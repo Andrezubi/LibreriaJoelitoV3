@@ -1,52 +1,179 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FrontendLibreria</title>
-    <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/FrontendLibreria.styles.css" asp-append-version="true" />
+
+    <!-- GOOGLE FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/globals.css" />
+    <link rel="stylesheet" href="~/css/style.css" />
+
+    <title>@ViewData["Title"]</title>
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">FrontendLibreria</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
+
+@{
+                //var enSistema = User.Identity != null && User.Identity.IsAuthenticated;
+                var esAdministrador = User.IsInRole("Administrador");
+                var esEmpleado = User.IsInRole("Empleado");
+                var enSistema = esAdministrador || esEmpleado;
+                var ocultarSidebar = ViewData["OcultarSidebar"] != null && (bool)ViewData["OcultarSidebar"];
+}
+
+<body class="@(enSistema && !ocultarSidebar ? "bg-sistema" : "")">
+
+    <header class="main-header">
+
+        <div class="header-left">
+            <div class="logo"></div>
+
+            <div class="header-text">
+                <div class="titulo-sistema">
+                    LIBRERÍA JOELITO
+                </div>
+                <div class="subtitulo-sistema">
+                    Sistema de Gestión de Librería
                 </div>
             </div>
-        </nav>
+        </div>
+
+        <div class="header-right">
+
+            @if (enSistema)
+            {
+                <div class="user-info">
+                    <span class="user-name">
+                        @User.Identity?.Name
+                    </span>
+
+                    <form method="get" action="/Servicio2Pages/CerradoSesion">
+                        <button type="submit" class="btn-logout">Cerrar sesión</button>
+                    </form>
+                </div>
+            }
+
+            @if (IsSectionDefined("HeaderButtons"))
+            {
+                <div style="display:@(enSistema ? "none" : "flex")">
+                    @RenderSection("HeaderButtons")
+                </div>
+            }
+
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    @if (enSistema && !ocultarSidebar)
+    {
+        <div class="sistema-de-gestion">
+
+            <div class="main-container">
+
+                <!-- SIDEBAR -->
+                <aside class="sidebar">
+
+                    <a href="/Index" class="menu-item active">
+                        <img class="menu-icon" src="~/img/home-lib.svg">
+                        <span>Inicio</span>
+                    </a>
+
+                    @if (esAdministrador || esEmpleado)
+                    {
+                        <!-- PRODUCTOS -->
+                        <div class="menu-item d-flex justify-content-between align-items-center">
+
+                            <a class="menu-link d-flex align-items-center">
+                                <img class="menu-icon" src="~/img/prod-lib.svg">
+                                <span>Productos</span>
+                            </a>
+
+                            <span class="flecha-toggle" data-bs-toggle="collapse" data-bs-target="#menuProductos">
+                                ▾
+                            </span>
+                        </div>
+
+                        <div class="collapse submenu" id="menuProductos">
+                            <a href="/Productos/IndiceProductos" class="submenu-item">
+                                <img class="menu-icon" src="~/img/prod-lib.svg">
+                                <span>Productos Disponibles</span>
+                            </a>
+
+                            <a href="/Marcas/VerMarcas" class="submenu-item">
+                                <img class="menu-icon" src="~/img/marca-lib.svg">
+                                <span>Marcas Disponibles</span>
+                            </a>
+
+                            <a href="/Index" class="submenu-item">
+                                <img class="menu-icon" src="~/img/categoria-lib.svg">
+                                <span>Categoría</span>
+                            </a>
+
+
+
+                        </div>
+                    }
+
+                    @if (esAdministrador || esEmpleado)
+                    {
+                        <a href="/Clientes/ClientesGet" class="menu-item">
+                            <img class="menu-icon" src="~/img/cli-lib.svg">
+                            <span>Clientes</span>
+                        </a>
+                    }
+
+                    @if (esAdministrador)
+                    {
+                        <a href="/Usuarios/UsuarioIndex" class="menu-item">
+                            <img class="menu-icon" src="~/img/emp-lib.svg">
+                            <span>Usuarios</span>
+                        </a>
+
+                        <!-- REPORTES — fuera del collapse, visible solo para admin -->
+                        <a href="/Servicio2Pages/Reportes/ReporteVentasCategoria" class="menu-item">
+                            <img class="menu-icon" src="~/img/ventas-lib.svg">
+                            <span>Reporte Categorías</span>
+                        </a>
+
+                    }
+
+                    @if (esAdministrador || esEmpleado)
+                    {
+                        <a href="/Ventas/IndexVentas" class="menu-item">
+                            <img class="menu-icon" src="~/img/ventas-lib.svg">
+                            <span>Ventas</span>
+                        </a>
+                    }
+
+                    @if (esAdministrador || esEmpleado)
+                    {
+                        <a href="/Index" class="menu-item">
+                            <img class="menu-icon" src="~/img/config-lib.svg">
+                            <span>Configuración</span>
+                        </a>
+                    }
+
+                </aside>
+
+                <!-- CONTENIDO -->
+                <main class="content-area">
+                    @RenderBody()
+                </main>
+
+            </div>
+        </div>
+    }
+    else
+    {
+
+        <main class="content-area full-width">
             @RenderBody()
         </main>
-    </div>
+    }
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - FrontendLibreria - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

@@ -1,10 +1,47 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<img class="element" src="~/img/background-lib.png">
+
+@section HeaderButtons {
+
+    <a href="Servicio2/InicioSesion" class="btn-login">
+        Iniciar sesión
+    </a>
+}
+<div class="center-text">
+
+    <p class="texto-bienvenida">
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <text>
+                Bienvenido al Sistema de Gestión de la Librería Joelito, @User.Identity.Name
+            </text>
+        }
+        else
+        {
+            <text>
+                Bienvenido al Sistema de Gestión de la Librería Joelito
+            </text>
+        }
+
+    </p>
+
+    <p class="mensaje-inicio">
+
+        @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            <text>Seleccione una opción del menú para comenzar</text>
+        }
+        else
+        {
+            <text>Por favor inicie sesión</text>
+        }
+
+    </p>
+
 </div>

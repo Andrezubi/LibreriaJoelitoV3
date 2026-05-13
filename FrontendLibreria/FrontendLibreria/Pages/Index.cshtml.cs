@@ -14,7 +14,8 @@ namespace FrontendLibreria.Pages
 
         public void OnGet()
         {
-
+            var claim = User.FindFirst("MustChangePassword");
+            Console.WriteLine($">>> MustChangePassword claim: '{claim?.Value}' tipo: '{claim?.Type}'");
         }
     }
 }
