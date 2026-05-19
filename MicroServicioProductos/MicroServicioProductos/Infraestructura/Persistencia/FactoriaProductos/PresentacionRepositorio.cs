@@ -1,10 +1,10 @@
 ﻿
-using MySql.Data.MySqlClient;
 using Mysqlx.Crud;
 using MicroServicioProductos.Aplicacion.Interfaces;
 using MicroServicioProductos.Dominio.Modelos;
 using MicroServicioProductos.Infraestructura.Persistencia;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 {
@@ -28,8 +28,8 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public List<Presentacion> ObtenerTodo()
         {
-            string query = "SELECT Id, Nombre FROM presentacion WHERE Estado = 1 ORDER BY Nombre";
-            MySqlCommand cmd = new MySqlCommand(query);
+            string query = "SELECT Id, Nombre FROM Presentacion WHERE Estado = 1 ORDER BY Nombre";
+            SqlCommand cmd = new SqlCommand(query);
             //return ExecuteReturningDataTable(cmd);
 
             List<Presentacion> result = new List<Presentacion>();

@@ -1,4 +1,4 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Microsoft.Data.SqlClient;
 using MicroServicioProductos.Aplicacion.Interfaces;
 using MicroServicioProductos.Dominio.Modelos;
 using MicroServicioProductos.Infraestructura.Persistencia;
@@ -10,11 +10,11 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
     {
         public int Eliminar(Marca t)
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 UPDATE Marca SET
                     Estado                   = 0,
                     IdUsuario                = @idUsuario,
-                    FechaUltimaActualizacion = NOW()
+                    FechaUltimaActualizacion = GETDATE()
                 WHERE Id = @id");
 
             cmd.Parameters.AddWithValue("@idUsuario", t.IdUsuario);
@@ -24,7 +24,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public List<Marca> ObtenerTodo()
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 SELECT Id, Nombre, Descripcion, PaginaWeb, Industria, FechaRegistro, IdUsuario
                 FROM Marca
                 WHERE Estado = 1
@@ -50,7 +50,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public Marca ObtenerPorId(int id)
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 SELECT Id, Nombre, Descripcion, PaginaWeb, Industria, FechaRegistro, IdUsuario
                 FROM Marca
                 WHERE Id = @id AND Estado = 1");
@@ -77,10 +77,10 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public int Insertar(Marca t)
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 INSERT INTO Marca (Nombre, Descripcion, PaginaWeb, Industria, IdUsuario)
                 VALUES (@nombre, @descripcion, @paginaWeb, @industria, @idUsuario);
-                SELECT LAST_INSERT_ID();");
+                SELECT SCOPE_IDENTITY();");
 
             AgregarParametros(cmd, t);
             return Convert.ToInt32(ExecuteScalar(cmd));
@@ -88,14 +88,14 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public int Actualizar(Marca t)
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 UPDATE Marca SET
                     Nombre                   = @nombre,
                     Descripcion              = @descripcion,
                     PaginaWeb                = @paginaWeb,
                     Industria                = @industria,
                     IdUsuario                = @idUsuario,
-                    FechaUltimaActualizacion = NOW()
+                    FechaUltimaActualizacion = GETDATE()
                 WHERE Id = @id");
 
             AgregarParametros(cmd, t);
@@ -105,7 +105,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public bool ExisteDuplicado(Marca marca)
         {
-            MySqlCommand cmd = new MySqlCommand(@"
+            SqlCommand cmd = new SqlCommand(@"
                 SELECT COUNT(*) FROM Marca
                 WHERE UPPER(TRIM(Nombre)) = UPPER(TRIM(@nombre))
                   AND Id    <> @id
@@ -118,7 +118,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         // --- Métodos privados de apoyo ---
 
-        private static void AgregarParametros(MySqlCommand cmd, Marca marca)
+        private static void AgregarParametros(SqlCommand cmd, Marca marca)
         {
             cmd.Parameters.AddWithValue("@nombre", marca.Nombre);
             cmd.Parameters.AddWithValue("@descripcion", (object?)marca.Descripcion ?? DBNull.Value);

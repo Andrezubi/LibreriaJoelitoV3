@@ -1,7 +1,7 @@
-using MySql.Data.MySqlClient;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using Microsoft.Data.SqlClient;
 
 namespace MicroServicioProductos.Infraestructura.Persistencia
 {
@@ -11,8 +11,8 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
         private static readonly Lazy<RepositorioBD> _instancia = new Lazy<RepositorioBD>(() => new RepositorioBD());
         
         // Soporte para transacciones concurrentes por hilo/tarea
-        private readonly AsyncLocal<MySqlTransaction?> _activeTransaction = new();
-        private readonly AsyncLocal<MySqlConnection?> _activeConnection = new();
+        private readonly AsyncLocal<SqlTransaction?> _activeTransaction = new();
+        private readonly AsyncLocal<SqlConnection?> _activeConnection = new();
 
         public static RepositorioBD Instancia
         {
@@ -40,7 +40,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
         {
             if (_activeTransaction.Value != null) return;
 
-            var connection = new MySqlConnection(CatchStringConnection());
+            var connection = new SqlConnection(CatchStringConnection());
             connection.Open();
             var transaction = connection.BeginTransaction();
 
@@ -85,7 +85,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
         }
         #endregion
 
-        public int ExecuteNonQuery(MySqlCommand comando)
+        public int ExecuteNonQuery(SqlCommand comando)
         {
             if (_activeTransaction.Value != null)
             {
@@ -94,7 +94,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
                 return comando.ExecuteNonQuery();
             }
 
-            using (MySqlConnection con = new MySqlConnection(CatchStringConnection()))
+            using (SqlConnection con = new SqlConnection(CatchStringConnection()))
             {
                 con.Open();
                 comando.Connection = con;
@@ -102,7 +102,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
             }
         }
 
-        public MySqlDataReader ExecuteReader(MySqlCommand comando)
+        public SqlDataReader ExecuteReader(SqlCommand comando)
         {
             if (_activeTransaction.Value != null)
             {
@@ -111,33 +111,33 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
                 return comando.ExecuteReader();
             }
 
-            MySqlConnection con = new MySqlConnection(CatchStringConnection());
+            SqlConnection con = new SqlConnection(CatchStringConnection());
             con.Open();
             comando.Connection = con;
             return comando.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
-        public MySqlDataAdapter ExecuteDataAdapter(MySqlCommand comando)
+        public SqlDataAdapter ExecuteDataAdapter(SqlCommand comando)
         {
             if (_activeTransaction.Value != null)
             {
                 comando.Connection = _activeConnection.Value;
                 comando.Transaction = _activeTransaction.Value;
-                return new MySqlDataAdapter(comando);
+                return new SqlDataAdapter(comando);
             }
 
-            MySqlConnection con = new MySqlConnection(CatchStringConnection());
+            SqlConnection con = new SqlConnection(CatchStringConnection());
             comando.Connection = con;
-            return new MySqlDataAdapter(comando);
+            return new SqlDataAdapter(comando);
         }
 
-        public DataTable ExecuteReturningDataTable(MySqlCommand comando)
+        public DataTable ExecuteReturningDataTable(SqlCommand comando)
         {
             if (_activeTransaction.Value != null)
             {
                 comando.Connection = _activeConnection.Value;
                 comando.Transaction = _activeTransaction.Value;
-                using (MySqlDataAdapter dataAdapter = new MySqlDataAdapter(comando))
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter(comando))
                 {
                     DataTable dataTable = new DataTable();
                     dataAdapter.Fill(dataTable);
@@ -145,12 +145,12 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
                 }
             }
 
-            using (MySqlConnection con = new MySqlConnection(CatchStringConnection()))
+            using (SqlConnection con = new SqlConnection(CatchStringConnection()))
             {
                 con.Open();
                 comando.Connection = con;
 
-                using (MySqlDataAdapter dataAdapter = new MySqlDataAdapter(comando))
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter(comando))
                 {
                     DataTable dataTable = new DataTable();
                     dataAdapter.Fill(dataTable);
@@ -159,7 +159,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
             }
         }
 
-        public DataRow? ExecuteReturningDataRow(MySqlCommand comando)
+        public DataRow? ExecuteReturningDataRow(SqlCommand comando)
         {
             DataTable dt = ExecuteReturningDataTable(comando);
             if (dt.Rows.Count > 0)
@@ -167,7 +167,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
             return null;
         }
 
-        public object? ExecuteScalar(MySqlCommand comando)
+        public object? ExecuteScalar(SqlCommand comando)
         {
             if (_activeTransaction.Value != null)
             {
@@ -176,7 +176,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia
                 return comando.ExecuteScalar();
             }
 
-            using (MySqlConnection con = new MySqlConnection(CatchStringConnection()))
+            using (SqlConnection con = new SqlConnection(CatchStringConnection()))
             {
                 con.Open();
                 comando.Connection = con;

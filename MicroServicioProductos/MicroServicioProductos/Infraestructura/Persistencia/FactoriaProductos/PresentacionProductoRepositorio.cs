@@ -1,5 +1,5 @@
 ﻿
-using MySql.Data.MySqlClient;
+using Microsoft.Data.SqlClient;
 using MicroServicioProductos.Aplicacion.DTOs;
 using MicroServicioProductos.Aplicacion.Interfaces;
 using MicroServicioProductos.Dominio.Modelos;
@@ -53,7 +53,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
                                   AND p.Estado = 1
                                   AND pr.Estado = 1";
 
-            var cmd = new MySqlCommand(query);
+            var cmd = new SqlCommand(query);
 
             cmd.Parameters.AddWithValue("@idProducto", idProducto);
             cmd.Parameters.AddWithValue("@idPresentacion", idPresentacion);
@@ -86,11 +86,11 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
                                 ON p.IdMarca = m.Id
                             WHERE CONCAT(pr.Nombre, ' de ', p.Nombre, ' ', m.Nombre) 
                                   LIKE CONCAT('%', @frase, '%')
-                              AND pp.Estado = TRUE
-                              AND p.Estado = TRUE
-                              AND pr.Estado = TRUE
-                              AND (m.Estado = TRUE OR m.Id IS NULL);";
-            MySqlCommand cmd = new MySqlCommand(query);
+                              AND pp.Estado = 1
+                              AND p.Estado = 1
+                              AND pr.Estado = 1
+                              AND (m.Estado = 1 OR m.Id IS NULL);";
+            SqlCommand cmd = new SqlCommand(query);
             cmd.Parameters.AddWithValue("@frase", frase);
 
             List<PresentacionProductoDto> result= new List<PresentacionProductoDto>();
@@ -120,10 +120,10 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
 
         public int InsertarRelacion(int idProducto, int idPresentacion, double factorConversion, decimal precio, int? idUsuario)
         {
-            string query = @"INSERT INTO presentacionproducto (IdProducto, IdPresentacion, FactorConversion, Precio, IdUsuario) 
+            string query = @"INSERT INTO PresentacionProducto (IdProducto, IdPresentacion, FactorConversion, Precio, IdUsuario) 
                      VALUES (@idProd, @idPres, @factor, @precio, @idUsu)";
 
-            MySqlCommand cmd = new MySqlCommand(query);
+            SqlCommand cmd = new SqlCommand(query);
             cmd.Parameters.AddWithValue("@idProd", idProducto);
             cmd.Parameters.AddWithValue("@idPres", idPresentacion);
             cmd.Parameters.AddWithValue("@factor", factorConversion);
