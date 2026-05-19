@@ -1,0 +1,277 @@
+﻿@page
+@model FrontendLibreria.Pages.Productos.IndiceProductosModel
+@{
+    ViewData["Title"] = "Productos";
+}
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-center">
+        <div class="tabla-wrapper">
+
+            <div class="card shadow-sm tabla-card">
+                <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
+                    <h5 class="mb-0">Lista de Productos</h5>
+                    <a asp-page="CrearProducto" class="btn btn-sistema btn-sm">
+                        + Nuevo Producto
+                    </a>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.MensajeExito))
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @Model.MensajeExito
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                
+                @if (TempData["MensajeError"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @TempData["MensajeError"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="tabla-head-custom">
+                                <tr>
+                                    <th>Nombre del Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Marca</th>
+                                    <th>Stock</th>
+                                    <th>Fecha de Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @foreach (var producto in Model.Productos)
+                                {
+                                    <tr>
+                                        <td>@producto.Nombre</td>
+                                        <td>@producto.NombreCategoria</td>
+
+                                        <!-- el API ya resuelve el nombre -->
+                                        <td>@producto.NombreMarca</td>
+                                        <td>@producto.Stock</td>
+                                        <td>@producto.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <button class="btn btn-sistema-danger btn-sm text-white"
+                                            onclick="abrirModalAgregarPresentacion('@producto.Id', '@producto.Nombre')">
+                                            Nueva Presentacion</button>
+
+                                            <a class="btn btn-sistema btn-sm" onclick="abrirModalUpdate('@producto.Id','@producto.Nombre','@producto.IdCategoria','@producto.IdMarca','@producto.Stock')">Editar</a>
+                                            <a data-bs-toggle="modal" data-bs-target="#modalDelete-@producto.Id" class="btn btn-sistema-danger btn-sm">Eliminar</a>
+                                        </td>
+                                    </tr>
+                                    <div class="modal fade" id="modalDelete-@producto.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form method="post" asp-page-handler="Delete" asp-route-id="@producto.Id">
+                                                    <div class="modal-header modal-header-morado">
+                                                        <h5 class="modal-title">Eliminar producto</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <span>¿Está seguro de eliminar el producto @producto.Nombre?</span>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" class="btn btn-sistema-danger">Sí</button>
+                                                        <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgregarPresentacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="AgregarPresentacion">
+                <div class="modal-header modal-header-morado">
+                    <h5 class="modal-title">Agregar Presentación a: <span id="lblNombreProdPres"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <input type="hidden" name="IdProductoSeleccionado" id="input_idProdPres" />
+
+                    <div class="form-group mb-3">
+                        <label class="form-label font-weight-bold">Presentación</label>
+                        <select asp-for="IdPresentacionSeleccionada" class="form-select" id="selectPresentacionModal" required>
+                            <option value="">Elija una presentación</option>
+                            @if (Model.Presentaciones != null)
+                            {
+                                @foreach (var presentation in Model.Presentaciones)
+                                {
+                                    <option value="@presentation.Id" data-nombre="@presentation.Nombre.ToLower()">@presentation.Nombre</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3" id="grupoFactorModal" style="display:none;">
+                        <label class="form-label font-weight-bold">Unidades que contiene</label>
+                        <input asp-for="FactorConversion" type="number" min="1" class="form-control" id="inputFactorModal" value="1" />
+                        <small class="text-muted">¿Cuántas unidades individuales conforman esta presentación?</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label font-weight-bold">Precio de Venta (Bs.)</label>
+                        <input asp-for="PrecioVenta" type="number" step="0.01" min="0.1" class="form-control" required />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sistema">Guardar Presentación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Update">
+                <div class="modal-header modal-header-morado">
+                    <h5 class="modal-title" id="editModalLabel">Editar Datos del Producto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
+                    <input type="hidden" name="Id" id="edit_id" />
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label font-weight-bold">Nombre</label>
+                            <input type="text" name="Nombre" id="edit_nombre" class="form-control" required />
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="edit_categoria" name="IdCategoria" required>
+                                @foreach (var cat in Model.Categorias)
+                                {
+                                    <option value="@cat.Id">@cat.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Marca</label>
+                            <select class="form-select" id="edit_marca" name="IdMarca" required>
+                                @foreach (var marca in Model.Marcas)
+                                {
+                                    <option value="@marca.Id">@marca.Nombre</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Stock</label>
+                            <input type="text" name="Stock" id="edit_stock" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-sistema" onclick="enviarUpdate()">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function abrirModalAgregarPresentacion(idProducto, nombreProducto) {
+            document.getElementById('input_idProdPres').value = idProducto;
+            document.getElementById('lblNombreProdPres').textContent = nombreProducto;
+        
+            document.getElementById('selectPresentacionModal').value = "";
+            document.getElementById('inputFactorModal').value = 1;
+            document.getElementById('grupoFactorModal').style.display = 'none';
+
+            new bootstrap.Modal(document.getElementById('modalAgregarPresentacion')).show();
+        }
+
+        document.getElementById('selectPresentacionModal').addEventListener('change', function () {
+            const opcion = this.options[this.selectedIndex];
+            const nombrePres = opcion ? opcion.getAttribute('data-nombre') : '';
+            const grupoFactor = document.getElementById('grupoFactorModal');
+            const inputFactor = document.getElementById('inputFactorModal');
+
+            if (!nombrePres || nombrePres.includes('unidad')) {
+                grupoFactor.style.display = 'none';
+                inputFactor.value = 1;
+            } else {
+                grupoFactor.style.display = 'block';
+                if(inputFactor.value == 1) inputFactor.value = "";
+            }
+        });
+
+        function abrirModalUpdate(id, nombre, idCategoria, idMarca, stock) {
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_categoria').value = idCategoria;
+            document.getElementById('edit_marca').value = idMarca;
+            document.getElementById('edit_stock').value = stock;
+
+            const alerta = document.getElementById('alertaErrorModal');
+            alerta.style.display = "none";
+            alerta.textContent = "";
+
+            new bootstrap.Modal(document.getElementById('modalEditarProducto')).show();
+        }
+
+        function enviarUpdate() {
+            const form = document.querySelector("#modalEditarProducto form");
+            const formData = new FormData(form);
+            const alerta = document.getElementById('alertaErrorModal');
+
+            alerta.style.display = "none";
+            alerta.innerHTML = "";
+
+            fetch('?handler=Update', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+                else if (data.errores) {
+                    let html = "<ul>";
+                    data.errores.forEach(err => { html += `<li>${err}</li>`; });
+                    html += "</ul>";
+                    alerta.innerHTML = html;
+                    alerta.style.display = "block";
+                }
+                else {
+                    alerta.textContent = data.message;
+                    alerta.style.display = "block";
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+}
