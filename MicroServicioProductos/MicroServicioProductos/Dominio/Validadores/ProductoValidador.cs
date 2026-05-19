@@ -1,6 +1,4 @@
 ﻿
-using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI;
 using MicroServicioProductos.Dominio.Modelos;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;

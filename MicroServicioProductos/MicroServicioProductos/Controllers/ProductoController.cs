@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
 using MicroServicioProductos.Aplicacion.DTOs;
 using MicroServicioProductos.Aplicacion.Results;
 using MicroServicioProductos.Aplicacion.Servicios;
@@ -10,6 +9,8 @@ using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.Persistencia;
 using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.Data.SqlClient;
+using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 
 namespace MicroServicioProductos.Controllers
 {
@@ -21,12 +22,12 @@ namespace MicroServicioProductos.Controllers
     {
         private readonly ProductoServicio _productoServicio;
         private readonly PresentacionServicio _presentacionServicio;
-        private readonly Infrestructura.Persistencia.FactoriaProductos.BitacoraRepositorio _bitacoraRepo;
+        private readonly BitacoraRepositorio _bitacoraRepo;
         
         public ProductoController(
             ProductoServicio productoServicio, 
             PresentacionServicio presentacionServicio,
-            Infrestructura.Persistencia.FactoriaProductos.BitacoraRepositorio bitacoraRepo)
+            BitacoraRepositorio bitacoraRepo)
         {
             _productoServicio = productoServicio;
             _presentacionServicio = presentacionServicio;
@@ -48,17 +49,17 @@ namespace MicroServicioProductos.Controllers
         public IActionResult GetCategorias() {
 
             string query = @"SELECT Id, Nombre FROM categoria WHERE estado = 1 ORDER BY Nombre";
-            MySqlCommand cmd = new MySqlCommand(query);
+            SqlCommand cmd = new SqlCommand(query);
 
             List<CategoriaDto> result = new List<CategoriaDto>();
-            MySqlDataReader reader = RepositorioBD.Instancia.ExecuteReader(cmd);
+            SqlDataReader reader = RepositorioBD.Instancia.ExecuteReader(cmd);
             while (reader.Read())
             {
 
                 result.Add(
                     new CategoriaDto
                     {
-                        Id = reader.GetInt32("Id"),
+                        Id = Convert.ToInt32(reader["Id"]),
                         Nombre = reader["Nombre"].ToString(),
                         
                     });
@@ -71,17 +72,17 @@ namespace MicroServicioProductos.Controllers
         [HttpGet("marcas")]
         public IActionResult GetMarcas() {
             string query = @"SELECT Id, Nombre FROM marca WHERE estado = 1 ORDER BY Nombre";
-            MySqlCommand cmd = new MySqlCommand(query);
+            SqlCommand cmd = new SqlCommand(query);
 
             List<Marca> result = new List<Marca>();
-            MySqlDataReader reader = RepositorioBD.Instancia.ExecuteReader(cmd);
+            SqlDataReader reader = RepositorioBD.Instancia.ExecuteReader(cmd);
             while (reader.Read())
             {
 
                 result.Add(
                     new Marca
                     {
-                        Id = reader.GetInt32("Id"),
+                        Id = Convert.ToInt32(reader["Id"]),
                         Nombre = reader["Nombre"].ToString(),
 
                     });
@@ -100,7 +101,7 @@ namespace MicroServicioProductos.Controllers
                 if (errors.Any()) return BadRequest(new { errores = errors });
 
                 string query = "INSERT INTO categoria (Nombre, IdUsuario) VALUES (@nombre, @idUsuario);";
-                MySqlCommand cmd = new MySqlCommand(query);
+                SqlCommand cmd = new SqlCommand(query);
                 cmd.Parameters.AddWithValue("@nombre", data.Nombre);
                 cmd.Parameters.AddWithValue("@idUsuario",data.IdUsuario);
                 int res=RepositorioBD.Instancia.ExecuteNonQuery(cmd);

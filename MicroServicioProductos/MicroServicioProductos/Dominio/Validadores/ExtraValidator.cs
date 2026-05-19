@@ -1,5 +1,5 @@
 ﻿
-using MySql.Data.MySqlClient;
+using Microsoft.Data.SqlClient;
 using MicroServicioProductos.Infraestructura.Persistencia;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
@@ -53,7 +53,7 @@ public static class ExtraValidador
                 LIMIT 1;
             ";
 
-        using (var cmd = new MySqlCommand(query))
+        using (var cmd = new SqlCommand(query))
         {
             cmd.Parameters.AddWithValue("@nombre", nombre);
 
@@ -112,7 +112,7 @@ public static class ExtraValidador
                 LIMIT 1;
             ";
 
-        using (var cmd = new MySqlCommand(query))
+        using (var cmd = new SqlCommand(query))
         {
             cmd.Parameters.AddWithValue("@nombre", nombre);
 

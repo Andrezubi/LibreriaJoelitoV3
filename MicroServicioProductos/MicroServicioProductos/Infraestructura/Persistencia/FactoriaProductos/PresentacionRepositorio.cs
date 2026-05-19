@@ -1,5 +1,4 @@
 ﻿
-using Mysqlx.Crud;
 using MicroServicioProductos.Aplicacion.Interfaces;
 using MicroServicioProductos.Dominio.Modelos;
 using MicroServicioProductos.Infraestructura.Persistencia;

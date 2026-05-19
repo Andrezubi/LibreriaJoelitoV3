@@ -1,4 +1,4 @@
-﻿namespace MicroServicioProductos.DTOs
+﻿namespace MicroServicioProductos.Aplicacion.DTOs
 {
     public class ProductoDto
     {

@@ -1,5 +1,5 @@
 
-using MicroServicioProductos.DTOs;
+using MicroServicioProductos.Aplicacion.DTOs;
 using Microsoft.Data.SqlClient;
 using MicroServicioProductos.Aplicacion.Interfaces;
 using MicroServicioProductos.Dominio.Modelos;
@@ -230,7 +230,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
                             ORDER BY 3";
             SqlCommand command = new SqlCommand(query);
             var result = new List<Producto>();
-            using (var reader = ExecuteReader(command))
+            using (SqlDataReader reader = ExecuteReader(command))
             {
                 while (reader.Read())
                 {

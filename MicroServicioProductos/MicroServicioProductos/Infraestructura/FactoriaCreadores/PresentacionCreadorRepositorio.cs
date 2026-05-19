@@ -3,8 +3,7 @@
 using MicroServicioProductos.Aplicacion.Interfaces;
 
 using MicroServicioProductos.Dominio.Modelos;
-using MicroServicios.Infraestructura.FactoriaCreadores;
-using MicroServicioProductos.Infrestructura.Persistencia.FactoriaProductos;
+using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 
 namespace MicroServicioProductos.Infraestructura.FactoriaCreadores
 {

@@ -1,6 +1,7 @@
 ﻿
 using MicroServicioProductos.Dominio.Modelos;
-using MicroServicioProductos.Infarestructura.Persistencia.FactoriaProductos;
+
+using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 using System.Data;
 
 namespace MicroServicioProductos.Aplicacion.Servicios

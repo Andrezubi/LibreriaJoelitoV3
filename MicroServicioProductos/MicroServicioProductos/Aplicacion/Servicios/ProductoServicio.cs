@@ -1,5 +1,6 @@
 ﻿
-using FrontendLibreria.DTOs;
+
+using MicroServicioProductos.Aplicacion.DTOs;
 using MicroServicioProductos.Aplicacion.Results;
 using MicroServicioProductos.Dominio.Modelos;
 using MicroServicioProductos.Dominio.Validadores;
