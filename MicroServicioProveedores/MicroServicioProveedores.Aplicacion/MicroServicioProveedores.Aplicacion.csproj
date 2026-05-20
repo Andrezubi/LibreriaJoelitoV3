@@ -9,8 +9,11 @@
   <ItemGroup>
     <Folder Include="CasosDeUso\" />
     <Folder Include="DTOs\" />
-    <Folder Include="Results\" />
     <Folder Include="Validadores\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroServicioProveedores.Dominio\MicroServicioProveedores.Dominio.csproj" />
   </ItemGroup>
 
 </Project>

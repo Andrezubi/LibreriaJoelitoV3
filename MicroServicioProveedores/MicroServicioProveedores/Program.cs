@@ -1,4 +1,6 @@
 using MicroservicioProveedores.Infraestructura.Persistence;
+using MicroservicioProveedores.Infraestructura.Persistence.FactoriaCreadores;
+using MicroservicioProveedores.Infraestructura.ProductosConcretos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,10 @@ if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(databaseName)
 {
     throw new InvalidOperationException("La configuración de MongoDB (ConnectionString o DatabaseName) no está presente en appsettings.json");
 }
+
+builder.Services.AddScoped<ProveedorRepositorio>(provider => {
+    return new CreadorProveedorRepositorio().CrearRepositorio();
+});
 
 bd.Initiate(connectionString, databaseName);
 

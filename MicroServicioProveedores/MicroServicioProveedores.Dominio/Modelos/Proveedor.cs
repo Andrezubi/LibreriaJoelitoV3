@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MicroServicioProveedores.Dominio.Modelos
 {
-    internal class Proveedor
+    public class Proveedor
     {
 
         [BsonId]
@@ -27,15 +27,7 @@ namespace MicroServicioProveedores.Dominio.Modelos
 
         public Proveedor() { }
 
-        public Proveedor(string id, string nombre, int nit, int telefonoContacto, string? descripcion, string direccion, int idUsuario)
-        {
-            Id = id;
-            Nombre = nombre;
-            Nit = nit;
-            TelefonoContacto = telefonoContacto;
-            Descripcion = descripcion;
-            Direccion = direccion;
-            IdUsuario = idUsuario;
-        }
+        
+
     }
 }

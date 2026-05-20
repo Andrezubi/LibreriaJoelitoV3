@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace MicroServicioProveedores.Dominio.Interfaces
 {
-    internal interface IReporitory<T>
+    public interface IRepositorio<T>
     {
-        int Insertar(T t);
-        int Actualizar(T t);
-        int Eliminar(T t);
-        List<T> ObtenerTodo();
+        Task Insertar(T t);
+        Task<bool> Actualizar(T t);
+        Task<bool> Eliminar(T t);
+        Task<List<T>> ObtenerTodo();
     }
 }
