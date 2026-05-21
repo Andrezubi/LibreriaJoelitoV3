@@ -1,6 +1,7 @@
 using MicroservicioProveedores.Infraestructura.Persistence;
 using MicroservicioProveedores.Infraestructura.Persistence.FactoriaCreadores;
 using MicroservicioProveedores.Infraestructura.ProductosConcretos;
+using MicroServicioProveedores.Aplicacion.CasosDeUso;
 using MicroServicioProveedores.Aplicacion.Validadores;
 using MicroServicioProveedores.Dominio.Interfaces;
 using MicroServicioProveedores.Dominio.Modelos;
@@ -33,6 +34,12 @@ bd.Initiate(connectionString, databaseName);
 
 //Validadores
 builder.Services.AddScoped<ProveedorValidador>();
+
+//Casos De Uso
+builder.Services.AddScoped<CasoDeUsoCrearProveedor>();
+builder.Services.AddScoped<CasoDeUsoObtenerProveedor>();
+builder.Services.AddScoped<CasoDeUsoActualizarProveedor>();
+builder.Services.AddScoped<CasoDeUsoEliminarProveedor>();
 
 // Configure the HTTP request pipeline.
 

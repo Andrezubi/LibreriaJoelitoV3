@@ -1,4 +1,5 @@
 ﻿using MicroServicioProveedores.Aplicacion.DTOs;
+using MicroServicioProveedores.Aplicacion.Results;
 using MicroServicioProveedores.Aplicacion.Validadores;
 using MicroServicioProveedores.Dominio.Interfaces;
 using MicroServicioProveedores.Dominio.Modelos;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MicroServicioProveedores.Aplicacion.CasosDeUso
 {
-    internal class CasoDeUsoActualizarProveedor
+    public class CasoDeUsoActualizarProveedor
     {
         private readonly IRepositorio<Proveedor> _repositorioProveedores;
         private readonly ProveedorValidador _proveedorValidador;
@@ -21,7 +22,7 @@ namespace MicroServicioProveedores.Aplicacion.CasosDeUso
             _proveedorValidador = proveedorValidador;
         }
 
-        public async Task Actualizar(RegistrarProveedorDto proveedorDTO)
+        public async Task<Result> Actualizar(RegistrarProveedorDto proveedorDTO)
         {
             var resultadosValidacion = _proveedorValidador.Validar(proveedorDTO);
 
@@ -47,8 +48,10 @@ namespace MicroServicioProveedores.Aplicacion.CasosDeUso
 
             if (!resultado)
             {
-                throw new Exception("Error al actualizar el proveedor");
+                return Result.Failure("Error al actualizar el proveedor");
             }
+
+            return Result.Success();
         }
     }
 }

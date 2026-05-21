@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MicroServicioProveedores.Aplicacion.CasosDeUso
 {
-    internal class CasoDeUsoObtenerProveedor
+    public class CasoDeUsoObtenerProveedor
     {
         private readonly IRepositorio<Proveedor> _repositorioProveedores;
 
