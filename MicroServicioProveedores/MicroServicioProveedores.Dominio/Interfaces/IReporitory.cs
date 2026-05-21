@@ -12,5 +12,6 @@ namespace MicroServicioProveedores.Dominio.Interfaces
         Task<bool> Actualizar(T t);
         Task<bool> Eliminar(T t);
         Task<List<T>> ObtenerTodo();
+        Task<T> ObtenerPorId(string id);
     }
 }

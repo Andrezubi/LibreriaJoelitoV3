@@ -27,13 +27,20 @@ namespace MicroservicioProveedores.Infraestructura.ProductosConcretos
 
         public async Task<bool> Eliminar(Proveedor t)
         {
-            var resultado = await _proveedores.DeleteOneAsync(p => p.Id == t.Id);
-            return resultado.IsAcknowledged && resultado.DeletedCount > 0;
+            var filtro = Builders<Proveedor>.Filter.Eq(p => p.Id, t.Id);
+            var actualizacion = Builders<Proveedor>.Update.Set(p => p.estado, 0);
+            var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion);
+            return resultado.IsAcknowledged && resultado.MatchedCount > 0;
         }
 
         public async Task<List<Proveedor>> ObtenerTodo()
         {
             return await _proveedores.Find(_ => true).ToListAsync();
+        }
+
+        public async Task<Proveedor> ObtenerPorId(string id)
+        {
+            return await _proveedores.Find(p => p.Id == id).FirstOrDefaultAsync();
         }
     }
 }
