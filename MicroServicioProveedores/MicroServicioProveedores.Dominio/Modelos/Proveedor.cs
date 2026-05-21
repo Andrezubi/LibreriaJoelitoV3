@@ -27,7 +27,14 @@ namespace MicroServicioProveedores.Dominio.Modelos
 
         public Proveedor() { }
 
-        
-
+        public Proveedor(string nombre, int nit, int telefonoContacto, string? descripcion, string direccion, int idUsuario)
+        {
+            Nombre = nombre;
+            Nit = nit;
+            TelefonoContacto = telefonoContacto;
+            Descripcion = descripcion;
+            Direccion = direccion;
+            IdUsuario = idUsuario;
+        }
     }
 }
