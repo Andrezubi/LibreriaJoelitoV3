@@ -1,13 +1,8 @@
 ﻿using MicroServicioProveedores.Aplicacion.DTOs;
-using MicroServicioProveedores.Dominio.Modelos;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MicroServicioProveedores.Aplicacion.Validadores
 {
@@ -38,12 +33,12 @@ namespace MicroServicioProveedores.Aplicacion.Validadores
         {
             if (string.IsNullOrWhiteSpace(dto.Nombre))
             {
-                errores.Add(new ValidationResult("El nombre del proveedor es obligatorio."));
+                errores.Add(new ValidationResult("El nombre del proveedor es obligatorio.", new[] { "Nombre" }));
             }
 
             if (string.IsNullOrWhiteSpace(dto.Direccion))
             {
-                errores.Add(new ValidationResult("La dirección es obligatoria."));
+                errores.Add(new ValidationResult("La dirección es obligatoria.", new[] { "Direccion" }));
             }
         }
 
@@ -51,14 +46,14 @@ namespace MicroServicioProveedores.Aplicacion.Validadores
         {
             if (nit <= 0)
             {
-                errores.Add(new ValidationResult("El NIT proporcionado no es válido."));
-                return; 
+                errores.Add(new ValidationResult("El NIT proporcionado no es válido.", new[] { "Nit" }));
+                return;
             }
 
             string nitStr = nit.ToString();
             if (nitStr.Length < 7 || nitStr.Length > 12)
             {
-                errores.Add(new ValidationResult("El NIT debe tener una longitud válida según el formato de Impuestos Nacionales."));
+                errores.Add(new ValidationResult("El NIT debe tener una longitud válida según el formato de Impuestos Nacionales.", new[] { "Nit" }));
             }
         }
 
@@ -68,13 +63,13 @@ namespace MicroServicioProveedores.Aplicacion.Validadores
 
             if (telefonoStr.Length != 8)
             {
-                errores.Add(new ValidationResult("El número de teléfono debe tener exactamente 8 dígitos."));
-                return; 
+                errores.Add(new ValidationResult("El número de teléfono debe tener exactamente 8 dígitos.", new[] { "TelefonoContacto" }));
+                return;
             }
 
             if (!Regex.IsMatch(telefonoStr, "^[23467]"))
             {
-                errores.Add(new ValidationResult("El teléfono debe empezar con 2, 3 o 4 (fijos) o con 6 o 7 (celulares)."));
+                errores.Add(new ValidationResult("El teléfono debe empezar con 2, 3 o 4 (fijos) o con 6 o 7 (celulares).", new[] { "TelefonoContacto" }));
             }
         }
 
@@ -82,7 +77,7 @@ namespace MicroServicioProveedores.Aplicacion.Validadores
         {
             if (idUsuario <= 0)
             {
-                errores.Add(new ValidationResult("El identificador del usuario responsable es inválido."));
+                errores.Add(new ValidationResult("El identificador del usuario responsable es inválido.", new[] { "IdUsuario" }));
             }
         }
 
