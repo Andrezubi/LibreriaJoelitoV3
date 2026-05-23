@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroServicioUsuarios.dominio.Resultados;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,35 +18,35 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
         private FechaNacimiento(DateOnly valor) => Valor = valor;
 
-        public static Result<FechaNacimiento> Crear(DateOnly fecha)
+        public static Resultado<FechaNacimiento> Crear(DateOnly fecha)
         {
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
 
             if (fecha > hoy)
-                return Result.Fallido<FechaNacimiento>(
+                return Resultado.Fallido<FechaNacimiento>(
                     Error.Validacion("La fecha de nacimiento no puede ser futura."));
 
             if (fecha.Year < 1900)
-                return Result.Fallido<FechaNacimiento>(
+                return Resultado.Fallido<FechaNacimiento>(
                     Error.Validacion("La fecha de nacimiento no puede ser anterior al año 1900."));
 
             var edad = CalcularEdad(fecha, hoy);
             if (edad < 18)
-                return Result.Fallido<FechaNacimiento>(
+                return Resultado.Fallido<FechaNacimiento>(
                     Error.Validacion($"El usuario debe tener al menos 18 años. Edad calculada: {edad}."));
 
-            return Result.Exitoso(new FechaNacimiento(fecha));
+            return Resultado.Exitoso(new FechaNacimiento(fecha));
         }
 
-        public static Result<FechaNacimiento> Crear(int anio, int mes, int dia)
+        public static Resultado<FechaNacimiento> Crear(int anio, int mes, int dia)
         {
             try
             {
                 return Crear(new DateOnly(anio, mes, dia));
             }
             catch (ArgumentOutOfRangeException)
-            {
-                return Result.Fallido<FechaNacimiento>(
+            {   
+                return Resultado.Fallido<FechaNacimiento>(
                     Error.Validacion($"La fecha {dia}/{mes}/{anio} no es válida."));
             }
         }

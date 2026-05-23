@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroServicioUsuarios.dominio.Resultados;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,23 +14,23 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
         private Direccion(string valor) => Valor = valor;
 
-        public static Result<Direccion> Crear(string valor)
+        public static Resultado<Direccion> Crear(string valor)
         {
             if (string.IsNullOrWhiteSpace(valor))
-                return Result.Fallido<Direccion>(
+                return Resultado.Fallido<Direccion>(
                     Error.Validacion("La dirección no puede estar vacía."));
 
             var limpio = valor.Trim();
 
             if (limpio.Length < 5)
-                return Result.Fallido<Direccion>(
+                return Resultado.Fallido<Direccion>(
                     Error.Validacion("La dirección debe tener al menos 5 caracteres."));
 
             if (limpio.Length > 200)
-                return Result.Fallido<Direccion>(
+                return Resultado.Fallido<Direccion>(
                     Error.Validacion("La dirección no puede superar 200 caracteres."));
 
-            return Result.Exitoso(new Direccion(limpio));
+            return Resultado.Exitoso(new Direccion(limpio));
         }
 
         public override string ToString() => Valor;
@@ -49,29 +50,30 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
         private FechaIngreso(DateOnly valor) => Valor = valor;
 
-        public static Result<FechaIngreso> Crear(DateOnly fecha)
+        public static Resultado<FechaIngreso> Crear(DateOnly fecha)
         {
             var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
 
             if (fecha > hoy)
-                return Result.Fallido<FechaIngreso>(
+                return Resultado.Fallido<FechaIngreso>(
                     Error.Validacion("La fecha de ingreso no puede ser futura."));
 
+            ///Revisar mas adelante si se quiere permitir fechas de ingreso anteriores al año 2000, o si se quiere dejar esa validación para el caso de uso.
             if (fecha.Year < 2000)
-                return Result.Fallido<FechaIngreso>(
+                return Resultado.Fallido<FechaIngreso>(
                     Error.Validacion("La fecha de ingreso no puede ser anterior al año 2000."));
 
-            return Result.Exitoso(new FechaIngreso(fecha));
+            return Resultado.Exitoso(new FechaIngreso(fecha));
         }
 
         /// <summary>Valida que la fecha de ingreso sea posterior a la de nacimiento.</summary>
-        public Result ValidarCoherenciaConNacimiento(FechaNacimiento nacimiento)
+        public Resultado ValidarCoherenciaConNacimiento(FechaNacimiento nacimiento)
         {
             if (Valor <= nacimiento.Valor)
-                return Result.Fallido(
+                return Resultado.Fallido(
                     Error.Validacion("La fecha de ingreso debe ser posterior a la fecha de nacimiento."));
 
-            return Result.Exitoso();
+            return Resultado.Exitoso();
         }
 
         public override string ToString() => Valor.ToString("yyyy-MM-dd");

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroServicioUsuarios.dominio.Resultados;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,13 +7,13 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
     public sealed class PoliticaContraseña
     {
-        private PoliticaContraseña { }
+        private PoliticaContraseña() { }
 
         /// <summary>
         /// Valida que una contraseña cumpla la política de seguridad:
         /// mínimo 8 caracteres, al menos 1 número, 1 mayúscula, 1 minúscula, 1 carácter especial.
         /// </summary>
-        public static Result Validar(string password)
+        public static Resultado Validar(string password)
         {
             var errores = new List<string>();
 
@@ -32,9 +33,10 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
                 errores.Add("Debe contener al menos un carácter especial.");
 
             if (errores.Any())
-                return Result.Fallido(Error.Validacion(string.Join(" ", errores)));
+                return Resultado.Fallido(Error.Validacion(string.Join(" ", errores)));
 
-            return Result.Exitoso();
+            return Resultado.Exitoso();
         }
     }
+}
 

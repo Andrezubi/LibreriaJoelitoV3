@@ -4,7 +4,9 @@ using System.Text;
 
 namespace MicroServicioUsuarios.dominio.Interfaces
 {
-    internal interface IContraHasher
+    public interface IContraHasher
     {
+        string Hashear(string password);
+        bool Verificar(string password, string hash);
     }
 }
