@@ -7,6 +7,10 @@ using MicroServicioUsuarios.dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MicroServicioUsuarios.Infraestructura.ConexionBD;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace MicroServicioUsuarios.Infraestructura
 {
@@ -18,7 +22,7 @@ namespace MicroServicioUsuarios.Infraestructura
         {
             // ── Base de datos MySQL — DbContextPool como Singleton administrado ──
             var conn = config.GetConnectionString("MySQL");
-            services.AddDbContextPool<AppDbContext>(opt =>
+            services.AddDbContextPool<RepositorioBD>(opt =>
                 opt.UseMySql(conn, ServerVersion.AutoDetect(conn)));
 
             // ── Repositorios (Scoped) ────────────────────────────────────────

@@ -1,4 +1,6 @@
 ﻿using MicroServicioUsuarios.dominio.Entidades;
+using MicroServicioUsuarios.Infraestructura.ConexionBD.Configuraciones;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
@@ -15,10 +17,11 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD
         public RepositorioBD(DbContextOptions<RepositorioBD> options) : base(options) { }
 
         public DbSet<Usuario> Usuarios => Set<Usuario>();
-      
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UsuarioConfig());
             base.OnModelCreating(modelBuilder);
         }
     }
+}

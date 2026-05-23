@@ -1,5 +1,6 @@
 ﻿using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.dominio.EntidadesDeValor;
+using MicroServicioUsuarios.dominio.Interfaces;
 using MicroServicioUsuarios.dominio.Resultados;
 using System;
 using System.Collections.Generic;
@@ -36,13 +37,10 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
     public sealed class ActualizarUsuarioCasoDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
-        private readonly IBitacoraRepositorio _bitacoraRepo;
-
         public ActualizarUsuarioCasoDeUso(
-            IUsuarioRepositorio usuarioRepo, IBitacoraRepositorio bitacoraRepo)
+            IUsuarioRepositorio usuarioRepo)
         {
             _usuarioRepo = usuarioRepo;
-            _bitacoraRepo = bitacoraRepo;
         }
 
         public async Task<Resultado<UsuarioDto>> EjecutarAsync(
@@ -82,10 +80,6 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
             await _usuarioRepo.ActualizarAsync(usuario);
             await _usuarioRepo.GuardarCambiosAsync();
 
-            await _bitacoraRepo.RegistrarAsync(new Bitacora(
-                $"id:{idModificador}", "UPDATE", "Usuario", ipOrigen,
-                detalleNuevo: $"Usuario ID {id} actualizado"));
-            await _bitacoraRepo.GuardarCambiosAsync();
 
             return Resultado.Exitoso(new UsuarioDto(
                 usuario.Id, usuario.NombreUsuario, usuario.NombreCompleto,

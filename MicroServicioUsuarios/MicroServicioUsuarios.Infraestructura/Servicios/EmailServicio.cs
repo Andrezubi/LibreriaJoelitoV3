@@ -1,9 +1,9 @@
-﻿using MicroServicioUsuarios.Aplicacion.InterfacesExt;
+using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
 using System.Collections.Generic;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
 using System.Text;
 
 namespace MicroServicioUsuarios.Infraestructura.Servicios

@@ -2,7 +2,7 @@
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 using MicroServicioUsuarios.dominio.Entidades;
 using MicroServicioUsuarios.dominio.Resultados;
-using MicroServicioUsuarios.dominio.interfaces;
+using MicroServicioUsuarios.dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,7 +22,6 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
     {
         private readonly IUsuarioFabrica _fabrica;
         private readonly IUsuarioRepositorio _usuarioRepo;
-        private readonly IBitacoraRepositorio _bitacoraRepo;
         private readonly IEmailServicio _email;
 
         public CrearUsuarioCasoDeUso(

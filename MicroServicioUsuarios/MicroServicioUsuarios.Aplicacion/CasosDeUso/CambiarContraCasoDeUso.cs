@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
+using MicroServicioUsuarios.dominio.EntidadesDeValor;
 
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
@@ -42,7 +43,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
                     Error.Validacion("La nueva contraseña y su confirmación no coinciden."));
 
             // 2. Política — delegada a Value Object (en Servicio_Clientes era método privado)
-            var politica = PasswordPolicy.Validar(dto.NuevoPassword);
+            var politica = PoliticaContraseña.Validar(dto.NuevoPassword);
             if (politica.EsFallido) return politica;
 
             // 3. Obtener usuario
