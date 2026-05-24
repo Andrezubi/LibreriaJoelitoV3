@@ -96,6 +96,38 @@ namespace MicroServicioUsuarios.Controllers
             return Ok(new { mensaje = "Contraseña actualizada exitosamente. Inicie sesión nuevamente." });
         }
 
+        // ── ENDPOINT TEMPORAL PARA PRUEBAS (SEMILLA) ────────────────────────
+        [AllowAnonymous]
+        [HttpPost("seed-admin")]
+        public async Task<IActionResult> SeedAdmin([FromServices] MicroServicioUsuarios.dominio.Interfaces.IContraHasher hasher, [FromServices] MicroServicioUsuarios.dominio.Interfaces.IUsuarioRepositorio repo)
+        {
+            var existe = await repo.ExisteNombreUsuarioAsync("admin.prueba");
+            if (existe) return Ok("El admin de prueba ya existe. Su password es temporal123");
+
+            var hash = hasher.Hashear("temporal123");
+
+            var admin = new MicroServicioUsuarios.dominio.Entidades.Usuario(
+                "admin.prueba",
+                hash,
+                "Administrador",
+                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Admin").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Prueba").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Sistema").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.CarnetIdentidad.Crear("12345678").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.FechaNacimiento.Crear(new DateOnly(1990, 1, 1)).Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.Email.Crear("admin@libreria.com").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.Direccion.Crear("Calle Falsa 123").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.Telefono.Crear("77777777").Valor!,
+                MicroServicioUsuarios.dominio.EntidadesDeValor.FechaIngreso.Crear(DateOnly.FromDateTime(DateTime.Now)).Valor!,
+                0
+            );
+
+            await repo.AgregarAsync(admin);
+            await repo.GuardarCambiosAsync();
+
+            return Ok(new { mensaje = "Usuario creado exitosamente para pruebas.", usuario = "admin.prueba", password = "temporal123" });
+        }
+
         // ── Helpers privados ─────────────────────────────────────────────────
 
         private int ObtenerIdUsuarioDelToken()
