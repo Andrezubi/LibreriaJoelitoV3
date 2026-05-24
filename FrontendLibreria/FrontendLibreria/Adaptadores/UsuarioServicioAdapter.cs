@@ -8,7 +8,7 @@ namespace FrontendLibreria.Adaptadores
     public class UsuarioServicioAdapter : IUsuarioServicioAdapter
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<UsuarioServicioAdapter> _logger;
+        ILogger<UsuarioServicioAdapter> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UsuarioServicioAdapter(HttpClient httpClient, IHttpContextAccessor httpContextAccessor, ILogger<UsuarioServicioAdapter> logger)
@@ -16,6 +16,10 @@ namespace FrontendLibreria.Adaptadores
             _httpClient = httpClient;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+        }
+        public ILogger<UsuarioServicioAdapter> GetLogger()
+        {
+            return _logger;
         }
 
         /// <summary>
@@ -80,8 +84,9 @@ namespace FrontendLibreria.Adaptadores
                 }
             }
 
-        public async Task<bool> CambiarPasswordAsync(CambiarPasswordDto request)
+        public async Task<(bool Exito, List<string> Errores)> CambiarPasswordAsync(CambiarPasswordDto request)
         {
+            var errores = new List<string>();
             try
             {
                 ConfigurarHeaderDeAutorizacion();
@@ -93,17 +98,28 @@ namespace FrontendLibreria.Adaptadores
                 if (response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation("✅ Contraseña cambiada exitosamente");
-                    return true;
+                    return (true, errores);
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("❌ Error al cambiar contraseña: {Error}", errorContent);
-                return false;
+
+                if (errorContent == "{\"error\":\"La contraseña actual es incorrecta.\"}")
+                {
+                    _logger.LogError("⚠️ Contraseña actual incorrecta");
+                    errores.Add("⚠️ Contraseña actual incorrecta");
+                }
+                else
+                {
+                    _logger.LogError("❌ Error al cambiar contraseña: {Error}", errorContent);
+                    errores.Add(errorContent);
+                }
+                return (false, errores);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error en cambiar contraseña");
-                return false;
+                errores.Add($"Error: {ex.Message}");
+                return (false, errores);
             }
         }
 

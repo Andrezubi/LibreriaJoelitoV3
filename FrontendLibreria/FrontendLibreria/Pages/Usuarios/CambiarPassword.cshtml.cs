@@ -45,11 +45,18 @@ namespace FrontendLibreria.Pages.Usuarios
                 return Page();
             }
 
-            var exito = await _usuarioServicio.CambiarPasswordAsync(Input);
+            var (exito, errores) = await _usuarioServicio.CambiarPasswordAsync(Input);
 
             if (!exito)
             {
-                ErrorMessage = "Error al cambiar la contraseña. Verifique que la contraseña actual sea correcta y que la nueva cumpla con las políticas de seguridad.";
+                if (errores != null && errores.Contains("⚠️ Contraseña actual incorrecta"))
+                {
+                    ErrorMessage = "La contraseña actual es incorrecta.";
+                }
+                else
+                {
+                    ErrorMessage = "Error al cambiar la contraseña. Verifique que la contraseña actual sea correcta y que la nueva cumpla con las políticas de seguridad.";
+                }
                 return Page();
             }
 
