@@ -1,4 +1,4 @@
-﻿using MicroServicioUsuarios.Aplicacion.DTOs;
+using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.dominio.Entidades;
 using MicroServicioUsuarios.dominio.Resultados;
 using System;
@@ -9,6 +9,6 @@ namespace MicroServicioUsuarios.Aplicacion.InterfacesExt
 {
     public interface IUsuarioFabrica
     {
-        Task<Resultado<(Usuario usuario, string passwordTemporal)>> CrearAsync(CrearUsuarioDto dto, string creadoPor);
+        Task<Resultado<(Usuario usuario, string passwordTemporal)>> CrearAsync(CrearUsuarioDto dto, int idUsuarioRegistrador);
     }
 }

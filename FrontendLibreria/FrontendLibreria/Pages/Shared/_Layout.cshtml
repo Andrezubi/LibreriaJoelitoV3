@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,6 +21,7 @@
                 var esEmpleado = User.IsInRole("Empleado");
                 var enSistema = esAdministrador || esEmpleado;
                 var ocultarSidebar = ViewData["OcultarSidebar"] != null && (bool)ViewData["OcultarSidebar"];
+                var debeCambiarPassword = User.FindFirst("MustChangePassword")?.Value == "true";
 }
 
 <body class="@(enSistema && !ocultarSidebar ? "bg-sistema" : "")">
@@ -67,6 +68,17 @@
 
     @if (enSistema && !ocultarSidebar)
     {
+        @if (debeCambiarPassword)
+        {
+            <div class="alert alert-danger m-0 text-center rounded-0" style="z-index: 1000; position: relative;">
+                <strong>¡Acceso Restringido!</strong> Por razones de seguridad, debes cambiar tu contraseña obligatoriamente para poder acceder al sistema.
+            </div>
+            <main class="content-area full-width">
+                @RenderBody()
+            </main>
+        }
+        else
+        {
         <div class="sistema-de-gestion">
 
             <div class="main-container">
@@ -163,6 +175,7 @@
 
             </div>
         </div>
+        }
     }
     else
     {

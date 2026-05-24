@@ -1,4 +1,4 @@
-﻿using MicroServicioUsuarios.dominio.EntidadesDeValor;
+using MicroServicioUsuarios.dominio.EntidadesDeValor;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -41,7 +41,7 @@ namespace MicroServicioUsuarios.dominio.Entidades
         // Constructor privado para EF Core
         private Usuario() { }
 
-        internal Usuario(
+        public Usuario(
             string nombreUsuario,
             string passwordHash,
             string rol,

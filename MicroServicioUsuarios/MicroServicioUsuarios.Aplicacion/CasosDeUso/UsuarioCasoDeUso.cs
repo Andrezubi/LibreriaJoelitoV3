@@ -1,9 +1,11 @@
-﻿using MicroServicioUsuarios.Aplicacion.DTOs;
+using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.dominio.EntidadesDeValor;
 using MicroServicioUsuarios.dominio.Resultados;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MicroServicioUsuarios.dominio.Interfaces;
+using MicroServicioUsuarios.dominio.Entidades;
 
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {

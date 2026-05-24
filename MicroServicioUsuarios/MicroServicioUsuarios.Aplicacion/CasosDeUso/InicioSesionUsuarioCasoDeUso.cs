@@ -1,9 +1,11 @@
-﻿using MicroServicioUsuarios.Aplicacion.DTOs;
+using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.dominio.Resultados;
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using MicroServicioUsuarios.dominio.Interfaces;
+using MicroServicioUsuarios.dominio.Entidades;
+using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
     /// <summary>
@@ -18,13 +20,13 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
         private readonly IBitacoraRepositorio _bitacoraRepo;
-        private readonly IPasswordHasher _hasher;
+        private readonly IContraHasher _hasher;
         private readonly IJwtServicio _jwt;
 
         public InicioSesionUsuarioCasoDeUso(
             IUsuarioRepositorio usuarioRepo,
             IBitacoraRepositorio bitacoraRepo,
-            IPasswordHasher hasher,
+            IContraHasher hasher,
             IJwtServicio jwt)
         {
             _usuarioRepo = usuarioRepo;

@@ -1,9 +1,14 @@
-﻿using MicroServicioUsuarios.Aplicacion.CasosDeUso;
+using MicroServicioUsuarios.Aplicacion.CasosDeUso;
 using MicroServicioUsuarios.Aplicacion.Fabrica;
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 using MicroServicioUsuarios.Infraestructura.Persistencia;
 using MicroServicioUsuarios.Infraestructura.Servicios;
+using MicroServicioUsuarios.Infraestructura.ConexionBD;
 using MicroServicioUsuarios.dominio.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,12 +23,12 @@ namespace MicroServicioUsuarios.Infraestructura
         {
             // ── Base de datos MySQL — DbContextPool como Singleton administrado ──
             var conn = config.GetConnectionString("MySQL");
-            services.AddDbContextPool<AppDbContext>(opt =>
+            services.AddDbContextPool<RepositorioBD>(opt =>
                 opt.UseMySql(conn, ServerVersion.AutoDetect(conn)));
 
             // ── Repositorios (Scoped) ────────────────────────────────────────
             services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-         
+            services.AddScoped<IBitacoraRepositorio, BitacoraRepositorio>();
 
             // ── Hasher BCrypt (Scoped) ───────────────────────────────────────
             // Reutilizado de Servicio_Clientes/HasherSimple — misma lógica, work factor 12

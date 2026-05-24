@@ -1,8 +1,8 @@
-﻿using MicroServicioUsuarios.Aplicacion.DTOs;
+using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 using MicroServicioUsuarios.dominio.Entidades;
 using MicroServicioUsuarios.dominio.Resultados;
-using MicroServicioUsuarios.dominio.interfaces;
+using MicroServicioUsuarios.dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,11 +28,13 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         public CrearUsuarioCasoDeUso(
             IUsuarioFabrica fabrica,
             IUsuarioRepositorio usuarioRepo,
-            IEmailServicio email)
+            IEmailServicio email,
+            IBitacoraRepositorio bitacoraRepo)
         {
             _fabrica = fabrica;
             _usuarioRepo = usuarioRepo;
             _email = email;
+            _bitacoraRepo = bitacoraRepo;
         }
 
         public async Task<Resultado<UsuarioDto>> EjecutarAsync(
@@ -48,8 +50,11 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
             // 2. Persistir
             await _usuarioRepo.AgregarAsync(usuario);
             await _usuarioRepo.GuardarCambiosAsync();
+            await _bitacoraRepo.RegistrarAsync(new Bitacora(
+                $"id:{idUsuarioRegistrador}", "INSERT", "Usuario", ipOrigen,
+                detalleNuevo: $"Nuevo usuario registrado: {usuario.NombreUsuario}"));
+            await _bitacoraRepo.GuardarCambiosAsync();
 
-       
             // 4. Email en fire-and-forget — igual que Servicio_Clientes pero no corta si falla
             _ = Task.Run(async () =>
             {

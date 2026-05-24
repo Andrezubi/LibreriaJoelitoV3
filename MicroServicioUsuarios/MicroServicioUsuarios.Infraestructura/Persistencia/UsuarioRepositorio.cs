@@ -1,15 +1,18 @@
-﻿using MicroServicioUsuarios.dominio.Entidades;
+using MicroServicioUsuarios.dominio.Entidades;
+using MicroServicioUsuarios.dominio.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using MicroServicioUsuarios.Infraestructura.ConexionBD;
 
 namespace MicroServicioUsuarios.Infraestructura.Persistencia
 {
     public sealed class UsuarioRepositorio : IUsuarioRepositorio
     {
-        private readonly AppDbContext _context;
+        private readonly RepositorioBD _context;
 
-        public UsuarioRepositorio(AppDbContext context) => _context = context;
+        public UsuarioRepositorio(RepositorioBD context) => _context = context;
 
         public async Task<Usuario?> ObtenerPorIdAsync(int id) =>
             await _context.Usuarios.FirstOrDefaultAsync(u => u.Id == id);

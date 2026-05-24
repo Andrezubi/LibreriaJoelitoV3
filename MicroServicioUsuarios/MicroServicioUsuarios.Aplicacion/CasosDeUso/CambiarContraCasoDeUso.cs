@@ -1,11 +1,12 @@
-﻿using MicroServicioUsuarios.Aplicacion.DTOs;
+using MicroServicioUsuarios.Aplicacion.DTOs;
 using MicroServicioUsuarios.dominio.Resultados;
 using MicroServicioUsuarios.dominio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
-
+using MicroServicioUsuarios.dominio.EntidadesDeValor;
+using MicroServicioUsuarios.dominio.Entidades;
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
     /// <summary>
@@ -22,15 +23,18 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         private readonly IUsuarioRepositorio _usuarioRepo;
         private readonly IContraHasher _hasher;
         private readonly IEmailServicio _email;
+        private readonly IBitacoraRepositorio _bitacoraRepo;
 
         public CambiarContraCasoDeUso(
             IUsuarioRepositorio usuarioRepo,
             IContraHasher hasher,
-            IEmailServicio email)
+            IEmailServicio email,
+            IBitacoraRepositorio bitacoraRepo)
         {
             _usuarioRepo = usuarioRepo;
             _hasher = hasher;
             _email = email;
+            _bitacoraRepo = bitacoraRepo;
         }
 
         public async Task<Resultado> EjecutarAsync(
@@ -42,7 +46,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
                     Error.Validacion("La nueva contraseña y su confirmación no coinciden."));
 
             // 2. Política — delegada a Value Object (en Servicio_Clientes era método privado)
-            var politica = PasswordPolicy.Validar(dto.NuevoPassword);
+            var politica = PoliticaContraseña.Validar(dto.NuevoPassword);
             if (politica.EsFallido) return politica;
 
             // 3. Obtener usuario
@@ -62,7 +66,10 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
             await _usuarioRepo.ActualizarAsync(usuario);
             await _usuarioRepo.GuardarCambiosAsync();
 
-            
+            await _bitacoraRepo.RegistrarAsync(new Bitacora(
+                nombreUsuario, "UPDATE", "Usuario", ipOrigen, "Cambio de contraseña exitoso"));
+            await _bitacoraRepo.GuardarCambiosAsync();
+
             // 7. Email de notificación (fire-and-forget)
             _ = Task.Run(async () =>
             {
