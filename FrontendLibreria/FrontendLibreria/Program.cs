@@ -1,7 +1,14 @@
+using FrontendLibreria.Adaptadores.ProveedoresAdapter;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.AddHttpClient<IProveedorAdapter, ProveedorAdapter>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioProveedoresUrl"]!);
+});
 
 var app = builder.Build();
 
