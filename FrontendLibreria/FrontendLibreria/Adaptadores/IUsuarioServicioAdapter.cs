@@ -7,5 +7,8 @@ namespace FrontendLibreria.Adaptadores
     {
         Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
         Task<bool> CambiarPasswordAsync(CambiarPasswordDto request);
+        Task<(bool Exito, List<string> Errores)> Insertar(SolicitudCrearUsuarioDto request);
+        Task<List<UsuarioDto>> ObtenerTodos();
+        Task<bool> Eliminar(int id);
     }
 }

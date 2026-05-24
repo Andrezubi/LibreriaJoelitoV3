@@ -15,17 +15,20 @@ namespace MicroServicioUsuarios.Controllers
         private readonly CrearUsuarioCasoDeUso _crearUseCase;
         private readonly ActualizarUsuarioCasoDeUso _actualizarUseCase;
         private readonly CambiarContraCasoDeUso _cambiarPasswordUseCase;
+        private readonly EliminarUsuarioCasoDeUso _eliminarUseCase;
 
         public UsuariosController(
             ObtenerUsuariosCasoDeUso obtenerUseCase,
             CrearUsuarioCasoDeUso crearUseCase,
             ActualizarUsuarioCasoDeUso actualizarUseCase,
-            CambiarContraCasoDeUso cambiarPasswordUseCase)
+            CambiarContraCasoDeUso cambiarPasswordUseCase,
+            EliminarUsuarioCasoDeUso eliminarUseCase)
         {
             _obtenerUseCase = obtenerUseCase;
             _crearUseCase = crearUseCase;
             _actualizarUseCase = actualizarUseCase;
             _cambiarPasswordUseCase = cambiarPasswordUseCase;
+            _eliminarUseCase = eliminarUseCase;
         }
 
         /// <summary>
@@ -75,6 +78,22 @@ namespace MicroServicioUsuarios.Controllers
                 return MapearError(resultado.Error);
 
             return Ok(resultado.Valor);
+        }
+
+        /// <summary>
+        /// Baja Lógica — desactiva un usuario sin eliminarlo de la BD.
+        /// </summary>
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            var idModificador = ObtenerIdUsuarioDelToken();
+
+            var resultado = await _eliminarUseCase.EjecutarAsync(id, idModificador);
+            if (resultado.EsFallido)
+                return MapearError(resultado.Error);
+
+            return Ok(new { mensaje = "Usuario eliminado exitosamente." });
         }
 
         /// <summary>

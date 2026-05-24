@@ -22,7 +22,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         public async Task<Resultado<IEnumerable<UsuarioDto>>> EjecutarAsync()
         {
             var usuarios = await _repo.ObtenerTodosAsync();
-            var dtos = usuarios.Select(u => new UsuarioDto(
+            var dtos = usuarios.Where(u => u.Estado).Select(u => new UsuarioDto(
                 u.Id, u.NombreUsuario, u.NombreCompleto, u.CiCompleto,
                 u.Email, u.Telefono, u.DireccionDomicilio, u.Rol,
                 u.Estado, u.MustChangePassword,
@@ -98,4 +98,28 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         }
     }
 
+    public sealed class EliminarUsuarioCasoDeUso
+    {
+        private readonly IUsuarioRepositorio _usuarioRepo;
+
+        public EliminarUsuarioCasoDeUso(IUsuarioRepositorio usuarioRepo)
+        {
+            _usuarioRepo = usuarioRepo;
+        }
+
+        public async Task<Resultado<bool>> EjecutarAsync(int id, int idModificador)
+        {
+            var usuario = await _usuarioRepo.ObtenerPorIdAsync(id);
+            if (usuario is null)
+                return Resultado.Fallido<bool>(
+                    Error.NoEncontrado($"No existe un usuario con ID {id}."));
+
+            usuario.Desactivar(idModificador);
+
+            await _usuarioRepo.ActualizarAsync(usuario);
+            await _usuarioRepo.GuardarCambiosAsync();
+
+            return Resultado.Exitoso(true);
+        }
+    }
 }

@@ -55,6 +55,7 @@ namespace MicroServicioUsuarios.Infraestructura
             services.AddScoped<CambiarContraCasoDeUso>();
             services.AddScoped<ObtenerUsuariosCasoDeUso>();
             services.AddScoped<ActualizarUsuarioCasoDeUso>();
+            services.AddScoped<EliminarUsuarioCasoDeUso>();
 
             return services;
         }

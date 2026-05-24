@@ -1,0 +1,132 @@
+@page
+@model FrontendLibreria.Pages.Usuarios.UsuarioIndexModel
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="ventas-container">
+    <div class="ventas-card">
+        <h2 class="ventas-titulo">Gestión de Usuarios</h2>
+
+        <div class="card p-4">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Lista de Usuarios del Sistema</h4>
+                <a asp-page="/Usuarios/CrearUsuario" class="btn-sistema">
+                    + Registrar Nuevo Usuario
+                </a>
+            </div>
+
+            <div class="table-responsive tabla-card">
+                <table class="table table-hover mb-0">
+                    <thead class="tabla-head-custom">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Usuarios == null || !Model.Usuarios.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4">No hay usuarios registrados o activos.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var usuario in Model.Usuarios)
+                            {
+                                <tr>
+                                    <td><strong>@usuario.NombreUsuario</strong></td>
+                                    <td>@usuario.NombreCompleto</td>
+                                    <td>@usuario.Email</td>
+                                    <td>
+                                        <span class="badge @(usuario.Rol == "Administrador" ? "bg-primary" : "bg-info")">
+                                            @usuario.Rol
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn-sistema-danger btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#confirmarEliminacionModal"
+                                                    data-usuario-id="@usuario.Id"
+                                                    data-usuario-nombre="@usuario.NombreCompleto">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="confirmarEliminacionModal" tabindex="-1" aria-labelledby="confirmarEliminacionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmarEliminacionModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro de que desea dar de baja al usuario <strong id="modalUsuarioNombre"></strong>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminarUsuario" method="post" asp-page-handler="Eliminar">
+                    <input type="hidden" name="id" id="modalUsuarioId" value="" />
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var confirmarEliminacionModal = document.getElementById('confirmarEliminacionModal');
+            if (confirmarEliminacionModal) {
+                confirmarEliminacionModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var usuarioId = button.getAttribute('data-usuario-id');
+                    var usuarioNombre = button.getAttribute('data-usuario-nombre');
+
+                    var modalNombre = confirmarEliminacionModal.querySelector('#modalUsuarioNombre');
+                    var modalInputId = confirmarEliminacionModal.querySelector('#modalUsuarioId');
+
+                    if (modalNombre) modalNombre.textContent = usuarioNombre;
+                    if (modalInputId) modalInputId.value = usuarioId;
+                });
+            }
+        });
+    </script>
+}

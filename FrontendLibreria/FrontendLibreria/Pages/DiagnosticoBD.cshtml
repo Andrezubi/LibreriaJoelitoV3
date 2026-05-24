@@ -1,0 +1,106 @@
+@page
+@model FrontendLibreria.Pages.DiagnosticoBDModel
+@{
+    ViewData["Title"] = "Diagnóstico de Conexión";
+}
+
+<div class="container mt-5">
+    <h1>🔧 Diagnóstico de Conexión Backend</h1>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>📋 Información de Configuración</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>URL del Microservicio:</strong></p>
+                    <code>@Model.MicroservicioUrl</code>
+                    
+                    <hr />
+                    <p><strong>Ambiente:</strong> @Model.Ambiente</p>
+                    <p><strong>Base URL del HttpClient:</strong></p>
+                    <code>@Model.BaseUrl</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5>🧪 Prueba de Conexión</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <button type="submit" name="handler" value="ProbearConexion" class="btn btn-primary w-100">
+                            Probar Conexión Ahora
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ResultadoPrueba != null)
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-@(Model.ResultadoPrueba.Exitoso ? "success" : "danger")">
+                    <div class="card-header bg-@(Model.ResultadoPrueba.Exitoso ? "success" : "danger") text-white">
+                        <h5>@(Model.ResultadoPrueba.Exitoso ? "✅ Conexión Exitosa" : "❌ Error de Conexión")</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Status Code:</strong> @Model.ResultadoPrueba.StatusCode</p>
+                        <p><strong>Mensaje:</strong> @Model.ResultadoPrueba.Mensaje</p>
+                        
+                        @if (!string.IsNullOrEmpty(Model.ResultadoPrueba.DetalleError))
+                        {
+                            <hr />
+                            <p><strong>Detalle del Error:</strong></p>
+                            <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">@Model.ResultadoPrueba.DetalleError</pre>
+                        }
+
+                        @if (Model.ResultadoPrueba.Datos != null)
+                        {
+                            <hr />
+                            <p><strong>Datos Recibidos:</strong></p>
+                            <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">@Model.ResultadoPrueba.Datos</pre>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h5>📝 Pasos para debuggear</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Verifica que el MicroServicioUsuarios esté ejecutándose en el puerto 7064</li>
+                        <li>Comprueba los logs del output en Visual Studio (Build -> Output)</li>
+                        <li>Revisa la consola del microservicio para ver si recibe la solicitud</li>
+                        <li>Valida que el endpoint <code>/api/usuarios</code> esté disponible</li>
+                        <li>Prueba la conexión usando Postman o curl directamente</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    code {
+        background-color: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    pre {
+        max-height: 300px;
+    }
+</style>

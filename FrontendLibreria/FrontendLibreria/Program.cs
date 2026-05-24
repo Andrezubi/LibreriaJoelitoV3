@@ -13,7 +13,22 @@ var uriUsuarios = builder.Configuration["ApiSettings:MicroServicioUsuariosUrl"];
 builder.Services.AddHttpClient<IUsuarioServicioAdapter, UsuarioServicioAdapter>(client =>
 {
     client.BaseAddress = new Uri(uriUsuarios!);
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+// En desarrollo, permitir certificados autofirmados
+if (builder.Environment.IsDevelopment())
+{
+    // HttpClientHandler configurado globalmente para ignorar errores de certificado
+    var httpClientHandler = new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+    };
+
+    // Registrar un named HttpClient para desarrollo
+    builder.Services.AddHttpClient("Development")
+        .ConfigurePrimaryHttpMessageHandler(() => httpClientHandler);
+}
 
 // Configurar Autenticación por Cookies para Razor Pages
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

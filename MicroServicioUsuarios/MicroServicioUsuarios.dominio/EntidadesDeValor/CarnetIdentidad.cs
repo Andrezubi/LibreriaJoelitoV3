@@ -35,9 +35,9 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
             var numeroLimpio = numero.Trim();
 
-            if (!Regex.IsMatch(numeroLimpio, @"^\d{8,11}$"))
+            if (!Regex.IsMatch(numeroLimpio, @"^\d{7,11}$"))
                 return Resultado.Fallido<CarnetIdentidad>(
-                    Error.Validacion("El CI debe contener entre 8 y 11 dígitos numéricos."));
+                    Error.Validacion("El CI debe contener entre 7 y 11 dígitos numéricos."));
 
             // ── Validar complemento (si se proporcionó) ─────────────────────
             string? complementoLimpio = null;
