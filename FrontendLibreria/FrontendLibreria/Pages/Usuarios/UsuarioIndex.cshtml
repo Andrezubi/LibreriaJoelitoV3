@@ -1,0 +1,88 @@
+﻿@page
+@model FrontendLibreria.Pages.Usuarios.UsuarioIndexModel
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="ventas-container">
+    <div class="ventas-card">
+        <h2 class="ventas-titulo">Gestión de Usuarios</h2>
+
+        <div class="card p-4">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Lista de Usuarios del Sistema</h4>
+                <a asp-page="/Usuarios/CrearUsuario" class="btn-sistema">
+                    + Registrar Nuevo Usuario
+                </a>
+            </div>
+
+            <div class="table-responsive tabla-card">
+                <table class="table table-hover mb-0">
+                    <thead class="tabla-head-custom">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Usuarios == null || !Model.Usuarios.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4">No hay usuarios registrados o activos.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var usuario in Model.Usuarios)
+                            {
+                                <tr>
+                                    <td><strong>@usuario.NombreUsuario</strong></td>
+                                    <td>@usuario.NombreCompleto</td>
+                                    <td>@usuario.Email</td>
+                                    <td>
+                                        <span class="badge @(usuario.Rol == "Administrador" ? "bg-primary" : "bg-info")">
+                                            @usuario.Rol
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <form method="post" asp-page-handler="Eliminar" asp-route-id="@usuario.Id"
+                                                  onsubmit="return confirm('¿Está seguro de que desea dar de baja a este usuario?');">
+                                                <button type="submit" class="btn-sistema-danger btn-sm">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
