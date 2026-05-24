@@ -15,7 +15,7 @@ using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 namespace MicroServicioProductos.Controllers
 {
     // Controllers/ProductosController.cs
-    [Authorize]
+    // [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class ProductoController : ControllerBase

@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace FrontendLibreria.Pages.Marcas
 {
-    [Authorize(Roles = "Administrador,Empleado")]
+    //[Authorize(Roles = "Administrador,Empleado")]
     public class CrearMarcaModel : PageModel
     {
         private readonly IAdaptadorMarca _marcaAdapter;

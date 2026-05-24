@@ -1,6 +1,7 @@
 using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.FactoriaCreadores;
+using MicroServicioProductos.Infraestructura.Persistencia;
 using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,12 @@ builder.Services.AddScoped<MarcaValidador>();
 
 
 var app = builder.Build();
+
+// Config BD
+var bd = RepositorioBD.Instancia;
+
+var connectionString = builder.Configuration.GetConnectionString("ConnectionSqlServer");
+bd.Initiate(connectionString);
 
 // Configure the HTTP request pipeline.
 

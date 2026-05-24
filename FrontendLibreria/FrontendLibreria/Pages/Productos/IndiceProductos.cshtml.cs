@@ -9,7 +9,7 @@ namespace FrontendLibreria.Pages.Productos
 {
 
     // Pages/Productos/MostrarProductos.cshtml.cs
-    [Authorize(Roles = "Administrador,Empleado")]
+    //[Authorize(Roles = "Administrador,Empleado")]
     public class IndiceProductosModel : PageModel
     {
         private readonly IAdaptadorProducto _productoAdapter;

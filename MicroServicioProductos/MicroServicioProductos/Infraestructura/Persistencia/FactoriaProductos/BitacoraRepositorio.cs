@@ -8,7 +8,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
         public void Registrar(int idUsuario, string accion, string tabla, string descripcion)
         {
             string query = @"INSERT INTO Bitacora (IdUsuario, Accion, Tabla, Fecha, Descripcion) 
-                            VALUES (@idUsuario, @accion, @tabla, NOW(), @descripcion)";
+                             VALUES (@idUsuario, @accion, @tabla, GETDATE(), @descripcion)";
 
             SqlCommand command = new SqlCommand(query);
             command.Parameters.AddWithValue("@idUsuario", idUsuario);
