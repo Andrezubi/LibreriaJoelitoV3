@@ -10,6 +10,8 @@ namespace FrontendLibreria.Adaptadores.ProveedoresAdapter
 
         Task<bool> RegistrarAsync(RegistrarProveedorDto proveedor);
 
+        Task<ProveedorOperacionResultadoDTO> RegistrarConResultadoAsync(RegistrarProveedorDto proveedor);
+
         Task<bool> ActualizarAsync(string id, RegistrarProveedorDto proveedor);
 
         Task<bool> EliminarAsync(string id);

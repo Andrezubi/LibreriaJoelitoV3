@@ -4,12 +4,16 @@
     {
         public string? Id { get; set; }
 
-        public string? Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
 
-        public string? Telefono { get; set; }
+        public int Nit { get; set; }
 
-        public string? Correo { get; set; }
+        public int TelefonoContacto { get; set; }
 
-        public string? Direccion { get; set; }
+        public string? Descripcion { get; set; }
+
+        public string Direccion { get; set; } = string.Empty;
+
+        public int IdUsuario { get; set; } = 1;
     }
 }

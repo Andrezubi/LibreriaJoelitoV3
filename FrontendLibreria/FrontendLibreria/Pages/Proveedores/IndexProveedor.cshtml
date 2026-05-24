@@ -1,0 +1,471 @@
+﻿@page
+@model FrontendLibreria.Pages.Proveedores.IndexProveedorModel
+
+@{
+    ViewData["Title"] = "Proveedores";
+    var numero = 1;
+}
+
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-center">
+        <div class="tabla-wrapper w-100">
+
+            <div class="card shadow-sm tabla-card">
+
+                <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
+                    <h5 class="mb-0">Lista de Proveedores</h5>
+
+                    <a asp-page="RegistrarProveedor" class="btn btn-sistema btn-sm">
+                        + Registrar Proveedor
+                    </a>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.MensajeExito))
+                {
+                    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                        @Model.MensajeExito
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.MensajeError))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                        @Model.MensajeError
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @Html.AntiForgeryToken()
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead class="tabla-head-custom">
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Nombre</th>
+                                    <th>NIT</th>
+                                    <th>Teléfono</th>
+                                    <th>Dirección</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @if (Model.Proveedores == null || !Model.Proveedores.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No existen proveedores registrados.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var proveedor in Model.Proveedores)
+                                    {
+                                        <tr>
+                                            <td>@numero</td>
+                                            <td>@proveedor.Nombre</td>
+                                            <td>@proveedor.Nit</td>
+                                            <td>@proveedor.TelefonoContacto</td>
+                                            <td>@proveedor.Direccion</td>
+                                            <td class="text-center">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-info btn-ver-proveedor"
+                                                        data-idproveedor="@proveedor.Id">
+                                                    Ver
+                                                </button>
+
+                                                <button type="button"
+                                                        class="btn btn-sm btn-warning btn-editar-proveedor"
+                                                        data-idproveedor="@proveedor.Id">
+                                                    Editar
+                                                </button>
+
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger btn-preparar-eliminacion"
+                                                        data-idproveedor="@proveedor.Id"
+                                                        data-nombreproveedor="@proveedor.Nombre">
+                                                    Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        numero++;
+                                    }
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="proveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header modal-header-morado">
+                <h5 class="modal-title" id="proveedorModalLabel">Detalle de Proveedor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
+                <div id="alertaExitoModal" class="alert alert-success" style="display:none;"></div>
+
+                <form id="formProveedorModal">
+                    <input type="hidden" id="modalIdProveedor" />
+
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Información general del proveedor</h5>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+                                    <label for="modalNombre" class="form-label fw-bold">
+                                        Nombre <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" id="modalNombre" class="form-control campo-proveedor" required disabled>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="modalNit" class="form-label fw-bold">
+                                        NIT <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" id="modalNit" class="form-control campo-proveedor" required disabled>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="modalTelefonoContacto" class="form-label fw-bold">
+                                        Teléfono de contacto <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" id="modalTelefonoContacto" class="form-control campo-proveedor" required disabled>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="modalDireccion" class="form-label fw-bold">
+                                        Dirección <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" id="modalDireccion" class="form-control campo-proveedor" required disabled>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label for="modalDescripcion" class="form-label fw-bold">
+                                        Descripción <span class="text-muted fw-normal">(opcional)</span>
+                                    </label>
+                                    <textarea id="modalDescripcion" class="form-control campo-proveedor" rows="3" disabled></textarea>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button" class="btn btn-warning" id="btnActivarEdicion">
+                    Editar
+                </button>
+
+                <button type="button" class="btn btn-guardar" id="btnGuardarCambiosProveedor" style="display:none;">
+                    Guardar Cambios
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Eliminar proveedor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body text-center p-4">
+                <p class="mb-0">
+                    ¿Estás seguro de querer eliminar el proveedor
+                    <strong id="lblProveedorEliminar"></strong>?
+                </p>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <input type="hidden" id="inputIdProveedorEliminar" />
+
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminarProveedor">
+                    Eliminar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("click", async function (e) {
+            const botonVer = e.target.closest(".btn-ver-proveedor");
+
+            if (botonVer) {
+                const idProveedor = botonVer.dataset.idproveedor;
+                await cargarProveedor(idProveedor, false);
+                return;
+            }
+
+            const botonEditar = e.target.closest(".btn-editar-proveedor");
+
+            if (botonEditar) {
+                const idProveedor = botonEditar.dataset.idproveedor;
+                await cargarProveedor(idProveedor, true);
+                return;
+            }
+
+            const botonEliminar = e.target.closest(".btn-preparar-eliminacion");
+
+            if (botonEliminar) {
+                prepararEliminacion(
+                    botonEliminar.dataset.idproveedor,
+                    botonEliminar.dataset.nombreproveedor
+                );
+            }
+        });
+
+        async function cargarProveedor(idProveedor, modoEdicion) {
+            if (!idProveedor) {
+                alert("No se encontró el proveedor seleccionado.");
+                return;
+            }
+
+            limpiarModalProveedor();
+
+            const modalProveedor = new bootstrap.Modal(document.getElementById("modalProveedor"));
+
+            try {
+                const response = await fetch(`?handler=ObtenerProveedor&id=${encodeURIComponent(idProveedor)}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || "No se pudo obtener el proveedor.");
+                }
+
+                const proveedor = data.proveedor;
+
+                document.getElementById("modalIdProveedor").value = proveedor.id ?? "";
+                document.getElementById("modalNombre").value = proveedor.nombre ?? "";
+                document.getElementById("modalNit").value = proveedor.nit ?? "";
+                document.getElementById("modalTelefonoContacto").value = proveedor.telefonoContacto ?? "";
+                document.getElementById("modalDireccion").value = proveedor.direccion ?? "";
+                document.getElementById("modalDescripcion").value = proveedor.descripcion ?? "";
+
+                configurarModoEdicion(modoEdicion);
+                modalProveedor.show();
+            } catch (error) {
+                mostrarErrorModal(error.message);
+                configurarModoEdicion(false);
+                modalProveedor.show();
+            }
+        }
+
+        function limpiarModalProveedor() {
+            document.getElementById("modalIdProveedor").value = "";
+            document.getElementById("modalNombre").value = "";
+            document.getElementById("modalNit").value = "";
+            document.getElementById("modalTelefonoContacto").value = "";
+            document.getElementById("modalDireccion").value = "";
+            document.getElementById("modalDescripcion").value = "";
+
+            document.getElementById("alertaErrorModal").style.display = "none";
+            document.getElementById("alertaErrorModal").textContent = "";
+
+            document.getElementById("alertaExitoModal").style.display = "none";
+            document.getElementById("alertaExitoModal").textContent = "";
+        }
+
+        function configurarModoEdicion(editar) {
+            const campos = document.querySelectorAll(".campo-proveedor");
+
+            campos.forEach(campo => {
+                campo.disabled = !editar;
+            });
+
+            document.getElementById("proveedorModalLabel").textContent = editar
+                ? "Editar Proveedor"
+                : "Detalle de Proveedor";
+
+            document.getElementById("btnActivarEdicion").style.display = editar ? "none" : "inline-block";
+            document.getElementById("btnGuardarCambiosProveedor").style.display = editar ? "inline-block" : "none";
+        }
+
+        document.getElementById("btnActivarEdicion").addEventListener("click", function () {
+            configurarModoEdicion(true);
+        });
+
+        document.getElementById("btnGuardarCambiosProveedor").addEventListener("click", async function () {
+            const idProveedor = document.getElementById("modalIdProveedor").value;
+
+            if (!idProveedor) {
+                mostrarErrorModal("No se encontró el proveedor seleccionado.");
+                return;
+            }
+
+            const payload = {
+                id: idProveedor,
+                nombre: document.getElementById("modalNombre").value.trim(),
+                nit: parseInt(document.getElementById("modalNit").value),
+                telefonoContacto: parseInt(document.getElementById("modalTelefonoContacto").value),
+                descripcion: document.getElementById("modalDescripcion").value.trim(),
+                direccion: document.getElementById("modalDireccion").value.trim()
+            };
+
+            if (!payload.nombre) {
+                mostrarErrorModal("El nombre del proveedor es obligatorio.");
+                return;
+            }
+
+            if (!payload.nit || payload.nit <= 0) {
+                mostrarErrorModal("El NIT del proveedor es obligatorio.");
+                return;
+            }
+
+            if (!payload.telefonoContacto || payload.telefonoContacto <= 0) {
+                mostrarErrorModal("El teléfono de contacto es obligatorio.");
+                return;
+            }
+
+            if (!payload.direccion) {
+                mostrarErrorModal("La dirección del proveedor es obligatoria.");
+                return;
+            }
+
+            const boton = this;
+            boton.disabled = true;
+            boton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+
+            try {
+                const response = await fetch("?handler=ActualizarProveedor", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || "No se pudo actualizar el proveedor.");
+                }
+
+                mostrarExitoModal("Proveedor actualizado correctamente.");
+
+                setTimeout(() => {
+                    location.reload();
+                }, 900);
+            } catch (error) {
+                mostrarErrorModal(error.message);
+            } finally {
+                boton.disabled = false;
+                boton.textContent = "Guardar Cambios";
+            }
+        });
+
+        function prepararEliminacion(idProveedor, nombreProveedor) {
+            if (!idProveedor) {
+                alert("No se encontró el proveedor seleccionado.");
+                return;
+            }
+
+            document.getElementById("inputIdProveedorEliminar").value = idProveedor;
+            document.getElementById("lblProveedorEliminar").textContent = nombreProveedor || "seleccionado";
+
+            const modalEliminar = new bootstrap.Modal(document.getElementById("modalEliminarProveedor"));
+            modalEliminar.show();
+        }
+
+        document.getElementById("btnConfirmarEliminarProveedor").addEventListener("click", async function () {
+            const idProveedor = document.getElementById("inputIdProveedorEliminar").value;
+
+            if (!idProveedor) {
+                alert("No se encontró el proveedor seleccionado.");
+                return;
+            }
+
+            const boton = this;
+            boton.disabled = true;
+            boton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Eliminando...';
+
+            try {
+                const response = await fetch("?handler=EliminarProveedor", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(idProveedor)
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || "No se pudo eliminar el proveedor.");
+                }
+
+                location.reload();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                boton.disabled = false;
+                boton.textContent = "Eliminar";
+            }
+        });
+
+        function mostrarErrorModal(mensaje) {
+            const alertaError = document.getElementById("alertaErrorModal");
+            const alertaExito = document.getElementById("alertaExitoModal");
+
+            alertaExito.style.display = "none";
+            alertaExito.textContent = "";
+
+            alertaError.textContent = mensaje;
+            alertaError.style.display = "block";
+        }
+
+        function mostrarExitoModal(mensaje) {
+            const alertaError = document.getElementById("alertaErrorModal");
+            const alertaExito = document.getElementById("alertaExitoModal");
+
+            alertaError.style.display = "none";
+            alertaError.textContent = "";
+
+            alertaExito.textContent = mensaje;
+            alertaExito.style.display = "block";
+        }
+    </script>
+}
