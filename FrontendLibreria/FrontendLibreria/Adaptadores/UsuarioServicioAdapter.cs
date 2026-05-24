@@ -27,7 +27,7 @@ namespace FrontendLibreria.Adaptadores
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request);
+                var response = await _httpClient.PostAsJsonAsync("/api/Auth/login", request);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<LoginResponseDto>();
