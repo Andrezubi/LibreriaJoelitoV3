@@ -12,7 +12,7 @@ namespace MicroservicioProveedores.Infraestructura.ProductosConcretos
 {
     public class ProveedorRepositorio : IRepositorio<Proveedor>
     {
-        private readonly IMongoCollection<Proveedor> _proveedores = RepositorioBD.Instancia.GetCollection<Proveedor>("Proveedores");
+        private readonly IMongoCollection<Proveedor> _proveedores = RepositorioBD.Instancia.GetCollection<Proveedor>("proveedores");
 
         public async Task Insertar(Proveedor t)
         {
@@ -28,19 +28,19 @@ namespace MicroservicioProveedores.Infraestructura.ProductosConcretos
         public async Task<bool> Eliminar(Proveedor t)
         {
             var filtro = Builders<Proveedor>.Filter.Eq(p => p.Id, t.Id);
-            var actualizacion = Builders<Proveedor>.Update.Set(p => p.estado, 0);
+            var actualizacion = Builders<Proveedor>.Update.Set(p => p.Estado, 0);
             var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion);
             return resultado.IsAcknowledged && resultado.MatchedCount > 0;
         }
 
         public async Task<List<Proveedor>> ObtenerTodo()
         {
-            return await _proveedores.Find(_ => true).ToListAsync();
+            return await _proveedores.Find(p => p.Estado == 1).ToListAsync();
         }
 
         public async Task<Proveedor> ObtenerPorId(string id)
         {
-            return await _proveedores.Find(p => p.Id == id).FirstOrDefaultAsync();
+            return await _proveedores.Find(p => p.Id == id && p.Estado == 1).FirstOrDefaultAsync();
         }
     }
 }

@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MicroServicioProveedores.Aplicacion\MicroServicioProveedores.Aplicacion.csproj" />
     <ProjectReference Include="..\MicroservicioProveedores.Infraestructura\MicroservicioProveedores.Infraestructura.csproj" />
   </ItemGroup>

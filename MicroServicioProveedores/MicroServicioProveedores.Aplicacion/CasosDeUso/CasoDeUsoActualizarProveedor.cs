@@ -24,6 +24,7 @@ namespace MicroServicioProveedores.Aplicacion.CasosDeUso
 
         public async Task<Result> Actualizar(RegistrarProveedorDto proveedorDTO)
         {
+            proveedorDTO.IdUsuario = 1; // TODO usar id dinamico cuando s eimplemente autenticacion
             var resultadosValidacion = _proveedorValidador.Validar(proveedorDTO);
 
             if (resultadosValidacion.Count > 0)

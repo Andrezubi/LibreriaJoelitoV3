@@ -8,7 +8,7 @@ namespace MicroServicioProveedores.Aplicacion.DTOs
 {
     public class RegistrarProveedorDto
     {
-        public string Id { get; set; }
+        public string? Id { get; set; }
         public string Nombre { get; set; }
         public int Nit { get; set; }
         public int TelefonoContacto { get; set; }

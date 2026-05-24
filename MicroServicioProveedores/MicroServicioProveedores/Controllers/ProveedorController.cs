@@ -61,7 +61,7 @@ namespace MicroServicioProveedores.Controllers
             return BadRequest(new { error = resultado.Errors });
         }
 
-        [HttpPatch("{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(string id, [FromBody] RegistrarProveedorDto dto)
         {
             try

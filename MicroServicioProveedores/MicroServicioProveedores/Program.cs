@@ -11,8 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
 
 var bd = RepositorioBD.Instancia;
 
@@ -40,6 +41,14 @@ builder.Services.AddScoped<CasoDeUsoCrearProveedor>();
 builder.Services.AddScoped<CasoDeUsoObtenerProveedor>();
 builder.Services.AddScoped<CasoDeUsoActualizarProveedor>();
 builder.Services.AddScoped<CasoDeUsoEliminarProveedor>();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Configure the HTTP request pipeline.
 

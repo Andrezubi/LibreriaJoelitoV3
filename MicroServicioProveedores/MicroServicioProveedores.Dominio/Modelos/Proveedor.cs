@@ -20,7 +20,7 @@ namespace MicroServicioProveedores.Dominio.Modelos
         public string? Descripcion { get; set; }
         public string Direccion { get; set; }
         public int IdUsuario { get; set; }
-        public int estado { get; set; }
+        public int Estado { get; set; }
         public DateTime FechaRegistro { get; set; }
         public DateTime? FechaUltimaActualizacion { get; set; }
 
