@@ -34,7 +34,7 @@ namespace FrontendLibreria.Pages.Usuarios
             var exito = await _usuarioAdapter.Eliminar(id);
             if (exito)
             {
-                SuccessMessage = "Usuario eliminado (baja lógica) exitosamente.";
+                SuccessMessage = "Usuario eliminado exitosamente.";
             }
             else
             {

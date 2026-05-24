@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model FrontendLibreria.Pages.Usuarios.UsuarioIndexModel
 @{
     ViewData["Title"] = "Gestión de Usuarios";
@@ -69,12 +69,13 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <form method="post" asp-page-handler="Eliminar" asp-route-id="@usuario.Id"
-                                                  onsubmit="return confirm('¿Está seguro de que desea dar de baja a este usuario?');">
-                                                <button type="submit" class="btn-sistema-danger btn-sm">
-                                                    Eliminar
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn-sistema-danger btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#confirmarEliminacionModal"
+                                                    data-usuario-id="@usuario.Id"
+                                                    data-usuario-nombre="@usuario.NombreCompleto">
+                                                Eliminar
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -86,3 +87,46 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="confirmarEliminacionModal" tabindex="-1" aria-labelledby="confirmarEliminacionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmarEliminacionModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro de que desea dar de baja al usuario <strong id="modalUsuarioNombre"></strong>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminarUsuario" method="post" asp-page-handler="Eliminar">
+                    <input type="hidden" name="id" id="modalUsuarioId" value="" />
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var confirmarEliminacionModal = document.getElementById('confirmarEliminacionModal');
+            if (confirmarEliminacionModal) {
+                confirmarEliminacionModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var usuarioId = button.getAttribute('data-usuario-id');
+                    var usuarioNombre = button.getAttribute('data-usuario-nombre');
+
+                    var modalNombre = confirmarEliminacionModal.querySelector('#modalUsuarioNombre');
+                    var modalInputId = confirmarEliminacionModal.querySelector('#modalUsuarioId');
+
+                    if (modalNombre) modalNombre.textContent = usuarioNombre;
+                    if (modalInputId) modalInputId.value = usuarioId;
+                });
+            }
+        });
+    </script>
+}
