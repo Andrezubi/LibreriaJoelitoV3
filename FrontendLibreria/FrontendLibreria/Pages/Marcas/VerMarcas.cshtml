@@ -1,0 +1,185 @@
+﻿@page
+@model FrontendLibreria.Pages.Marcas.VerMarcasModel
+@{
+    ViewData["Title"] = "Gestión de Marcas";
+}
+
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-center">
+        <div class="tabla-wrapper">
+            <div class="card shadow-sm tabla-card">
+
+                <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
+                    <h5 class="mb-0">Lista de Marcas</h5>
+                    <a asp-page="CreateMarca" class="btn btn-sistema btn-sm">+ Nueva Marca</a>
+                </div>
+
+                @if (TempData["MensajeExito"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                        @TempData["MensajeExito"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="tabla-head-custom">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Industria</th>
+                                    <th>Página Web</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var marca in Model.Marcas)
+                                {
+                                    <tr>
+                                        <td>@marca.Nombre</td>
+                                        <td>@(string.IsNullOrEmpty(marca.Industria) ? "—" : marca.Industria)</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(marca.PaginaWeb))
+                                            {
+                                                <a href="@marca.PaginaWeb" target="_blank">@marca.PaginaWeb</a>
+                                            }
+                                            else
+                                            {
+                                                <span>—</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <a onclick="abrirModalEditar(
+                                                    '@marca.Id',
+                                                    '@marca.Nombre',
+                                                    '@(marca.Descripcion ?? "")',
+                                                    '@(marca.PaginaWeb ?? "")',
+                                                    '@(marca.Industria ?? "")')"
+                                               class="btn btn-sistema btn-sm">
+                                                Editar
+                                            </a>
+                                            <a data-bs-toggle="modal"
+                                               data-bs-target="#modalDelete-@marca.Id"
+                                               class="btn btn-sistema-danger btn-sm">
+                                                Eliminar
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <!-- MODAL ELIMINAR POR FILA -->
+                                    <div class="modal fade" id="modalDelete-@marca.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form method="post" asp-page-handler="Delete" asp-route-id="@marca.Id">
+                                                    <div class="modal-header modal-header-morado">
+                                                        <h5 class="modal-title">Eliminar marca</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        ¿Está seguro de eliminar la marca <strong>@marca.Nombre</strong>?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" class="btn btn-sistema-danger">Sí</button>
+                                                        <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (!Model.Marcas.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            No hay marcas registradas.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR MARCA -->
+<div class="modal fade" id="modalEditarMarca" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarMarca">
+                <input type="hidden" id="edit_id" name="MarcaEditar.Id" />
+                <div class="modal-header modal-header-morado">
+                    <h5 class="modal-title">Editar Datos de la Marca</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" id="edit_nombre" name="MarcaEditar.Nombre" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Industria</label>
+                        <input type="text" id="edit_industria" name="MarcaEditar.Industria" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Página Web</label>
+                        <input type="text" id="edit_web" name="MarcaEditar.PaginaWeb" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea id="edit_desc" name="MarcaEditar.Descripcion" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-sistema" onclick="enviarUpdate()">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    function abrirModalEditar(id, nombre, desc, web, industria) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_desc').value = desc ?? '';
+        document.getElementById('edit_web').value = web ?? '';
+        document.getElementById('edit_industria').value = industria ?? '';
+        document.getElementById('alertaErrorModal').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('modalEditarMarca')).show();
+    }
+
+    function enviarUpdate() {
+        const form = document.querySelector('#formEditarMarca');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        fetch('?handler=Update', {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                "RequestVerificationToken":
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                const alerta = document.getElementById('alertaErrorModal');
+                alerta.innerHTML = data.message;
+                alerta.style.display = 'block';
+            }
+        });
+    }
+</script>
