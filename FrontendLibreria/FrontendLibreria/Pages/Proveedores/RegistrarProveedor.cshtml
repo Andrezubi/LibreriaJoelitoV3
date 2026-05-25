@@ -1,0 +1,140 @@
+﻿@page
+@model FrontendLibreria.Pages.Proveedores.RegistrarProveedorModel
+
+@{
+    ViewData["Title"] = "Registrar Proveedor";
+}
+
+<div class="ventas-page">
+    <div class="content-area">
+        <div class="ventas-card">
+            <h2 class="ventas-titulo">REGISTRO DE PROVEEDOR</h2>
+
+            <div class="card p-4 shadow-sm mb-4">
+                <form method="post" id="proveedorForm">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row g-4 bg-light p-3 rounded border">
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Proveedor.Nombre" class="form-label fw-bold">
+                                    Nombre del proveedor <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="Proveedor.Nombre"
+                                       class="form-control"
+                                       placeholder="Ej: Editorial Santillana"
+                                       autocomplete="off" />
+
+                                <small class="form-text text-muted d-block mt-1">
+                                    Ingrese el nombre comercial o razón social del proveedor.
+                                </small>
+
+                                <span asp-validation-for="Proveedor.Nombre" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Proveedor.Nit" class="form-label fw-bold">
+                                    NIT <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="Proveedor.Nit"
+                                       type="number"
+                                       class="form-control"
+                                       placeholder="Ej: 1023456789"
+                                       autocomplete="off" />
+
+                                <small class="form-text text-muted d-block mt-1">
+                                    Debe tener una longitud válida según Impuestos Nacionales.
+                                </small>
+
+                                <span asp-validation-for="Proveedor.Nit" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Proveedor.TelefonoContacto" class="form-label fw-bold">
+                                    Teléfono de contacto <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="Proveedor.TelefonoContacto"
+                                       type="number"
+                                       class="form-control"
+                                       placeholder="Ej: 70700000"
+                                       autocomplete="off" />
+
+                                <small class="form-text text-muted d-block mt-1">
+                                    Debe tener 8 dígitos y empezar con 2, 3, 4, 6 o 7.
+                                </small>
+
+                                <span asp-validation-for="Proveedor.TelefonoContacto" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Proveedor.Direccion" class="form-label fw-bold">
+                                    Dirección <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="Proveedor.Direccion"
+                                       class="form-control"
+                                       placeholder="Ej: Av. América #123"
+                                       autocomplete="off" />
+
+                                <small class="form-text text-muted d-block mt-1">
+                                    Ingrese la dirección principal del proveedor.
+                                </small>
+
+                                <span asp-validation-for="Proveedor.Direccion" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label asp-for="Proveedor.Descripcion" class="form-label fw-bold">
+                                    Descripción <span class="text-muted fw-normal">(opcional)</span>
+                                </label>
+
+                                <textarea asp-for="Proveedor.Descripcion"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="Ej: Proveedor de libros escolares, material de oficina, textos universitarios..."></textarea>
+
+                                <small class="form-text text-muted d-block mt-1">
+                                    Puede agregar una referencia breve sobre el tipo de productos o servicios que ofrece.
+                                </small>
+
+                                <span asp-validation-for="Proveedor.Descripcion" class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="ventas-footer mt-4 d-flex justify-content-center align-items-center gap-2">
+                        <a asp-page="IndexProveedor"
+                               class="btn btn-secondary px-4 py-2 d-inline-flex align-items-center justify-content-center">
+                            Cancelar
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-guardar px-4 py-2 d-inline-flex align-items-center justify-content-center"
+                                id="btnGuardarProveedor">
+                            Registrar Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,14 +1,16 @@
 using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Marca;
+using FrontendLibreria.Adaptadores.Producto;
+using FrontendLibreria.Adaptadores.ProveedoresAdapter;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
 builder.Services.AddHttpContextAccessor();
 
-// Configurar HttpClient
+// HttpClient para consumir el microservicio de usuarios.
 var uriUsuarios = builder.Configuration["ApiSettings:MicroServicioUsuariosUrl"];
 builder.Services.AddHttpClient<IUsuarioServicioAdapter, UsuarioServicioAdapter>(client =>
 {
@@ -29,6 +31,31 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddHttpClient("Development")
         .ConfigurePrimaryHttpMessageHandler(() => httpClientHandler);
 }
+
+// HttpClient para consumir los microservicios integrados desde main.
+builder.Services.AddHttpClient<IAdaptadorProducto, AdaptadorProducto>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["ApiSettings:MicroServicioProductosUrl"] ?? "http://localhost:5038"
+    );
+});
+
+builder.Services.AddHttpClient<IAdaptadorMarca, AdaptadorMarca>(client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["ApiSettings:MicroServicioProductosUrl"] ?? "http://localhost:5038"
+    );
+});
+
+builder.Services.AddHttpClient<IProveedorAdapter, ProveedorAdapter>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioProveedoresUrl"]!);
+});
+
+builder.Services.AddHttpClient<IAdaptadorCliente, AdaptadorCliente>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioClientesUrl"]!);
+});
 
 // Configurar Autenticación por Cookies para Razor Pages
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
