@@ -1,0 +1,49 @@
+﻿@page
+@model FrontendLibreria.Pages.Marcas.CrearMarcaModel
+@{
+    ViewData["Title"] = "Nueva Marca";
+}
+
+<div class="form-container">
+
+    <div class="form-header">
+        Nueva Marca
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <form method="post">
+
+        <div class="form-group mb-3">
+            <label>Nombre de la Marca <span class="text-danger">*</span></label>
+            <input asp-for="Nombre" type="text" required class="form-control" placeholder="Ej: Faber-Castell" />
+            <span asp-validation-for="Nombre" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group mb-3">
+                <label>Industria</label>
+                <input asp-for="Industria" type="text" class="form-control" placeholder="Ej: Papelería o Tecnología" />
+                <span asp-validation-for="Industria" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 form-group mb-3">
+                <label>Página Web</label>
+                <input asp-for="PaginaWeb" type="text" class="form-control" placeholder="Ej: www.faber-castell.com" />
+                <span asp-validation-for="PaginaWeb" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group mb-4">
+            <label>Descripción</label>
+            <textarea asp-for="Descripcion" class="form-control" rows="3"
+                      placeholder="Breve descripción de la marca o proveedor..."></textarea>
+            <span asp-validation-for="Descripcion" class="text-danger"></span>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-sistema">Registrar Marca</button>
+            <a asp-page="VerMarcas" class="btn btn-cancelar ms-2">Cancelar y Volver</a>
+        </div>
+
+    </form>
+</div>
