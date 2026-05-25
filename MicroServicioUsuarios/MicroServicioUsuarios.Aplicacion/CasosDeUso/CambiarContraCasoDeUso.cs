@@ -38,7 +38,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         }
 
         public async Task<Resultado> EjecutarAsync(
-            string nombreUsuario, CambiarPasswordDto dto, string ipOrigen)
+            int idUsuario, string nombreUsuario, CambiarPasswordDto dto)
         {
             // 1. Confirmación de contraseñas (estaba en AuthController en Servicio_Clientes)
             if (dto.NuevoPassword != dto.ConfirmarPassword)
@@ -61,14 +61,12 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 
             // 5. Actualizar — el método de la entidad limpia MustChangePassword
             var nuevoHash = _hasher.Hashear(dto.NuevoPassword);
-            usuario.ActualizarPassword(nuevoHash, usuario.Id);
+            usuario.ActualizarPassword(nuevoHash, idUsuario);
 
             await _usuarioRepo.ActualizarAsync(usuario);
-            await _usuarioRepo.GuardarCambiosAsync();
-
             await _bitacoraRepo.RegistrarAsync(new Bitacora(
-                nombreUsuario, "UPDATE", "Usuario", ipOrigen, "Cambio de contraseña exitoso"));
-            await _bitacoraRepo.GuardarCambiosAsync();
+                idUsuario, "UPDATE", "Usuario", "Contraseña del usuario actualizada"));
+            await _usuarioRepo.GuardarCambiosAsync();
 
             // 7. Email de notificación (fire-and-forget)
             _ = Task.Run(async () =>

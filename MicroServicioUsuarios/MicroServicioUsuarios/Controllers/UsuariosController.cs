@@ -54,9 +54,10 @@ namespace MicroServicioUsuarios.Controllers
         public async Task<IActionResult> Crear([FromBody] CrearUsuarioDto dto)
         {
             var idRegistrador = ObtenerIdUsuarioDelToken();
-            var ip = ObtenerIp();
+            if (idRegistrador is null)
+                return TokenSinIdentificador();
 
-            var resultado = await _crearUseCase.EjecutarAsync(dto, idRegistrador, ip);
+            var resultado = await _crearUseCase.EjecutarAsync(dto, idRegistrador.Value);
             if (resultado.EsFallido)
                 return MapearError(resultado.Error);
 
@@ -71,9 +72,10 @@ namespace MicroServicioUsuarios.Controllers
         public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarUsuarioDto dto)
         {
             var idModificador = ObtenerIdUsuarioDelToken();
-            var ip = ObtenerIp();
+            if (idModificador is null)
+                return TokenSinIdentificador();
 
-            var resultado = await _actualizarUseCase.EjecutarAsync(id, dto, idModificador, ip);
+            var resultado = await _actualizarUseCase.EjecutarAsync(id, dto, idModificador.Value);
             if (resultado.EsFallido)
                 return MapearError(resultado.Error);
 
@@ -88,8 +90,10 @@ namespace MicroServicioUsuarios.Controllers
         public async Task<IActionResult> Eliminar(int id)
         {
             var idModificador = ObtenerIdUsuarioDelToken();
+            if (idModificador is null)
+                return TokenSinIdentificador();
 
-            var resultado = await _eliminarUseCase.EjecutarAsync(id, idModificador);
+            var resultado = await _eliminarUseCase.EjecutarAsync(id, idModificador.Value);
             if (resultado.EsFallido)
                 return MapearError(resultado.Error);
 
@@ -105,55 +109,26 @@ namespace MicroServicioUsuarios.Controllers
         [HttpPost("cambiar-password")]
         public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordDto dto)
         {
-            var nombreUsuario = ObtenerNombreUsuarioDelToken();
-            var ip = ObtenerIp();
+            var idUsuario = ObtenerIdUsuarioDelToken();
+            if (idUsuario is null)
+                return TokenSinIdentificador();
 
-            var resultado = await _cambiarPasswordUseCase.EjecutarAsync(nombreUsuario, dto, ip);
+            var nombreUsuario = ObtenerNombreUsuarioDelToken();
+
+            var resultado = await _cambiarPasswordUseCase.EjecutarAsync(idUsuario.Value, nombreUsuario, dto);
             if (resultado.EsFallido)
                 return MapearError(resultado.Error);
 
             return Ok(new { mensaje = "Contraseña actualizada exitosamente. Inicie sesión nuevamente." });
         }
 
-        // ── ENDPOINT TEMPORAL PARA PRUEBAS (SEMILLA) ────────────────────────
-        [AllowAnonymous]
-        [HttpPost("seed-admin")]
-        public async Task<IActionResult> SeedAdmin([FromServices] MicroServicioUsuarios.dominio.Interfaces.IContraHasher hasher, [FromServices] MicroServicioUsuarios.dominio.Interfaces.IUsuarioRepositorio repo)
-        {
-            var existe = await repo.ExisteNombreUsuarioAsync("admin.prueba");
-            if (existe) return Ok("El admin de prueba ya existe. Su password es temporal123");
-
-            var hash = hasher.Hashear("temporal123");
-
-            var admin = new MicroServicioUsuarios.dominio.Entidades.Usuario(
-                "admin.prueba",
-                hash,
-                "Administrador",
-                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Admin").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Prueba").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.NombrePersona.Crear("Sistema").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.CarnetIdentidad.Crear("12345678").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.FechaNacimiento.Crear(new DateOnly(1990, 1, 1)).Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.Email.Crear("admin@libreria.com").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.Direccion.Crear("Calle Falsa 123").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.Telefono.Crear("77777777").Valor!,
-                MicroServicioUsuarios.dominio.EntidadesDeValor.FechaIngreso.Crear(DateOnly.FromDateTime(DateTime.Now)).Valor!,
-                0
-            );
-
-            await repo.AgregarAsync(admin);
-            await repo.GuardarCambiosAsync();
-
-            return Ok(new { mensaje = "Usuario creado exitosamente para pruebas.", usuario = "admin.prueba", password = "temporal123" });
-        }
-
         // ── Helpers privados ─────────────────────────────────────────────────
 
-        private int ObtenerIdUsuarioDelToken()
+        private int? ObtenerIdUsuarioDelToken()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier)
                      ?? User.FindFirst("sub");
-            return claim is not null && int.TryParse(claim.Value, out var id) ? id : 0;
+            return claim is not null && int.TryParse(claim.Value, out var id) && id > 0 ? id : null;
         }
 
         private string ObtenerNombreUsuarioDelToken()
@@ -163,8 +138,8 @@ namespace MicroServicioUsuarios.Controllers
                 ?? string.Empty;
         }
 
-        private string ObtenerIp() =>
-            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida";
+        private IActionResult TokenSinIdentificador() =>
+            Unauthorized(new { error = "El token no contiene un identificador de usuario válido." });
 
         private IActionResult MapearError(Error error) => error.Tipo switch
         {

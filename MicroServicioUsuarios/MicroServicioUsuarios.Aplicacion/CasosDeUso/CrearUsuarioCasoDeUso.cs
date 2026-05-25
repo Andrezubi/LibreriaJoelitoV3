@@ -38,7 +38,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         }
 
         public async Task<Resultado<UsuarioDto>> EjecutarAsync(
-            CrearUsuarioDto dto, int idUsuarioRegistrador, string ipOrigen)
+            CrearUsuarioDto dto, int idUsuarioRegistrador)
         {
             // 1. Fábrica valida todos los campos y construye la entidad
             var fabricaResult = await _fabrica.CrearAsync(dto, idUsuarioRegistrador);
@@ -49,11 +49,10 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 
             // 2. Persistir
             await _usuarioRepo.AgregarAsync(usuario);
-            await _usuarioRepo.GuardarCambiosAsync();
             await _bitacoraRepo.RegistrarAsync(new Bitacora(
-                $"id:{idUsuarioRegistrador}", "INSERT", "Usuario", ipOrigen,
-                detalleNuevo: $"Nuevo usuario registrado: {usuario.NombreUsuario}"));
-            await _bitacoraRepo.GuardarCambiosAsync();
+                idUsuarioRegistrador, "INSERT", "Usuario",
+                $"Nuevo usuario registrado: {usuario.NombreUsuario}"));
+            await _usuarioRepo.GuardarCambiosAsync();
 
             // 4. Email en fire-and-forget — igual que Servicio_Clientes pero no corta si falla
             _ = Task.Run(async () =>

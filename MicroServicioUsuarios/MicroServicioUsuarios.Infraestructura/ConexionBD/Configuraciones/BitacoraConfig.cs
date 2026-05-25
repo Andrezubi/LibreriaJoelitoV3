@@ -8,40 +8,35 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD.Configuraciones
     {
         public void Configure(EntityTypeBuilder<Bitacora> builder)
         {
-            builder.ToTable("bitacoras");
+            builder.ToTable("Bitacora");
 
             builder.HasKey(b => b.Id);
             builder.Property(b => b.Id)
-                .HasColumnName("id")
+                .HasColumnName("Id")
                 .ValueGeneratedOnAdd();
 
-            builder.Property(b => b.Usuario)
-                .HasColumnName("usuario")
-                .HasMaxLength(100)
+            builder.Property(b => b.IdUsuario)
+                .HasColumnName("IdUsuario")
                 .IsRequired();
 
             builder.Property(b => b.Accion)
-                .HasColumnName("accion")
+                .HasColumnName("Accion")
                 .HasMaxLength(50)
                 .IsRequired();
 
-            builder.Property(b => b.Modulo)
-                .HasColumnName("modulo")
+            builder.Property(b => b.Tabla)
+                .HasColumnName("Tabla")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(b => b.Ip)
-                .HasColumnName("ip")
-                .HasMaxLength(50)
+            builder.Property(b => b.Fecha)
+                .HasColumnName("Fecha")
                 .IsRequired();
 
-            builder.Property(b => b.Detalle)
-                .HasColumnName("detalle")
+            builder.Property(b => b.Descripcion)
+                .HasColumnName("Descripcion")
                 .HasMaxLength(500)
                 .IsRequired();
-
-            builder.Property(b => b.Fecha)
-                .HasColumnName("fecha");
         }
     }
 }

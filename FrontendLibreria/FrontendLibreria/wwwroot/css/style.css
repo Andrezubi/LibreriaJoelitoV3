@@ -592,6 +592,33 @@ select.form-control {
     border-radius: 20px;
 }
 
+.btn-password {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.4);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-password:hover {
+        background: rgba(255,255,255,0.24);
+    }
+
+.password-modal {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.password-policy-box {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f6f3fb;
+    border: 1px solid #e1d6f1;
+}
+
 /* BOTÓN LOGOUT */
 .btn-logout {
     background: white;

@@ -102,17 +102,20 @@ namespace FrontendLibreria.Adaptadores
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(errorContent);
+                    if (doc.RootElement.TryGetProperty("error", out var errorProp))
+                    {
+                        errores.Add(errorProp.GetString() ?? "No se pudo cambiar la contraseña.");
+                    }
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    errores.Add("No se pudo cambiar la contraseña.");
+                }
 
-                if (errorContent == "{\"error\":\"La contraseña actual es incorrecta.\"}")
-                {
-                    _logger.LogError("⚠️ Contraseña actual incorrecta");
-                    errores.Add("⚠️ Contraseña actual incorrecta");
-                }
-                else
-                {
-                    _logger.LogError("❌ Error al cambiar contraseña: {Error}", errorContent);
-                    errores.Add(errorContent);
-                }
+                _logger.LogError("Error al cambiar contraseña: {Error}", errorContent);
                 return (false, errores);
             }
             catch (Exception ex)

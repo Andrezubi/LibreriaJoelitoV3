@@ -39,34 +39,59 @@ namespace FrontendLibreria.Pages.Usuarios
         {
             if (!ModelState.IsValid) return Page();
 
-            if (Input.NuevoPassword != Input.ConfirmarPassword)
+            var error = await CambiarPasswordAsync();
+            if (error is not null)
             {
-                ErrorMessage = "La nueva contraseña y su confirmación no coinciden.";
+                ErrorMessage = error;
                 return Page();
             }
 
-            var (exito, errores) = await _usuarioServicio.CambiarPasswordAsync(Input);
-
-            if (!exito)
-            {
-                if (errores != null && errores.Contains("⚠️ Contraseña actual incorrecta"))
-                {
-                    ErrorMessage = "La contraseña actual es incorrecta.";
-                }
-                else
-                {
-                    ErrorMessage = "Error al cambiar la contraseña. Verifique que la contraseña actual sea correcta y que la nueva cumpla con las políticas de seguridad.";
-                }
-                return Page();
-            }
-
-            // Si fue exitoso, cerramos sesión para que el usuario ingrese con su nueva clave (y se limpie el MustChangePassword claim)
+            // Al cerrar la sesión, el siguiente acceso exige utilizar la nueva contraseña.
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             SuccessMessage = "¡Contraseña actualizada exitosamente! Serás redirigido al login...";
             ViewData["Redirect"] = true;
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostVoluntarioAsync()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new { exito = false, mensaje = "Complete todos los campos requeridos." });
+            }
+
+            var error = await CambiarPasswordAsync();
+            if (error is not null)
+            {
+                return BadRequest(new { exito = false, mensaje = error });
+            }
+
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return new JsonResult(new
+            {
+                exito = true,
+                mensaje = "Contraseña actualizada exitosamente. Inicie sesión nuevamente."
+            });
+        }
+
+        private async Task<string?> CambiarPasswordAsync()
+        {
+            if (Input.NuevoPassword != Input.ConfirmarPassword)
+            {
+                return "La nueva contraseña y su confirmación no coinciden.";
+            }
+
+            var (exito, errores) = await _usuarioServicio.CambiarPasswordAsync(Input);
+            if (exito)
+            {
+                return null;
+            }
+
+            return errores.FirstOrDefault()
+                ?? "Error al cambiar la contraseña. Verifique que cumpla con las políticas de seguridad.";
         }
     }
 }

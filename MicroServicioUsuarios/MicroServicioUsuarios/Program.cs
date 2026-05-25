@@ -53,11 +53,11 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ── Crear tablas automáticamente si no existen (EnsureCreated) ─────────
+// ── Inicializar las tablas requeridas por el microservicio ──────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<RepositorioBD>();
-    db.Database.EnsureCreated();
+    await db.InicializarEsquemaAsync();
 }
 
 // Configure the HTTP request pipeline.

@@ -50,6 +50,16 @@
                         @User.Identity?.Name
                     </span>
 
+                    @if (!debeCambiarPassword)
+                    {
+                        <button type="button"
+                                class="btn-password"
+                                data-bs-toggle="modal"
+                                data-bs-target="#cambiarPasswordModal">
+                            Cambiar contrase&ntilde;a
+                        </button>
+                    }
+
                     <form method="get" action="/Usuarios/Logout">
                         <button type="submit" class="btn-logout">Cerrar sesión</button>
                     </form>
@@ -185,7 +195,173 @@
         </main>
     }
 
+    @if (enSistema && !debeCambiarPassword)
+    {
+        <div class="modal fade" id="cambiarPasswordModal" tabindex="-1" aria-labelledby="cambiarPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content password-modal">
+                    <div class="modal-header modal-header-morado">
+                        <h5 class="modal-title" id="cambiarPasswordModalLabel">Cambiar contrase&ntilde;a</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form method="post"
+                          asp-page="/Usuarios/CambiarPassword"
+                          asp-page-handler="Voluntario"
+                          id="cambiarPasswordVoluntarioForm">
+                        <div class="modal-body">
+                            <p class="text-muted small mb-3">
+                                El cambio cerrará su sesión y se aplicará en el próximo inicio.
+                            </p>
+                            <div id="passwordModalError" class="alert alert-danger d-none" role="alert"></div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="passwordActualModal">Contrase&ntilde;a actual</label>
+                                <input class="form-control"
+                                       type="password"
+                                       id="passwordActualModal"
+                                       name="Input.PasswordActual"
+                                       autocomplete="current-password"
+                                       required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="nuevoPasswordModal">Nueva contrase&ntilde;a</label>
+                                <input class="form-control"
+                                       type="password"
+                                       id="nuevoPasswordModal"
+                                       name="Input.NuevoPassword"
+                                       autocomplete="new-password"
+                                       required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="confirmarPasswordModal">Confirmar nueva contrase&ntilde;a</label>
+                                <input class="form-control"
+                                       type="password"
+                                       id="confirmarPasswordModal"
+                                       name="Input.ConfirmarPassword"
+                                       autocomplete="new-password"
+                                       required />
+                                <div id="passwordModalMatchError" class="text-danger small mt-1 d-none">
+                                    Las contrase&ntilde;as no coinciden.
+                                </div>
+                            </div>
+
+                            <div class="password-policy-box">
+                                <p class="fw-semibold mb-2">La nueva contrase&ntilde;a debe contener:</p>
+                                <ul class="list-unstyled small mb-0">
+                                    <li id="modal-policy-length" class="text-danger">Mínimo 8 caracteres</li>
+                                    <li id="modal-policy-upper" class="text-danger">Al menos 1 mayúscula</li>
+                                    <li id="modal-policy-lower" class="text-danger">Al menos 1 minúscula</li>
+                                    <li id="modal-policy-number" class="text-danger">Al menos 1 número</li>
+                                    <li id="modal-policy-special" class="text-danger">Al menos 1 carácter especial</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn-sistema-danger" id="passwordModalSubmit" disabled>
+                                Actualizar contrase&ntilde;a
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @if (enSistema && !debeCambiarPassword)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const modal = document.getElementById("cambiarPasswordModal");
+                const form = document.getElementById("cambiarPasswordVoluntarioForm");
+                if (!modal || !form) return;
+
+                const actual = document.getElementById("passwordActualModal");
+                const nueva = document.getElementById("nuevoPasswordModal");
+                const confirmar = document.getElementById("confirmarPasswordModal");
+                const submit = document.getElementById("passwordModalSubmit");
+                const matchError = document.getElementById("passwordModalMatchError");
+                const error = document.getElementById("passwordModalError");
+
+                const reglas = {
+                    length: valor => valor.length >= 8,
+                    upper: valor => /[A-Z]/.test(valor),
+                    lower: valor => /[a-z]/.test(valor),
+                    number: valor => /[0-9]/.test(valor),
+                    special: valor => /[!@@#\$%\^\&*\)\(+=._-]/.test(valor)
+                };
+
+                function marcarPolitica(nombre, valida) {
+                    const elemento = document.getElementById("modal-policy-" + nombre);
+                    elemento.classList.toggle("text-success", valida);
+                    elemento.classList.toggle("text-danger", !valida);
+                }
+
+                function validarFormulario() {
+                    const valor = nueva.value;
+                    const resultados = Object.entries(reglas).map(([nombre, regla]) => {
+                        const valida = regla(valor);
+                        marcarPolitica(nombre, valida);
+                        return valida;
+                    });
+                    const coinciden = valor !== "" && valor === confirmar.value;
+                    matchError.classList.toggle("d-none", confirmar.value === "" || coinciden);
+                    submit.disabled = !actual.value || resultados.includes(false) || !coinciden;
+                }
+
+                function mostrarError(mensaje) {
+                    error.textContent = mensaje;
+                    error.classList.remove("d-none");
+                }
+
+                [actual, nueva, confirmar].forEach(input => input.addEventListener("input", validarFormulario));
+
+                modal.addEventListener("hidden.bs.modal", function () {
+                    form.reset();
+                    error.classList.add("d-none");
+                    error.textContent = "";
+                    validarFormulario();
+                });
+
+                form.addEventListener("submit", async function (event) {
+                    event.preventDefault();
+                    error.classList.add("d-none");
+                    submit.disabled = true;
+                    submit.textContent = "Actualizando...";
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: "POST",
+                            body: new FormData(form),
+                            headers: { "X-Requested-With": "XMLHttpRequest" }
+                        });
+                        const resultado = await response.json();
+
+                        if (!response.ok || !resultado.exito) {
+                            mostrarError(resultado.mensaje || "No fue posible actualizar la contraseña.");
+                            validarFormulario();
+                            return;
+                        }
+
+                        document.querySelector(".password-modal .modal-body").innerHTML =
+                            '<div class="alert alert-success mb-0">Contraseña actualizada. Redirigiendo al inicio de sesión...</div>';
+                        document.querySelector(".password-modal .modal-footer").classList.add("d-none");
+                        window.setTimeout(function () {
+                            window.location.href = "/Usuarios/Login";
+                        }, 1800);
+                    } catch {
+                        mostrarError("No fue posible comunicarse con el servicio de usuarios.");
+                        validarFormulario();
+                    } finally {
+                        submit.textContent = "Actualizar contraseña";
+                    }
+                });
+
+                validarFormulario();
+            });
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

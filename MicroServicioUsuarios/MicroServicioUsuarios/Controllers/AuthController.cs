@@ -23,8 +23,7 @@ namespace MicroServicioUsuarios.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida";
-            var resultado = await _loginUseCase.EjecutarAsync(dto, ip);
+            var resultado = await _loginUseCase.EjecutarAsync(dto);
 
             if (resultado.EsFallido)
                 return MapearError(resultado.Error);

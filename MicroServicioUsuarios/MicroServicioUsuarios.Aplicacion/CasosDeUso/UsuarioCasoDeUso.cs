@@ -48,7 +48,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         }
 
         public async Task<Resultado<UsuarioDto>> EjecutarAsync(
-            int id, ActualizarUsuarioDto dto, int idModificador, string ipOrigen)
+            int id, ActualizarUsuarioDto dto, int idModificador)
         {
             var usuario = await _usuarioRepo.ObtenerPorIdAsync(id);
             if (usuario is null)
@@ -82,12 +82,9 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
                 dto.Rol, idModificador);
 
             await _usuarioRepo.ActualizarAsync(usuario);
-            await _usuarioRepo.GuardarCambiosAsync();
-
             await _bitacoraRepo.RegistrarAsync(new Bitacora(
-                $"id:{idModificador}", "UPDATE", "Usuario", ipOrigen,
-                detalleNuevo: $"Usuario ID {id} actualizado"));
-            await _bitacoraRepo.GuardarCambiosAsync();
+                idModificador, "UPDATE", "Usuario", $"Usuario ID {id} actualizado"));
+            await _usuarioRepo.GuardarCambiosAsync();
 
             return Resultado.Exitoso(new UsuarioDto(
                 usuario.Id, usuario.NombreUsuario, usuario.NombreCompleto,
@@ -101,10 +98,14 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
     public sealed class EliminarUsuarioCasoDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
+        private readonly IBitacoraRepositorio _bitacoraRepo;
 
-        public EliminarUsuarioCasoDeUso(IUsuarioRepositorio usuarioRepo)
+        public EliminarUsuarioCasoDeUso(
+            IUsuarioRepositorio usuarioRepo,
+            IBitacoraRepositorio bitacoraRepo)
         {
             _usuarioRepo = usuarioRepo;
+            _bitacoraRepo = bitacoraRepo;
         }
 
         public async Task<Resultado<bool>> EjecutarAsync(int id, int idModificador)
@@ -117,6 +118,8 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
             usuario.Desactivar(idModificador);
 
             await _usuarioRepo.ActualizarAsync(usuario);
+            await _bitacoraRepo.RegistrarAsync(new Bitacora(
+                idModificador, "DELETE", "Usuario", $"Usuario ID {id} dado de baja"));
             await _usuarioRepo.GuardarCambiosAsync();
 
             return Resultado.Exitoso(true);
