@@ -1,7 +1,13 @@
 using FrontendLibreria.Adaptadores.Marca;
 using FrontendLibreria.Adaptadores.Producto;
+using FrontendLibreria.Adaptadores.ProveedoresAdapter;
+
+using FrontendLibreria.Adaptadores;
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpContextAccessor();
+
 
 builder.Services.AddHttpContextAccessor();
 
@@ -23,6 +29,17 @@ builder.Services.AddHttpClient<IAdaptadorMarca, AdaptadorMarca>(client =>
     );
 });
 
+builder.Services.AddHttpClient<IProveedorAdapter, ProveedorAdapter>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioProveedoresUrl"]!);
+});
+
+builder.Services.AddHttpClient<IAdaptadorCliente, AdaptadorCliente>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioClientesUrl"]!);
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -37,7 +54,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseAuthorization();
+//app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapRazorPages()
