@@ -1,0 +1,227 @@
+@page
+@model FrontendLibreria.Pages.Clientes.ClientesGetModel
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-center">
+        <div class="tabla-wrapper">
+
+
+            <div class="card shadow-sm tabla-card">
+
+                <!-- HEADER -->
+                <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
+
+                    <h5 class="mb-0">Lista de Clientes</h5>
+
+                    <a asp-page="Create" class="btn btn-sistema btn-sm">
+                        + Nuevo Cliente
+                    </a>
+
+                </div>
+
+                @if (TempData["MensajeExito"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["MensajeExito"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <div class="card-body p-0">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead class="tabla-head-custom">
+                                <tr>
+                                    <th>RazonSocial</th>
+                                    <th>Carnet de Identidad</th>
+                                    <th>Email</th>
+                                    <th>Cliente Frecuente</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            
+                                @foreach (var cliente in Model.Clientes)
+                                {
+                                    <tr>
+                                        <td>@cliente.RazonSocial</td>
+                                        @if (!string.IsNullOrWhiteSpace(cliente.Complemento))
+                                        {
+                                            <td>@($"{cliente.Ci}-{cliente.Complemento}")</td>
+                                        }
+                                        else
+                                        {
+                                            <td>@cliente.Ci</td>
+                                        }
+                                        <td>@(cliente.Email == null ? "—" : cliente.Email)</td>
+                                        <td>@(Convert.ToBoolean(cliente.ClienteFrecuente) ? "Sí" : "No")</td>
+                                        <td>
+                                            <a onclick="abrirModalEditar(
+                                                '@cliente.Id',
+                                                '@cliente.RazonSocial',
+                                                '@cliente.Ci',
+                                                '@(cliente.Complemento == null ? " " : cliente.Complemento)',
+                                                '@(cliente.Email == null ? "" : cliente.Email)',
+                                                '@(Convert.ToBoolean(cliente.ClienteFrecuente).ToString().ToLower())')"
+                                               class="btn btn-sistema btn-sm">
+                                                Editar
+                                            </a>
+                                            <a data-bs-toggle="modal" data-bs-target="#modalDelete-@cliente.Id"
+                                               class="btn btn-sistema-danger btn-sm">
+                                                Eliminar
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <!-- MODAL ELIMINAR POR FILA -->
+                                    <div class="modal fade" id="modalDelete-@cliente.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form method="post" asp-page-handler="Delete" asp-route-id="@cliente.Id">
+                                                    <div class="modal-header modal-header-morado">
+                                                        <h5 class="modal-title">Eliminar cliente</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <span>¿Está seguro de eliminar al cliente <strong>@cliente.RazonSocial"]</strong>?</span>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" class="btn btn-sistema-danger">Sí</button>
+                                                        <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                @if (Model.Clientes.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted">
+                                            No hay clientes registrados.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR CLIENTE -->
+<div class="modal fade" id="modalEditarCliente" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="formEditarCliente">
+                <input type="hidden" name="ClienteEditar.Id" id="edit_id" />
+
+                <div class="modal-header modal-header-morado">
+                    <h5 class="modal-title" id="modalEditarLabel">Editar Datos del Cliente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Razón Social</label>
+                            <input type="text" name="ClienteEditar.RazonSocial" id="edit_razonSocial"
+                                   class="form-control" placeholder="Ej: Juan" required />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Carnet de Identidad</label>
+                            <input type="text" name="ClienteEditar.Ci" id="edit_ci"
+                                   class="form-control" placeholder="Ej: 1234567" required />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" name="ClienteEditar.Complemento" id="edit_complemento"
+                                   class="form-control" placeholder="Ej: 1A" />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="ClienteEditar.Email" id="edit_email"
+                                   class="form-control" placeholder="juan@ejemplo.com" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="ClienteEditar.ClienteFrecuente"
+                                   class="form-check-input" id="edit_frecuente" value="true" />
+                            <label class="form-check-label" for="edit_frecuente">Cliente Frecuente</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancelar" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-sistema" onclick="enviarUpdate()">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    function abrirModalEditar(id, razonSocial, ci, complemento, email, frecuente) {
+        document.getElementById('edit_id').value = id;
+        document.getElementById('edit_razonSocial').value = razonSocial;
+        document.getElementById('edit_ci').value = ci;
+        document.getElementById('edit_complemento').value = complemento ?? '';
+        document.getElementById('edit_email').value = email ?? '';
+
+        document.getElementById('edit_frecuente').checked =
+            (frecuente === true || frecuente === 'true');
+
+        new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
+    }
+
+    function enviarUpdate() {
+        const form = document.querySelector('#formEditarCliente');
+
+        // Validación HTML5 (IMPORTANTE)
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+
+        fetch('?handler=Update', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                "RequestVerificationToken":
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                const alerta = document.getElementById('alertaErrorModal');
+                alerta.textContent = data.message;
+                alerta.style.display = 'block';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
