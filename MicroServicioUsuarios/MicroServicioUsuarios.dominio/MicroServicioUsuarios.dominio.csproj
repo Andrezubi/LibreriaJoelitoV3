@@ -6,10 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Entidades\" />
-    <Folder Include="Interfaces\" />
-    <Folder Include="EntidadesDeValor\" />
-  </ItemGroup>
-
 </Project>

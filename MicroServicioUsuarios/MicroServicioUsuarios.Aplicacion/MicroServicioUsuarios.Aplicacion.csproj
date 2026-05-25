@@ -7,9 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="InterfacesExt\" />
-    <Folder Include="DTOs\" />
-    <Folder Include="UseCases\" />
+    <ProjectReference Include="..\MicroServicioUsuarios.dominio\MicroServicioUsuarios.dominio.csproj" />
   </ItemGroup>
 
 </Project>

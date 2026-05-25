@@ -1,0 +1,70 @@
+@page
+@model FrontendLibreria.Pages.Usuarios.LoginModel
+@{
+    ViewData["Title"] = "Inicio de Sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Librería Joelito</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <!-- Encabezado morado -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#7b2cbf;">
+        <div class="container">
+            <span class="navbar-brand fw-bold text-uppercase d-flex align-items-center">
+                <img src="~/img/logo-lib.png" alt="Logo Librería Joelito" width="40" class="me-2" />
+                Librería Joelito
+            </span>
+            <small class="text-white-50">Sistema de Gestión de Librería</small>
+        </div>
+    </nav>
+
+    <!-- Contenedor principal -->
+    <div class="container d-flex justify-content-center align-items-center flex-grow-1">
+        <div class="card shadow-sm border-0 rounded-4 p-4" style="max-width: 400px;">
+            <div class="text-center mb-3">
+                <img src="~/img/logo-lib.png" alt="Logo Librería Joelito" width="40" class="me-2" />
+                <h5 class="fw-bold mb-0" style="color: #1a237e;">LIBRERÍA JOELITO</h5>
+                <small class="text-muted">Sistema de Gestión</small>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger text-center">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <form method="post">
+                <div class="mb-3">
+                    <label asp-for="Input.NombreUsuario" class="form-label">Usuario</label>
+                    <input asp-for="Input.NombreUsuario" class="form-control bg-light" placeholder="Ingrese su usuario" required />
+                </div>
+                <div class="mb-3">
+                    <div class="mb-3">
+                        <label asp-for="Input.Password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input asp-for="Input.Password" type="password"
+                                   class="form-control bg-light"
+                                   placeholder="Ingrese su contraseña"
+                                   required id="passwordInput" />
+                        </div>
+                    </div>
+
+                </div>
+                <button type="submit" class="btn w-100 text-white fw-semibold" style="background-color:#3c096c;">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
