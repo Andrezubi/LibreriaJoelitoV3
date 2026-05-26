@@ -141,7 +141,7 @@ namespace FrontendLibreria.Adaptadores
                     _logger.LogDebug("📅 Fecha convertida: {Fecha}", fechaNac);
                 }
 
-                // El backend espera un objeto Usuario completo, agregamos campos técnicos faltantes
+                // El backend obtiene el usuario registrador desde el JWT, no desde el formulario.
                 var payload = new
                 {
                     Nombre = request.Nombre,
@@ -154,8 +154,7 @@ namespace FrontendLibreria.Adaptadores
                     Rol = request.Rol,
                     DireccionDomicilio = request.DireccionDomicilio ?? "Dirección no especificada",
                     FechaNacimiento = fechaNac,
-                    FechaIngreso = DateTime.Now.ToString("yyyy-MM-dd"),
-                    IdUsuario = 1 // ID por defecto del admin
+                    FechaIngreso = DateTime.Now.ToString("yyyy-MM-dd")
                 };
 
                 var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
