@@ -106,14 +106,16 @@ namespace FrontendLibreria.Adaptadores.ProveedoresAdapter
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> EliminarAsync(string id)
+        public async Task<bool> EliminarAsync(string id, int idUsuario)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(id) || idUsuario <= 0)
             {
                 return false;
             }
 
-            var response = await _httpClient.DeleteAsync($"api/Proveedor/{id}");
+            var response = await _httpClient.DeleteAsync(
+                $"api/Proveedor/{Uri.EscapeDataString(id)}?idUsuario={idUsuario}"
+            );
 
             return response.IsSuccessStatusCode;
         }

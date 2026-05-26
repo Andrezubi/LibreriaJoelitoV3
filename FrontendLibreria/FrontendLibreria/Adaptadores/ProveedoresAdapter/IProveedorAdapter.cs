@@ -14,6 +14,6 @@ namespace FrontendLibreria.Adaptadores.ProveedoresAdapter
 
         Task<bool> ActualizarAsync(string id, RegistrarProveedorDto proveedor);
 
-        Task<bool> EliminarAsync(string id);
+        Task<bool> EliminarAsync(string id, int idUsuario);
     }
 }
