@@ -21,13 +21,18 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
         private NombrePersona(string valor) => Valor = valor;
 
-        public static Resultado<NombrePersona> Crear(string valor, string nombreCampo = "Nombre", int maxLength = 100)
-        {
-            if (string.IsNullOrWhiteSpace(valor))
-                return Resultado.Fallido<NombrePersona>(
-                    Error.Validacion($"El campo '{nombreCampo}' no puede estar vacío."));
+        public static Resultado<NombrePersona> Crear(string? valor, string nombreCampo = "Nombre", int maxLength = 100, bool esOpcional = false)
+            {
+                if (string.IsNullOrWhiteSpace(valor))
+                {
+                    if (esOpcional)
+                        return Resultado.Exitoso(new NombrePersona(string.Empty));
 
-            var limpio = valor.Trim();
+                    return Resultado.Fallido<NombrePersona>(
+                        Error.Validacion($"El campo '{nombreCampo}' no puede estar vacío."));
+                }
+
+                var limpio = valor.Trim();
 
             if (limpio.Length < 2)
                 return Resultado.Fallido<NombrePersona>(
