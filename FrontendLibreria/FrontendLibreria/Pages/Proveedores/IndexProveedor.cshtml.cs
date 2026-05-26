@@ -2,9 +2,12 @@ using FrontendLibreria.Adaptadores.ProveedoresAdapter;
 using FrontendLibreria.DTOs.Proveedores;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace FrontendLibreria.Pages.Proveedores
 {
+    [Authorize(Roles = "Administrador")]
     public class IndexProveedorModel : PageModel
     {
         private readonly IProveedorAdapter _proveedorAdapter;

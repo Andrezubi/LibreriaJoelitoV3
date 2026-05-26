@@ -23,11 +23,11 @@
 
             <form method="post" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Nombre</label>
+                    <label class="form-label">Nombre *</label>
                     <input asp-for="NuevoUsuario.Nombre" class="form-control" required />
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Apellido Paterno</label>
+                    <label class="form-label">Apellido Paterno *</label>
                     <input asp-for="NuevoUsuario.ApellidoPaterno" class="form-control" required />
                 </div>
                 <div class="col-md-4">
@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">CI</label>
+                    <label class="form-label">CI *</label>
                     <input asp-for="NuevoUsuario.Ci" class="form-control" required />
                 </div>
                 <div class="col-md-2">
@@ -44,16 +44,16 @@
                     <input asp-for="NuevoUsuario.Complemento" class="form-control" />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Email</label>
+                    <label class="form-label">Email *</label>
                     <input asp-for="NuevoUsuario.Email" type="email" class="form-control" required />
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Teléfono</label>
+                    <label class="form-label">Teléfono * </label>
                     <input asp-for="NuevoUsuario.Telefono" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Rol</label>
+                    <label class="form-label">Rol *</label>
                     <select asp-for="NuevoUsuario.Rol" class="form-control" required>
                         <option value="">Seleccione un rol...</option>
                         <option value="Administrador">Administrador</option>
@@ -61,7 +61,7 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Fecha de Nacimiento</label>
+                    <label class="form-label">Fecha de Nacimiento *</label>
                     <input asp-for="NuevoUsuario.FechaNacimiento" type="date" class="form-control" required />
                 </div>
 
