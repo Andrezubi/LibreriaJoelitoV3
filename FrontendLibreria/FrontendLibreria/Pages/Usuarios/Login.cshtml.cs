@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FrontendLibreria.Pages.Usuarios
 {
@@ -32,7 +33,10 @@ namespace FrontendLibreria.Pages.Usuarios
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
 
             var result = await _usuarioServicio.LoginAsync(Input);
 
@@ -42,33 +46,58 @@ namespace FrontendLibreria.Pages.Usuarios
                 return Page();
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, result.NombreUsuario),
-                new Claim(ClaimTypes.Role, result.Rol),
-                new Claim("Token", result.Token),
-                new Claim("NombreCompleto", result.NombreCompleto)
-            };
+            var idUsuario = ObtenerIdUsuarioDesdeToken(result.Token);
 
-            // Marcar si necesita cambiar password
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, idUsuario.ToString()),
+        new Claim("IdUsuario", idUsuario.ToString()),
+        new Claim(ClaimTypes.Name, result.NombreUsuario),
+        new Claim(ClaimTypes.Role, result.Rol),
+        new Claim("Token", result.Token),
+        new Claim("NombreCompleto", result.NombreCompleto)
+    };
+
             if (result.MustChangePassword)
             {
                 claims.Add(new Claim("MustChangePassword", "true"));
             }
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsIdentity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity));
+                new ClaimsPrincipal(claimsIdentity)
+            );
 
-            // Si es primer inicio, redirigir obligatoriamente a CambiarPassword
             if (result.MustChangePassword)
             {
                 return RedirectToPage("/Usuarios/CambiarPassword");
             }
 
             return RedirectToPage("/Index");
+        }
+
+        private static int ObtenerIdUsuarioDesdeToken(string token)
+        {
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+
+            var idClaim = jwt.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier ||
+                c.Type == "nameid" ||
+                c.Type.EndsWith("/nameidentifier") ||
+                c.Type == JwtRegisteredClaimNames.Sub
+            );
+
+            if (idClaim == null || !int.TryParse(idClaim.Value, out var idUsuario))
+            {
+                return 1;
+            }
+
+            return idUsuario;
         }
     }
 }

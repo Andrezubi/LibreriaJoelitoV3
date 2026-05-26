@@ -34,7 +34,7 @@ namespace FrontendLibreria.Pages.Clientes
                 ClienteEditar.Id = Convert.ToInt32(Request.Form["ClienteEditar.Id"]);
 
                 
-                ClienteEditar.IdUsuario = 1;
+                ClienteEditar.IdUsuario = int.Parse(User.FindFirst("IdUsuario")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
 
                 ClienteEditar.RazonSocial = Normalizar(ClienteEditar.RazonSocial)!;
 
