@@ -1,8 +1,9 @@
 using FrontendLibreria.Adaptadores.ProveedoresAdapter;
 using FrontendLibreria.DTOs.Proveedores;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 
 namespace FrontendLibreria.Pages.Proveedores
@@ -164,7 +165,8 @@ namespace FrontendLibreria.Pages.Proveedores
 
         private int ObtenerIdUsuario()
         {
-            return 1;
+            var idClaim = User.FindFirst("IdUsuario")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
+            return int.Parse(idClaim);
         }
     }
 }

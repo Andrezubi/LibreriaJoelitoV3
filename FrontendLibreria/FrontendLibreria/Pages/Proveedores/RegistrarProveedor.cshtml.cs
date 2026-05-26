@@ -3,6 +3,7 @@ using FrontendLibreria.DTOs.Proveedores;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FrontendLibreria.Pages.Proveedores
 {
@@ -52,8 +53,8 @@ namespace FrontendLibreria.Pages.Proveedores
 
         private void PrepararDatosInternos()
         {
-            // Cuando haya sesión, aquí debe reemplazarse por el ID real del usuario autenticado.
-            Proveedor.IdUsuario = 1;
+            var idClaim = User.FindFirst("IdUsuario")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1";
+            Proveedor.IdUsuario = int.Parse(idClaim);
         }
 
         private void ValidarFormulario()
