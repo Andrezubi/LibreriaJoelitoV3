@@ -44,7 +44,7 @@ namespace MicroServicioUsuarios.Aplicacion.Fabrica
             var apPaternoResult = NombrePersona.Crear(dto.ApellidoPaterno, "Apellido paterno");
             if (apPaternoResult.EsFallido) errores.Add(apPaternoResult.Error.Mensaje);
 
-            var apMaternoResult = NombrePersona.Crear(dto.ApellidoMaterno, "Apellido materno");
+            var apMaternoResult = NombrePersona.Crear(dto.ApellidoMaterno ?? " ", "Apellido materno");
             if (apMaternoResult.EsFallido) errores.Add(apMaternoResult.Error.Mensaje);
 
             var ciResult = CarnetIdentidad.Crear(dto.Ci, dto.Complemento);

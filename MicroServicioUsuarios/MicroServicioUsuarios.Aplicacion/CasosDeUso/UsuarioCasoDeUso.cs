@@ -60,7 +60,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 
             var nombreR = NombrePersona.Crear(dto.Nombre, "Nombre");
             var apPaternoR = NombrePersona.Crear(dto.ApellidoPaterno, "Apellido paterno");
-            var apMaternoR = NombrePersona.Crear(dto.ApellidoMaterno, "Apellido materno");
+            var apMaternoR = NombrePersona.Crear(dto.ApellidoMaterno ?? " ", "Apellido materno");
             var emailR = Email.Crear(dto.Email);
             var telefonoR = Telefono.Crear(dto.Telefono);
             var direccionR = Direccion.Crear(dto.DireccionDomicilio);

@@ -7,12 +7,12 @@ namespace MicroServicioUsuarios.Aplicacion.DTOs
     public record CrearUsuarioDto(
     string Nombre,
     string ApellidoPaterno,
-    string ApellidoMaterno,
+    string? ApellidoMaterno,
     string Ci,
     string? Complemento,
     DateOnly FechaNacimiento,
     string Email,
-    string DireccionDomicilio,
+    string? DireccionDomicilio,
     string Telefono,
     DateOnly FechaIngreso,
     string Rol
@@ -21,7 +21,7 @@ namespace MicroServicioUsuarios.Aplicacion.DTOs
     public record ActualizarUsuarioDto(
         string Nombre,
         string ApellidoPaterno,
-        string ApellidoMaterno,
+        string? ApellidoMaterno,
         string Email,
         string DireccionDomicilio,
         string Telefono,
