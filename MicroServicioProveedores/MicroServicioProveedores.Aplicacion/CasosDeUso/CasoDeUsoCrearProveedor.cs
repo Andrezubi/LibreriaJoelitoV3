@@ -23,7 +23,6 @@ namespace MicroServicioProveedores.Aplicacion.CasosDeUso
 
         public async Task<Result> Insertar(RegistrarProveedorDto dto)
         {
-            dto.IdUsuario = 1; // TODO: Reemplazar con el ID del usuario autenticado en el contexto real.
 
             var resultadosValidacion = _proveedorValidador.Validar(dto);
 

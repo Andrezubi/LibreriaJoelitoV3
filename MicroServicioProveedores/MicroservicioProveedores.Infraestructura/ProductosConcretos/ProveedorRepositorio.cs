@@ -28,7 +28,8 @@ namespace MicroservicioProveedores.Infraestructura.ProductosConcretos
         public async Task<bool> Eliminar(Proveedor t)
         {
             var filtro = Builders<Proveedor>.Filter.Eq(p => p.Id, t.Id);
-            var actualizacion = Builders<Proveedor>.Update.Set(p => p.Estado, 0);
+            var actualizacion = Builders<Proveedor>.Update.Set(p => p.Estado, 0)
+                                                           .Set(p => p.IdUsuario, t.IdUsuario);
             var resultado = await _proveedores.UpdateOneAsync(filtro, actualizacion);
             return resultado.IsAcknowledged && resultado.MatchedCount > 0;
         }

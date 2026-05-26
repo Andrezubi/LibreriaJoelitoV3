@@ -84,12 +84,11 @@ namespace MicroServicioProveedores.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Eliminar(string id)
+        public async Task<IActionResult> Eliminar(string id, [FromQuery] string idUsuario)
         {
             try
             {
-                var resultado = await _casoDeUsoEliminarProveedor.Eliminar(id);
-
+                var resultado = await _casoDeUsoEliminarProveedor.Eliminar(id, idUsuario);
                 if (resultado)
                 {
                     return Ok(new { mensaje = "Proveedor eliminado exitosamente." });

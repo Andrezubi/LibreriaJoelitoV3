@@ -137,7 +137,9 @@ namespace FrontendLibreria.Pages.Proveedores
                 });
             }
 
-            var eliminado = await _proveedorAdapter.EliminarAsync(id);
+            var idUsuario = ObtenerIdUsuario();
+
+            var eliminado = await _proveedorAdapter.EliminarAsync(id, idUsuario);
 
             if (!eliminado)
             {
