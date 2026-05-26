@@ -47,8 +47,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
                 return Resultado.Exitoso(new Telefono(limpio));
 
             return Resultado.Fallido<Telefono>(
-                Error.Validacion("Teléfono inválido. Celular boliviano: 8 dígitos (6x o 7x). " +
-                                 "Fijo: 7 dígitos. Internacional: +código país + número."));
+                Error.Validacion("Teléfono inválido."));
         }
 
         public override string ToString() => Valor;

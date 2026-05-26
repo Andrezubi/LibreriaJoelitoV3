@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model FrontendLibreria.Pages.Usuarios.CrearUsuarioModel
 @{
     ViewData["Title"] = "Registrar Usuario";
@@ -9,35 +9,29 @@
         <h2 class="ventas-titulo">Registrar Nuevo Usuario</h2>
 
         <div class="card p-4">
-            @if (Model.ErrorMessages.Any())
-            {
-                <div class="alert alert-danger">
-                    <ul class="mb-0">
-                        @foreach (var error in Model.ErrorMessages)
-                        {
-                            <li>@error</li>
-                        }
-                    </ul>
-                </div>
-            }
+            <div asp-validation-summary="ModelOnly" class="form-text text-muted mb-3"></div>
 
             <form method="post" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Nombre *</label>
-                    <input asp-for="NuevoUsuario.Nombre" class="form-control" required />
+                    <input asp-for="NuevoUsuario.Nombre" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.Nombre" class="form-text text-muted"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Apellido Paterno *</label>
-                    <input asp-for="NuevoUsuario.ApellidoPaterno" class="form-control" required />
+                    <input asp-for="NuevoUsuario.ApellidoPaterno" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.ApellidoPaterno" class="form-text text-muted"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Apellido Materno</label>
                     <input asp-for="NuevoUsuario.ApellidoMaterno" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.ApellidoMaterno" class="form-text text-muted"></span>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">CI *</label>
-                    <input asp-for="NuevoUsuario.Ci" class="form-control" required />
+                    <input asp-for="NuevoUsuario.Ci" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.Ci" class="form-text text-muted"></span>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Complemento</label>
@@ -45,24 +39,28 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Email *</label>
-                    <input asp-for="NuevoUsuario.Email" type="email" class="form-control" required />
+                    <input asp-for="NuevoUsuario.Email" type="email" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.Email" class="form-text text-muted"></span>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Teléfono * </label>
                     <input asp-for="NuevoUsuario.Telefono" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.Telefono" class="form-text text-muted"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Rol *</label>
-                    <select asp-for="NuevoUsuario.Rol" class="form-control" required>
+                    <select asp-for="NuevoUsuario.Rol" class="form-control">
                         <option value="">Seleccione un rol...</option>
                         <option value="Administrador">Administrador</option>
                         <option value="Empleado">Empleado</option>
                     </select>
+                    <span asp-validation-for="NuevoUsuario.Rol" class="form-text text-muted"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fecha de Nacimiento *</label>
-                    <input asp-for="NuevoUsuario.FechaNacimiento" type="date" class="form-control" required />
+                    <input asp-for="NuevoUsuario.FechaNacimiento" type="date" class="form-control" />
+                    <span asp-validation-for="NuevoUsuario.FechaNacimiento" class="form-text text-muted"></span>
                 </div>
 
                 <div class="col-12 mt-4 d-flex justify-content-center gap-3">
@@ -77,3 +75,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

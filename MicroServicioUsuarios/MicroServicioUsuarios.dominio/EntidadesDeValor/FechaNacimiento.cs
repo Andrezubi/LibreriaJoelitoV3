@@ -33,7 +33,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
             var edad = CalcularEdad(fecha, hoy);
             if (edad < 18)
                 return Resultado.Fallido<FechaNacimiento>(
-                    Error.Validacion($"El usuario debe tener al menos 18 años. Edad calculada: {edad}."));
+                    Error.Validacion($"El usuario debe tener al menos 18 años."));
 
             return Resultado.Exitoso(new FechaNacimiento(fecha));
         }
