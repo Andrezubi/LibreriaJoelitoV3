@@ -17,13 +17,14 @@ namespace MicroServicioProveedores.Aplicacion.CasosDeUso
             _repositorioProveedores = repositorioProveedores;
         }  
 
-        public async Task<bool> Eliminar(string idProveedor)
+        public async Task<bool> Eliminar(string idProveedor, string idUsuario)
         {
             var proveedor = await _repositorioProveedores.ObtenerPorId(idProveedor);
             if (proveedor == null)
             {
                 throw new Exception("Proveedor no encontrado");
             }
+            proveedor.IdUsuario = int.Parse(idUsuario);
             return await _repositorioProveedores.Eliminar(proveedor);
         }
     }
