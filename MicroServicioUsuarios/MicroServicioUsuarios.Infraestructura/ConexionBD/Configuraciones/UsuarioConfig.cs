@@ -53,8 +53,7 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD.Configuraciones
 
             builder.Property(u => u.ApellidoMaterno)
                 .HasColumnName("apellido_materno")
-                .HasMaxLength(100)
-                .IsRequired();
+                .HasMaxLength(100);
 
             builder.Property(u => u.Ci)
                 .HasColumnName("ci")
