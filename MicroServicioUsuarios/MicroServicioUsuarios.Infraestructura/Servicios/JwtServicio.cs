@@ -9,11 +9,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Infraestructura.Servicios
 {
-    /// <summary>
-    /// Singleton Lazy: la clave de firma y los parámetros de validación
-    /// se construyen una única vez cuando se necesitan por primera vez.
-    /// Patrón: Lazy[T] wrapping AddSingleton en DependencyInjection.cs
-    /// </summary>
     public sealed class JwtServicio : IJwtServicio
     {
         private readonly Lazy<(SymmetricSecurityKey clave, TokenValidationParameters parametros)> _config;

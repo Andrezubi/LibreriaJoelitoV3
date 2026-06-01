@@ -28,7 +28,7 @@ namespace MicroServicioUsuarios.Aplicacion.DTOs
         string Rol
     );
 
-    /// <summary>Select — nunca expone PasswordHash.</summary>
+    
     public record UsuarioDto(
         int Id,
         string NombreUsuario,

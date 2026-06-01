@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
-    /// <summary>
+    /// 
     /// Número de teléfono.
     /// Bolivia: celular 8 dígitos empezando en 6 o 7 (ej: 77012345).
     ///          fijo    7 dígitos empezando en 2, 3 o 4 (ej: 4123456).
     /// También acepta formato internacional con prefijo + (ej: +59177012345).
-    /// </summary>
+    /// 
     public sealed class Telefono
     {
         public string Valor { get; }

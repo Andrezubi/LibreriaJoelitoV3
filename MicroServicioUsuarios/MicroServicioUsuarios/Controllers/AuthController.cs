@@ -16,10 +16,6 @@ namespace MicroServicioUsuarios.Controllers
             _loginUseCase = loginUseCase;
         }
 
-        /// <summary>
-        /// Endpoint de login — genera JWT firmado con id, nombre_usuario y rol.
-        /// Retorna MustChangePassword para que el frontend fuerce el cambio en primer inicio.
-        /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {

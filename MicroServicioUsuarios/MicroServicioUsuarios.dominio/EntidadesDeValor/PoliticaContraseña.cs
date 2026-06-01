@@ -9,10 +9,10 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
     {
         private PoliticaContraseña() { }
 
-        /// <summary>
+        /// 
         /// Valida que una contraseña cumpla la política de seguridad:
         /// mínimo 8 caracteres, al menos 1 número, 1 mayúscula, 1 minúscula, 1 carácter especial.
-        /// </summary>
+        /// 
         public static Resultado Validar(string password)
         {
             var errores = new List<string>();

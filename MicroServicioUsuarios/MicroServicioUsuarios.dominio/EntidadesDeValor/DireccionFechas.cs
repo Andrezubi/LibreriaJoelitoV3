@@ -5,9 +5,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
-    /// <summary>
-    /// Dirección de domicilio: texto libre con longitud controlada.
-    /// </summary>
     public sealed class Direccion
     {
         public string Valor { get; }
@@ -38,12 +35,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
         public override int GetHashCode() => Valor.GetHashCode();
     }
 
-    /// <summary>
-    /// Fecha de ingreso al sistema:
-    /// - No puede ser futura.
-    /// - No puede ser anterior al año 2000.
-    /// - Debe ser >= fecha de nacimiento del usuario (se valida en el caso de uso).
-    /// </summary>
+
     public sealed class FechaIngreso
     {
         public DateOnly Valor { get; }
@@ -66,7 +58,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
             return Resultado.Exitoso(new FechaIngreso(fecha));
         }
 
-        /// <summary>Valida que la fecha de ingreso sea posterior a la de nacimiento.</summary>
+        /// Valida que la fecha de ingreso sea posterior a la de nacimiento.
         public Resultado ValidarCoherenciaConNacimiento(FechaNacimiento nacimiento)
         {
             if (Valor <= nacimiento.Valor)

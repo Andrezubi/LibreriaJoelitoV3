@@ -5,13 +5,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.dominio.Entidades
 {
-    /// <summary>
-    /// Entidad Usuario.
-    /// Sus propiedades almacenan los VALUES extraídos de los Value Objects —
-    /// EF Core mapea tipos primitivos, no Value Objects directamente.
-    /// La construcción siempre pasa por la UsuarioFabrica, que valida todo
-    /// mediante Value Objects antes de llegar aquí.
-    /// </summary>
     public class Usuario
     {
         public int Id { get; private set; }
@@ -21,7 +14,7 @@ namespace MicroServicioUsuarios.dominio.Entidades
         public string Rol { get; private set; } = string.Empty;
         public bool Estado { get; private set; }
 
-        // ── Datos personales (valores extraídos de Value Objects) ─────────
+        //  Datos personales (valores extraídos de Value Objects) ─
         public string Nombre { get; private set; } = string.Empty;
         public string ApellidoPaterno { get; private set; } = string.Empty;
         public string ApellidoMaterno { get; private set; } = string.Empty;
@@ -33,7 +26,7 @@ namespace MicroServicioUsuarios.dominio.Entidades
         public string Telefono { get; private set; } = string.Empty;
         public DateOnly FechaIngreso { get; private set; }
 
-        // ── Auditoría ────────────────────────────────────────────────────────
+        //  Auditoría 
         public DateTime FechaRegistro { get; private set; }
         public DateTime? FechaUltimaActualizacion { get; private set; }
         public int IdUsuario { get; private set; }
@@ -77,7 +70,7 @@ namespace MicroServicioUsuarios.dominio.Entidades
             IdUsuario = idUsuarioRegistrador;
         }
 
-        // ── Métodos de negocio ───────────────────────────────────────────────
+        //  Métodos de negocio ─
 
         public void ActualizarPassword(string nuevoHash, int idModificador)
         {

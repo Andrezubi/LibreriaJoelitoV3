@@ -10,16 +10,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Aplicacion.Fabrica
 {
-    /// <summary>
-    /// Factory Method concreto.
-    /// Orquesta la creación de un Usuario en este orden:
-    ///   1. Valida TODOS los campos mediante Value Objects.
-    ///   2. Acumula errores — no corta al primer fallo.
-    ///   3. Si hay errores, retorna Result.Fallido con todos juntos.
-    ///   4. Genera NombreUsuario único con el protocolo.
-    ///   5. Genera y hashea la contraseña temporal.
-    ///   6. Construye la entidad solo si todo es válido.
-    /// </summary>
     public sealed class FabricaUsuario : IUsuarioFabrica
     {
         private readonly IUsuarioRepositorio _repositorio;
@@ -36,7 +26,7 @@ namespace MicroServicioUsuarios.Aplicacion.Fabrica
         {
             var errores = new List<string>();
 
-            // ── 1. Validar cada campo con su Value Object ──────────────────
+            // Validar cada campo con su Value Object 
 
             var nombreResult = NombrePersona.Crear(dto.Nombre, "Nombre");
             if (nombreResult.EsFallido) errores.Add(nombreResult.Error.Mensaje);
@@ -65,41 +55,41 @@ namespace MicroServicioUsuarios.Aplicacion.Fabrica
             var fechaIngResult = FechaIngreso.Crear(dto.FechaIngreso);
             if (fechaIngResult.EsFallido) errores.Add(fechaIngResult.Error.Mensaje);
 
-            // ── 2. Coherencia entre fechas (solo si ambas son válidas) ─────
+            // Coherencia entre fechas (solo si ambas son válidas) ─
             if (fechaNacResult.EsExitoso && fechaIngResult.EsExitoso)
             {
                 var coherencia = fechaIngResult.Valor.ValidarCoherenciaConNacimiento(fechaNacResult.Valor);
                 if (coherencia.EsFallido) errores.Add(coherencia.Error.Mensaje);
             }
 
-            // ── 3. Retornar todos los errores acumulados ───────────────────
+            //  Retornar todos los errores acumulados ─
             if (errores.Any())
                 return Resultado.Fallido<(Usuario, string)>(
                     Error.Validacion(string.Join(" | ", errores)));
 
-            // ── 4. Verificar CI único ──────────────────────────────────────
+            //  Verificar CI único ─
             var ciExiste = await _repositorio.ExisteCiAsync(ciResult.Valor.Numero);
             if (ciExiste)
                 return Resultado.Fallido<(Usuario, string)>(
                     Error.Conflicto($"Ya existe un usuario registrado con el CI {ciResult.Valor.ValorCompleto}."));
 
-            // ── 5. Verificar email único ───────────────────────────────────
+            //  Verificar email único 
             var emailExiste = await _repositorio.ExisteEmailAsync(emailResult.Valor.Valor);
             if (emailExiste)
                 return Resultado.Fallido<(Usuario, string)>(
                     Error.Conflicto($"El email {emailResult.Valor.Valor} ya está registrado."));
 
-            // ── 6. Generar nombre de usuario único ─────────────────────────
+            //  Generar nombre de usuario único ─
             var nombreUsuario = await GenerarNombreUsuarioUnicoAsync(
                 dto.Nombre, dto.ApellidoPaterno);
             if (nombreUsuario.EsFallido)
                 return Resultado.Fallido<(Usuario, string)>(nombreUsuario.Error);
 
-            // ── 7. Generar y hashear contraseña temporal ───────────────────
+            //  Generar y hashear contraseña temporal ─
             var passwordTemporal = GenerarPasswordSeguro();
             var hash = _hasher.Hashear(passwordTemporal);
 
-            // ── 8. Construir la entidad (constructor interno) ──────────────
+            //  Construir la entidad (constructor interno) 
             var usuario = new Usuario(
                 nombreUsuario: nombreUsuario.Valor.Valor,
                 passwordHash: hash,
@@ -118,7 +108,7 @@ namespace MicroServicioUsuarios.Aplicacion.Fabrica
             return Resultado.Exitoso((usuario, passwordTemporal));
         }
 
-        // ── Helpers privados ─────────────────────────────────────────────────
+        //  Helpers privados 
 
         private async Task<Resultado<NombreUsuario>> GenerarNombreUsuarioUnicoAsync(
             string nombre, string apellido)

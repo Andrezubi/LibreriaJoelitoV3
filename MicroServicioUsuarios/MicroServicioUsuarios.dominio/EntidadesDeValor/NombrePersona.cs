@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
-    /// <summary>
+    /// 
     /// Valida un segmento del nombre de una persona (nombre, apellido paterno, apellido materno).
     /// Reglas:
     /// - No puede estar vacío.
@@ -14,7 +14,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
     /// - Mínimo 2 caracteres, máximo según el límite indicado.
     /// - No puede empezar ni terminar con espacio o guion.
     /// - No puede tener dos espacios o guiones consecutivos.
-    /// </summary>
+    /// 
     public sealed class NombrePersona
     {
         public string Valor { get; }
@@ -63,10 +63,10 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
             return Resultado.Exitoso(new NombrePersona(capitalizado));
         }
 
-        /// <summary>
+        /// 
         /// Capitaliza cada palabra del nombre respetando partículas como "de", "del", "la".
         /// Ej: "maria DEL carmen" → "Maria del Carmen"
-        /// </summary>
+        /// 
         private static string CapitalizarNombre(string nombre)
         {
             var particulas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

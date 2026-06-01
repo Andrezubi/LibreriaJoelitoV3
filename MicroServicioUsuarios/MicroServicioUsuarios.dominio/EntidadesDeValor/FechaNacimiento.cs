@@ -5,12 +5,11 @@ using System.Text;
 
 namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
-    /// <summary>
     /// Fecha de nacimiento con reglas de negocio:
     /// - No puede ser futura.
     /// - El usuario debe tener al menos 18 años.
     /// - No puede ser anterior al año 1900.
-    /// </summary>
+    /// 
     public sealed class FechaNacimiento
     {
         public DateOnly Valor { get; }

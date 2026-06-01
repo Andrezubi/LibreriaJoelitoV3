@@ -9,15 +9,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
-    /// <summary>
-    /// Extraído de Servicio_Clientes/UsuarioServicio.InsertarAsync().
-    /// Diferencias:
-    ///   - Validaciones delegadas a Value Objects (no a ValidadorEmpleado estático).
-    ///   - Creación delegada a IUsuarioFabrica (Factory Method).
-    ///   - IdUsuario extraído del JWT, no hardcodeado a 1.
-    ///   - Bitácora registrada aquí, no en el Controller.
-    ///   - Email en fire-and-forget con Task.Run para no bloquear la respuesta.
-    /// </summary>
     public sealed class CrearUsuarioCasoDeUso
     {
         private readonly IUsuarioFabrica _fabrica;
@@ -40,21 +31,20 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         public async Task<Resultado<UsuarioDto>> EjecutarAsync(
             CrearUsuarioDto dto, int idUsuarioRegistrador)
         {
-            // 1. Fábrica valida todos los campos y construye la entidad
+            // Fábrica valida todos los campos y construye la entidad
             var fabricaResult = await _fabrica.CrearAsync(dto, idUsuarioRegistrador);
             if (fabricaResult.EsFallido)
                 return Resultado.Fallido<UsuarioDto>(fabricaResult.Error);
 
             var (usuario, passwordTemporal) = fabricaResult.Valor;
 
-            // 2. Persistir
             await _usuarioRepo.AgregarAsync(usuario);
             await _bitacoraRepo.RegistrarAsync(new Bitacora(
                 idUsuarioRegistrador, "INSERT", "Usuario",
                 $"Nuevo usuario registrado: {usuario.NombreUsuario}"));
             await _usuarioRepo.GuardarCambiosAsync();
 
-            // 4. Email en fire-and-forget — igual que Servicio_Clientes pero no corta si falla
+            // Email en fire-and-forget — igual que Servicio_Clientes pero no corta si falla
             _ = Task.Run(async () =>
             {
                 try
