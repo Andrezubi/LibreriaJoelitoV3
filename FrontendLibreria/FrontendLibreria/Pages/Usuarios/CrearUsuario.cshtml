@@ -15,23 +15,23 @@
                 <div class="col-md-4">
                     <label class="form-label">Nombre *</label>
                     <input asp-for="NuevoUsuario.Nombre" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.Nombre" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.Nombre" class="form-text  text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Apellido Paterno *</label>
                     <input asp-for="NuevoUsuario.ApellidoPaterno" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.ApellidoPaterno" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.ApellidoPaterno" class="form-text  text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Apellido Materno</label>
                     <input asp-for="NuevoUsuario.ApellidoMaterno" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.ApellidoMaterno" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.ApellidoMaterno" class="form-text  text-danger"></span>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">CI *</label>
                     <input asp-for="NuevoUsuario.Ci" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.Ci" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.Ci" class="form-text  text-danger"></span>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Complemento</label>
@@ -40,13 +40,13 @@
                 <div class="col-md-6">
                     <label class="form-label">Email *</label>
                     <input asp-for="NuevoUsuario.Email" type="email" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.Email" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.Email" class="form-text  text-danger"></span>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Teléfono * </label>
                     <input asp-for="NuevoUsuario.Telefono" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.Telefono" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.Telefono" class="form-text  text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Rol *</label>
@@ -55,12 +55,12 @@
                         <option value="Administrador">Administrador</option>
                         <option value="Empleado">Empleado</option>
                     </select>
-                    <span asp-validation-for="NuevoUsuario.Rol" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.Rol" class="form-text  text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fecha de Nacimiento *</label>
                     <input asp-for="NuevoUsuario.FechaNacimiento" type="date" class="form-control" />
-                    <span asp-validation-for="NuevoUsuario.FechaNacimiento" class="form-text text-muted"></span>
+                    <span asp-validation-for="NuevoUsuario.FechaNacimiento" class="form-text  text-danger"></span>
                 </div>
 
                 <div class="col-12 mt-4 d-flex justify-content-center gap-3">
