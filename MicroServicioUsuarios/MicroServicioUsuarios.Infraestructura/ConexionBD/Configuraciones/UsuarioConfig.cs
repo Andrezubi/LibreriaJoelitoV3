@@ -40,7 +40,7 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD.Configuraciones
             builder.Property(u => u.Estado)
                 .HasColumnName("estado");
 
-            // ── Datos personales ─────────────────────────────────────────────
+            //  Datos personales 
             builder.Property(u => u.Nombre)
                 .HasColumnName("nombre")
                 .HasMaxLength(100)
@@ -89,7 +89,7 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD.Configuraciones
                 .HasColumnName("fecha_ingreso")
                 .HasColumnType("date");
 
-            // ── Auditoría ────────────────────────────────────────────────────
+            //  Auditoría ─
             builder.Property(u => u.FechaRegistro)
                 .HasColumnName("fecha_registro");
 

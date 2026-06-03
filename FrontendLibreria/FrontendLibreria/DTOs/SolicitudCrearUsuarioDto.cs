@@ -13,6 +13,7 @@ namespace FrontendLibreria.DTOs
         public string? ApellidoMaterno { get; set; }
 
         [Required(ErrorMessage = "El CI es obligatorio.")]
+        [RegularExpression("^[1-9]\\d*$", ErrorMessage = "El CI no puede comenzar con ceros.")]
         public string Ci { get; set; } = "";
 
         public string? Complemento { get; set; }

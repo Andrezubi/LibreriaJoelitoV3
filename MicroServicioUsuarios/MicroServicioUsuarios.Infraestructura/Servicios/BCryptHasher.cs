@@ -5,10 +5,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Infraestructura.Servicios
 {
-    /// <summary>
-    /// Implementación de IPasswordHasher usando BCrypt.
-    /// Registrado como Scoped — una instancia por request.
-    /// </summary>
     public sealed class BcryptHasher : IContraHasher
     {
         private const int WorkFactor = 12;

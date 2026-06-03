@@ -8,11 +8,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Infraestructura.Servicios
 {
-    /// <summary>
-    /// Reutilizado de Servicio_Clientes/ServicioEmail.cs.
-    /// Cambios: IConfiguration → IOptions[EmailSettings] (más limpio en Clean Arch),
-    /// plantillas HTML adaptadas al contexto de usuarios del sistema.
-    /// </summary>
     public sealed class EmailServicio : IEmailServicio
     {
         private readonly EmailSettings _cfg;

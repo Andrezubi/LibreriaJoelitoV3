@@ -6,11 +6,6 @@ using System.Text.RegularExpressions;
 
 namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 {
-    /// <summary>
-    /// Carnet de Identidad boliviano.
-    /// Número: 5 a 8 dígitos.
-    /// Complemento (opcional): 1 dígito + 1 letra mayúscula. Ej: "3D", "1A".
-    /// </summary>
     public sealed class CarnetIdentidad
     {
         public string Numero { get; }
@@ -53,7 +48,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
             return Resultado.Exitoso(new CarnetIdentidad(numeroLimpio, complementoLimpio));
         }
 
-        /// <summary>Parsea un CI completo como string: "8051738" o "8051738 3D".</summary>
+        /// Parsea un CI completo como string: "8051738" o "8051738 3D".
         public static Resultado<CarnetIdentidad> Parsear(string valorCompleto)
         {
             if (string.IsNullOrWhiteSpace(valorCompleto))

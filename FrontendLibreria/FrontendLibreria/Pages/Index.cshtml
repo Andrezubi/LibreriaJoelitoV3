@@ -18,8 +18,10 @@
 
         @if (User.Identity != null && User.Identity.IsAuthenticated)
         {
+            @using System.Globalization
+
             <text>
-                Bienvenido al Sistema de Gestión de la Librería Joelito, @User.Identity.Name
+                Bienvenido al Sistema de Gestión de la Librería Joelito, @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(User.Identity.Name.Replace(".", " "))
             </text>
         }
         else

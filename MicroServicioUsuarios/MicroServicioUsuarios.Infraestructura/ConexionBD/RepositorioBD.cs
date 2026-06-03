@@ -8,10 +8,6 @@ using System.Text;
 
 namespace MicroServicioUsuarios.Infraestructura.ConexionBD
 {
-    /// <summary>
-    /// Singleton en el contenedor DI (registrado via AddDbContextPool).
-    /// EF Core gestiona internamente el pool de conexiones — no instanciar manualmente.
-    /// </summary>
     public sealed class RepositorioBD : DbContext
     {
         public RepositorioBD(DbContextOptions<RepositorioBD> options) : base(options) { }
@@ -22,8 +18,6 @@ namespace MicroServicioUsuarios.Infraestructura.ConexionBD
         public async Task InicializarEsquemaAsync()
         {
             await Database.EnsureCreatedAsync();
-
-            // EnsureCreated no agrega tablas nuevas cuando la base ya existe.
             await Database.ExecuteSqlRawAsync(
                 """
                 CREATE TABLE IF NOT EXISTS `Bitacora` (

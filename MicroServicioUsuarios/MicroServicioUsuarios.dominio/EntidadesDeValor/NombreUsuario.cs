@@ -11,11 +11,11 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
 
         private NombreUsuario(string valor) => Valor = valor;
 
-        /// <summary>
+        /// 
         /// Genera el nombre de usuario aplicando el protocolo:
         /// inicial del nombre + apellido + sufijo numérico si hay conflicto.
         /// Ej: Juan Pérez → jperez, jperez1, jperez2...
-        /// </summary>
+        /// 
         public static Resultado<NombreUsuario> Generar(string nombre, string apellido, int sufijo = 0)
         {
             if (string.IsNullOrWhiteSpace(nombre))
@@ -32,7 +32,7 @@ namespace MicroServicioUsuarios.dominio.EntidadesDeValor
             return Resultado.Exitoso(new NombreUsuario(valor));
         }
 
-        /// <summary>Valida un nombre de usuario ya existente.</summary>
+        /// Valida un nombre de usuario ya existente.
         public static Resultado<NombreUsuario> Crear(string valor)
         {
             if (string.IsNullOrWhiteSpace(valor) || valor.Length < 3)

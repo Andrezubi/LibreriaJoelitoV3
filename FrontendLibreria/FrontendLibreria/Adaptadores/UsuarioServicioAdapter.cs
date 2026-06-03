@@ -141,6 +141,11 @@ namespace FrontendLibreria.Adaptadores
                     _logger.LogDebug("📅 Fecha convertida: {Fecha}", fechaNac);
                 }
 
+                if (request.Ci.StartsWith("00000"))
+                {
+                  _logger.LogWarning("⚠️ CI inválido detectado: {CI}", request.Ci);
+                }
+
                 // El backend obtiene el usuario registrador desde el JWT, no desde el formulario.
                 var payload = new
                 {

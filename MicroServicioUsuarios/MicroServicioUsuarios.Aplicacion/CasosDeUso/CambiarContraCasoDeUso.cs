@@ -9,15 +9,6 @@ using MicroServicioUsuarios.dominio.EntidadesDeValor;
 using MicroServicioUsuarios.dominio.Entidades;
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
-    /// <summary>
-    /// Extraído de Servicio_Clientes/UsuarioServicio.CambiarContrasena()
-    /// + la lógica de confirmación que estaba en AuthController.
-    /// Diferencias:
-    ///   - Política de contraseña delegada a PasswordPolicy (Value Object).
-    ///   - Confirmación de contraseñas validada aquí, no en el controller.
-    ///   - Notificación por email al cambio exitoso.
-    ///   - Bitácora del evento de cambio.
-    /// </summary>
     public sealed class CambiarContraCasoDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
@@ -40,26 +31,26 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
         public async Task<Resultado> EjecutarAsync(
             int idUsuario, string nombreUsuario, CambiarPasswordDto dto)
         {
-            // 1. Confirmación de contraseñas (estaba en AuthController en Servicio_Clientes)
+            // Confirmación de contraseñas (estaba en AuthController en Servicio_Clientes)
             if (dto.NuevoPassword != dto.ConfirmarPassword)
                 return Resultado.Fallido(
                     Error.Validacion("La nueva contraseña y su confirmación no coinciden."));
 
-            // 2. Política — delegada a Value Object (en Servicio_Clientes era método privado)
+            // Política — delegada a Value Object (en Servicio_Clientes era método privado)
             var politica = PoliticaContraseña.Validar(dto.NuevoPassword);
             if (politica.EsFallido) return politica;
 
-            // 3. Obtener usuario
+            // Obtener usuario
             var usuario = await _usuarioRepo.ObtenerPorNombreUsuarioAsync(nombreUsuario);
             if (usuario is null)
                 return Resultado.Fallido(Error.NoEncontrado("Usuario no encontrado."));
 
-            // 4. Verificar contraseña actual
+            // Verificar contraseña actual
             if (!_hasher.Verificar(dto.PasswordActual, usuario.PasswordHash))
                 return Resultado.Fallido(
                     Error.Validacion("La contraseña actual es incorrecta."));
 
-            // 5. Actualizar — el método de la entidad limpia MustChangePassword
+            // Actualizar — el método de la entidad limpia MustChangePassword
             var nuevoHash = _hasher.Hashear(dto.NuevoPassword);
             usuario.ActualizarPassword(nuevoHash, idUsuario);
 
@@ -68,7 +59,7 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
                 idUsuario, "UPDATE", "Usuario", "Contraseña del usuario actualizada"));
             await _usuarioRepo.GuardarCambiosAsync();
 
-            // 7. Email de notificación (fire-and-forget)
+            // Email de notificación (fire-and-forget)
             _ = Task.Run(async () =>
             {
                 try { await _email.EnviarNotificacionCambioPasswordAsync(usuario.Email, nombreUsuario); }

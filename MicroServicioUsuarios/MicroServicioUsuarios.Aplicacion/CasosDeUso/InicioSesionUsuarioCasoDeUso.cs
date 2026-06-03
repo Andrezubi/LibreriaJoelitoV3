@@ -7,14 +7,7 @@ using MicroServicioUsuarios.dominio.Interfaces;
 using MicroServicioUsuarios.Aplicacion.InterfacesExt;
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
-    /// <summary>
-    /// Extraído de Servicio_Clientes/UsuarioServicio.Login().
-    /// Diferencias:
-    ///   - Retorna Result[LoginResponseDto] en lugar de LoginResultado con bool.
-    ///   - Mensaje de error unificado ("Credenciales inválidas") — no revela
-    ///     si el usuario existe o si la contraseña es incorrecta (buena práctica de seguridad).
-    /// </summary>
-    public sealed class InicioSesionUsuarioCasoDeUso
+   public sealed class InicioSesionUsuarioCasoDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
         private readonly IContraHasher _hasher;

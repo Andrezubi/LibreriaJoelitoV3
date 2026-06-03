@@ -31,9 +31,7 @@ namespace MicroServicioUsuarios.Controllers
             _eliminarUseCase = eliminarUseCase;
         }
 
-        /// <summary>
         /// Select — retorna todos los usuarios sin exponer PasswordHash.
-        /// </summary>
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> ObtenerTodos()
@@ -44,11 +42,8 @@ namespace MicroServicioUsuarios.Controllers
 
             return Ok(resultado.Valor);
         }
-
-        /// <summary>
         /// Insert — crea un usuario con generación automática de nombre de usuario
         /// y contraseña temporal enviada por email.
-        /// </summary>
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] CrearUsuarioDto dto)
@@ -64,9 +59,8 @@ namespace MicroServicioUsuarios.Controllers
             return CreatedAtAction(nameof(ObtenerTodos), new { id = resultado.Valor.Id }, resultado.Valor);
         }
 
-        /// <summary>
         /// Update — actualiza datos personales del usuario (sin cambiar password desde aquí).
-        /// </summary>
+        
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(int id, [FromBody] ActualizarUsuarioDto dto)
@@ -82,9 +76,8 @@ namespace MicroServicioUsuarios.Controllers
             return Ok(resultado.Valor);
         }
 
-        /// <summary>
         /// Baja Lógica — desactiva un usuario sin eliminarlo de la BD.
-        /// </summary>
+        
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Eliminar(int id)
@@ -100,11 +93,6 @@ namespace MicroServicioUsuarios.Controllers
             return Ok(new { mensaje = "Usuario eliminado exitosamente." });
         }
 
-        /// <summary>
-        /// Cambio de contraseña — protegido con [Authorize].
-        /// Requiere contraseña actual + nueva contraseña (2 veces).
-        /// Aplica políticas de seguridad y registra en bitácora.
-        /// </summary>
         [Authorize]
         [HttpPost("cambiar-password")]
         public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordDto dto)

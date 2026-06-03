@@ -9,11 +9,6 @@ using MicroServicioUsuarios.dominio.Entidades;
 
 namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
 {
-    /// <summary>
-    /// En Servicio_Clientes era ObtenerTodo() retornando DataTable.
-    /// Aquí retorna IEnumerable[UsuarioDto] tipado — sin exponer PasswordHash.
-    /// El Select no debe desplegar el password (requisito de la rúbrica).
-    /// </summary>
     public sealed class ObtenerUsuariosCasoDeUso
     {
         private readonly IUsuarioRepositorio _repo;
@@ -30,11 +25,6 @@ namespace MicroServicioUsuarios.Aplicacion.CasosDeUso
             return Resultado.Exitoso(dtos);
         }
     }
-
-    /// <summary>
-    /// En Servicio_Clientes era Actualizar() en UsuarioServicio con ValidadorEmpleado.
-    /// Aquí cada campo se valida con su Value Object antes de actualizar la entidad.
-    /// </summary>
     public sealed class ActualizarUsuarioCasoDeUso
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
