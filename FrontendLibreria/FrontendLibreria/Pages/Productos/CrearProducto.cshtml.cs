@@ -64,8 +64,17 @@ namespace FrontendLibreria.Pages.Productos
 
             if (!result.Success )
             {
-                var errores = result.Errors;
-                ModelState.AddModelError(string.Empty, string.Join(", ", errores));
+                //var errores = result.Errors;
+                //ModelState.AddModelError(string.Empty, string.Join(", ", errores));
+
+                foreach (var error in result.Errors)
+                {
+                    //var campo = error.Campo;
+
+                    ModelState.AddModelError(
+                        error.Campo,
+                        error.Mensaje);
+                }
 
                 await CargarListasAsync();
                 return Page();

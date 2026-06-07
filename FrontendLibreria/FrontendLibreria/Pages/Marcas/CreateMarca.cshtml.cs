@@ -41,8 +41,26 @@ namespace FrontendLibreria.Pages.Marcas
 
             if (!result.Success)
             {
+                //foreach (var error in result.Errors)
+                //    ModelState.AddModelError(string.Empty, error);
+
                 foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error);
+                {
+                    var campo = error.Campo ?? "";
+
+                    campo = campo.Replace("marca.", "");
+                    campo = campo.Replace("Marca.", "");
+
+                    if (string.IsNullOrWhiteSpace(campo))
+                    {
+                        ModelState.AddModelError(string.Empty, error.Mensaje);
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(campo, error.Mensaje);
+                    }
+                }
+
                 return Page();
             }
 

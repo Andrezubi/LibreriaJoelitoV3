@@ -155,36 +155,40 @@
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label font-weight-bold">Nombre</label>
+                            <label class="form-label font-weight-bold">Nombre <span class="text-danger">*</span></label>
                             <input type="text" name="Nombre" id="edit_nombre" class="form-control" required />
+                            <span id="error_Nombre" class="text-danger small d-block"></span>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Categoría</label>
+                            <label class="form-label">Categoría <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_categoria" name="IdCategoria" required>
                                 @foreach (var cat in Model.Categorias)
                                 {
                                     <option value="@cat.Id">@cat.Nombre</option>
                                 }
                             </select>
+                            <span id="error_IdCategoria" class="text-danger small d-block"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Marca</label>
+                            <label class="form-label">Marca <span class="text-danger">*</span></label>
                             <select class="form-select" id="edit_marca" name="IdMarca" required>
                                 @foreach (var marca in Model.Marcas)
                                 {
                                     <option value="@marca.Id">@marca.Nombre</option>
                                 }
                             </select>
+                            <span id="error_IdMarca" class="text-danger small d-block"></span>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Stock</label>
+                            <label class="form-label">Stock <span class="text-danger">*</span></label>
                             <input type="text" name="Stock" id="edit_stock" class="form-control" required />
+                            <span id="error_Stock" class="text-danger small d-block"></span>
                         </div>
                     </div>
                 </div>
@@ -225,6 +229,17 @@
             }
         });
 
+        function limpiarErroresUpdate() {
+            const alerta = document.getElementById('alertaErrorModal');
+            alerta.style.display = "none";
+            alerta.innerHTML = "";
+
+            document.getElementById('error_Nombre').textContent = "";
+            document.getElementById('error_IdCategoria').textContent = "";
+            document.getElementById('error_IdMarca').textContent = "";
+            document.getElementById('error_Stock').textContent = "";
+        }
+
         function abrirModalUpdate(id, nombre, idCategoria, idMarca, stock) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nombre').value = nombre;
@@ -232,9 +247,7 @@
             document.getElementById('edit_marca').value = idMarca;
             document.getElementById('edit_stock').value = stock;
 
-            const alerta = document.getElementById('alertaErrorModal');
-            alerta.style.display = "none";
-            alerta.textContent = "";
+            limpiarErroresUpdate();
 
             new bootstrap.Modal(document.getElementById('modalEditarProducto')).show();
         }
@@ -244,8 +257,7 @@
             const formData = new FormData(form);
             const alerta = document.getElementById('alertaErrorModal');
 
-            alerta.style.display = "none";
-            alerta.innerHTML = "";
+            limpiarErroresUpdate();
 
             fetch('?handler=Update', {
                 method: 'POST',
@@ -258,20 +270,45 @@
             .then(data => {
                 if (data.success) {
                     location.reload();
+                    return;
                 }
-                else if (data.errores) {
-                    let html = "<ul>";
-                    data.errores.forEach(err => { html += `<li>${err}</li>`; });
-                    html += "</ul>";
-                    alerta.innerHTML = html;
-                    alerta.style.display = "block";
+
+                if (data.errores) {
+                    data.errores.forEach(err => {
+                        const campoOriginal = err.campo || err.Campo || "";
+                        const mensaje = err.mensaje || err.Mensaje || "Error de validación";
+
+                        const campo = campoOriginal.replace("producto.", "");
+
+                        if (campo === "Nombre") {
+                            document.getElementById('error_Nombre').textContent = mensaje;
+                        }
+                        else if (campo === "IdCategoria") {
+                            document.getElementById('error_IdCategoria').textContent = mensaje;
+                        }
+                        else if (campo === "IdMarca") {
+                            document.getElementById('error_IdMarca').textContent = mensaje;
+                        }
+                        else if (campo === "Stock") {
+                            document.getElementById('error_Stock').textContent = mensaje;
+                        }
+                        else {
+                            alerta.innerHTML += `<div>${mensaje}</div>`;
+                            alerta.style.display = "block";
+                        }
+                    });
+
+                    return;
                 }
-                else {
-                    alerta.textContent = data.message;
-                    alerta.style.display = "block";
-                }
+
+                alerta.textContent = data.message || "Ocurrió un error al actualizar el producto.";
+                alerta.style.display = "block";
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alerta.textContent = "Ocurrió un error al comunicarse con el servidor.";
+                alerta.style.display = "block";
+            });
         }
     </script>
 }

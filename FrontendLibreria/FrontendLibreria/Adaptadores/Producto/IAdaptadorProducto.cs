@@ -9,8 +9,8 @@ namespace FrontendLibreria.Adaptadores.Producto
         Task<List<CategoriaDto>> GetCategoriasAsync();
         Task<List<MarcaDto>> GetMarcasAsync();
         Task<List<PresentacionDto>> GetPresentacionesAsync();
-        Task<ResultadoApi> CrearProductoAsync(ProductoDto producto,int idPresentacion,int FactorConversion, decimal precioVenta);
-        Task<ResultadoApi> UpdateAsync(ProductoDto producto);
+        Task<ResultadoProductoApi> CrearProductoAsync(ProductoDto producto,int idPresentacion,int FactorConversion, decimal precioVenta);
+        Task<ResultadoProductoApi> UpdateAsync(ProductoDto producto);
         Task<ResultadoApi> DeleteAsync(int id, int idUsuario);
         Task<ResultadoApi> AgregarPresentacionAsync(SolicitudAgregarPresentacion request);
 

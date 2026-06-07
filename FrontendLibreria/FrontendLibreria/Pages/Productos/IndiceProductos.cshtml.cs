@@ -82,14 +82,32 @@ namespace FrontendLibreria.Pages.Productos
 
         public async Task<JsonResult> OnPostUpdateAsync([FromForm] ProductoDto producto)
         {
+            //producto.IdUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
+            //var result = await _productoAdapter.UpdateAsync(producto);
+
+            //TempData["MensajeExito"] = "El producto fue editado correctamente.";
+            //return new JsonResult(new { success = true });
+
             producto.IdUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
+
             var result = await _productoAdapter.UpdateAsync(producto);
 
             if (!result.Success)
-                return new JsonResult(new { success = false, errores = result.Errors });
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    errores = result.Errors
+                });
+            }
 
             TempData["MensajeExito"] = "El producto fue editado correctamente.";
-            return new JsonResult(new { success = true });
+
+            return new JsonResult(new
+            {
+                success = true
+            });
+
         }
     }
 }   

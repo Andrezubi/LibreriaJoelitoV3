@@ -46,6 +46,19 @@ namespace MicroServicioProductos.Aplicacion.Servicios
 
         public Result<int> Insertar(Producto producto, int idPresentacion, int factorConversion, decimal precioVenta)
         {
+            var validationResults = productoValidador.ValidarProducto(producto);
+
+            if (validationResults.Any())
+            {
+                var errores = validationResults
+                    .Select(v => new ErrorValidacion(
+                        v.MemberNames.FirstOrDefault() ?? string.Empty,
+                        v.ErrorMessage ?? string.Empty))
+                    .ToList();
+
+                return Result<int>.Failure(errores);
+            }
+
             // 1. Validaciones básicas
             if (idPresentacion <= 0) return Result<int>.Failure("Debe seleccionar una presentación válida.");
             if (factorConversion <= 0) return Result<int>.Failure("El factor de conversión debe ser mayor a cero.");
@@ -114,15 +127,13 @@ namespace MicroServicioProductos.Aplicacion.Servicios
 
             if (validationResults.Any())
             {
-                var errors = validationResults
-                    .Select(v =>
-                    {
-                        var field = v.MemberNames.FirstOrDefault() ?? "General";
-                        return $"{v.ErrorMessage}";
-                    })
+                var errores = validationResults
+                    .Select(v => new ErrorValidacion(
+                        v.MemberNames.FirstOrDefault() ?? string.Empty,
+                        v.ErrorMessage ?? string.Empty))
                     .ToList();
 
-                return Result.Failure(errors);
+                return Result<int>.Failure(errores);
             }
 
             productoRepositorio.Actualizar(producto);

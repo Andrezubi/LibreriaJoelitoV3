@@ -31,18 +31,18 @@ namespace MicroServicioProductos.Dominio.Validadores
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                errores.Add(new ValidationResult("El Nombre de la marca es obligatorio.", new[] { "Marca.Nombre" }));
+                errores.Add(new ValidationResult("El Nombre de la marca es obligatorio.", new[] { "Nombre" }));
                 return; 
             }
 
             if (nombre.Length < 2 || nombre.Length > 250)
             {
-                errores.Add(new ValidationResult("El Nombre debe tener entre 2 y 250 caracteres.", new[] { "Marca.Nombre" }));
+                errores.Add(new ValidationResult("El Nombre debe tener entre 2 y 250 caracteres.", new[] { "Nombre" }));
             }
 
             if (!Regex.IsMatch(nombre, @"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s&\.\-]+$"))
             {
-                errores.Add(new ValidationResult("El Nombre contiene caracteres no permitidos.", new[] { "Marca.Nombre" }));
+                errores.Add(new ValidationResult("El Nombre contiene caracteres no permitidos.", new[] { "Nombre" }));
             }
         }
 
@@ -50,13 +50,13 @@ namespace MicroServicioProductos.Dominio.Validadores
         {
             if (string.IsNullOrWhiteSpace(descripcion))
             {
-                errores.Add(new ValidationResult("La Descripción de la marca es obligatoria.", new[] { "Marca.Descripcion" }));
+                errores.Add(new ValidationResult("La Descripción de la marca es obligatoria.", new[] { "Descripcion" }));
                 return;
             }
 
             if (descripcion.Length > 500)
             {
-                errores.Add(new ValidationResult("La Descripción no puede exceder los 500 caracteres.", new[] { "Marca.Descripcion" }));
+                errores.Add(new ValidationResult("La Descripción no puede exceder los 500 caracteres.", new[] { "Descripcion" }));
             }
         }
 
@@ -66,11 +66,11 @@ namespace MicroServicioProductos.Dominio.Validadores
             {
                 if (!Regex.IsMatch(url, @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$"))
                 {
-                    errores.Add(new ValidationResult("El formato de la Página Web no es válido.", new[] { "Marca.PaginaWeb" }));
+                    errores.Add(new ValidationResult("El formato de la Página Web no es válido.", new[] { "PaginaWeb" }));
                 }
                 if (url.Length > 250)
                 {
-                    errores.Add(new ValidationResult("La URL es demasiado larga.", new[] { "Marca.PaginaWeb" }));
+                    errores.Add(new ValidationResult("La URL es demasiado larga.", new[] { "PaginaWeb" }));
                 }
             }
         }
@@ -79,13 +79,13 @@ namespace MicroServicioProductos.Dominio.Validadores
         {
             if (string.IsNullOrWhiteSpace(industria))
             {
-                errores.Add(new ValidationResult("La Industria es obligatoria.", new[] { "Marca.Industria" }));
+                errores.Add(new ValidationResult("La Industria es obligatoria.", new[] { "Industria" }));
                 return;
             }
 
             if (industria.Length < 3 || industria.Length > 100)
             {
-                errores.Add(new ValidationResult("El campo Industria debe tener entre 3 y 100 caracteres.", new[] { "Marca.Industria" }));
+                errores.Add(new ValidationResult("El campo Industria debe tener entre 3 y 100 caracteres.", new[] { "Industria" }));
             }
         }
     }

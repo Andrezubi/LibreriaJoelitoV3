@@ -45,12 +45,12 @@ namespace FrontendLibreria.Adaptadores.Producto
         public async Task<List<PresentacionDto>> GetPresentacionesAsync()
             => await _http.GetFromJsonAsync<List<PresentacionDto>>("api/Producto/presentaciones") ?? new();
 
-        public async Task<ResultadoApi> UpdateAsync(ProductoDto producto)
+        public async Task<ResultadoProductoApi> UpdateAsync(ProductoDto producto)
         {
             var response = await _http.PutAsJsonAsync($"api/Producto/{producto.Id}", producto);
-            if (response.IsSuccessStatusCode) return ResultadoApi.Ok();
-            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorApi>();
-            return ResultadoApi.Fail(error?.Errores ?? new List<string> { "Error desconocido" });
+            if (response.IsSuccessStatusCode) return ResultadoProductoApi.Ok();
+            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorProductoApi>();
+            return ResultadoProductoApi.Fail(error?.Errores ?? new List<ErrorValidacionDto> { new ErrorValidacionDto { Campo = "", Mensaje = "Error desconocido" } });
         }
 
         public async Task<ResultadoApi> DeleteAsync(int id, int idUsuario)
@@ -79,12 +79,18 @@ namespace FrontendLibreria.Adaptadores.Producto
             var error = await response.Content.ReadFromJsonAsync<RespuestaErrorApi>();
             return ResultadoApi.Fail(error?.Errores ?? new List<string> { "Error al crear categoría" });
         }
-        public async Task<ResultadoApi> CrearProductoAsync(ProductoDto producto,int idPresentacion, int factorConversion,decimal precioVenta)
+        public async Task<ResultadoProductoApi> CrearProductoAsync(ProductoDto producto,int idPresentacion, int factorConversion,decimal precioVenta)
         {
             var response = await _http.PostAsJsonAsync($"api/Producto/{idPresentacion}/{factorConversion}/{precioVenta}", producto);
-            if (response.IsSuccessStatusCode) return ResultadoApi.Ok();
-            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorApi>();
-            return ResultadoApi.Fail(error?.Errores ?? new List<string> { "Error desconocido" });
+            if (response.IsSuccessStatusCode) return ResultadoProductoApi.Ok();
+            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorProductoApi>();
+            return ResultadoProductoApi.Fail(error?.Errores ?? new List<ErrorValidacionDto> {
+                new ErrorValidacionDto
+                {
+                    Campo = "",
+                    Mensaje = "Error desconocido"
+                }
+            });
 
         }                                                                                              
 
