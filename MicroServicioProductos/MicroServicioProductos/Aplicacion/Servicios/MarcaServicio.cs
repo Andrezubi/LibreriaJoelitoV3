@@ -32,13 +32,20 @@ namespace MicroServicioProductos.Aplicacion.Servicios
             if (validationResults.Any())
             {
                 var errors = validationResults
-                    .Select(v => $"{v.ErrorMessage}")
+                    .Select(v => new ErrorValidacion(
+                        v.MemberNames.FirstOrDefault() ?? "General",
+                        v.ErrorMessage ?? "Error de validación"))
                     .ToList();
+
                 return Result.Failure(errors);
             }
 
             if (marcaRepositorio.ExisteDuplicado(marca))
-                return Result.Failure("Ya existe una marca registrada con este nombre.");
+            {
+                return Result.Failure(
+                    "Nombre",
+                    "Ya existe una marca registrada con este nombre.");
+            }
 
             marcaRepositorio.Insertar(marca);
             return Result.Success();
@@ -50,13 +57,20 @@ namespace MicroServicioProductos.Aplicacion.Servicios
             if (validationResults.Any())
             {
                 var errors = validationResults
-                    .Select(v => $"{v.ErrorMessage}")
+                    .Select(v => new ErrorValidacion(
+                        v.MemberNames.FirstOrDefault() ?? "General",
+                        v.ErrorMessage ?? "Error de validación"))
                     .ToList();
+
                 return Result.Failure(errors);
             }
 
             if (marcaRepositorio.ExisteDuplicado(marca))
-                return Result.Failure("Ya existe una marca registrada con este nombre.");
+            {
+                return Result.Failure(
+                    "Nombre",
+                    "Ya existe una marca registrada con este nombre.");
+            }
 
             marcaRepositorio.Actualizar(marca);
             return Result.Success();

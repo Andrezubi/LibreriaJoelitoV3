@@ -119,20 +119,24 @@
                 <div class="modal-body">
                     <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
                         <input type="text" id="edit_nombre" name="MarcaEditar.Nombre" class="form-control" required />
+                        <span id="error_Nombre" class="text-danger small d-block"></span>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Industria</label>
+                        <label class="form-label">Industria <span class="text-danger">*</span></label>
                         <input type="text" id="edit_industria" name="MarcaEditar.Industria" class="form-control" />
+                        <span id="error_Industria" class="text-danger small d-block"></span>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Página Web</label>
                         <input type="text" id="edit_web" name="MarcaEditar.PaginaWeb" class="form-control" />
+                        <span id="error_PaginaWeb" class="text-danger small d-block"></span>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Descripción</label>
+                        <label class="form-label">Descripción <span class="text-danger">*</span></label>
                         <textarea id="edit_desc" name="MarcaEditar.Descripcion" class="form-control"></textarea>
+                        <span id="error_Descripcion" class="text-danger small d-block"></span>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -147,22 +151,67 @@
 @Html.AntiForgeryToken()
 
 <script>
+    function limpiarErroresMarca() {
+        const alerta = document.getElementById('alertaErrorModal');
+
+        alerta.style.display = 'none';
+        alerta.innerHTML = '';
+
+        document.getElementById('error_Nombre').textContent = '';
+        document.getElementById('error_Industria').textContent = '';
+        document.getElementById('error_PaginaWeb').textContent = '';
+        document.getElementById('error_Descripcion').textContent = '';
+    }
+
     function abrirModalEditar(id, nombre, desc, web, industria) {
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_nombre').value = nombre;
         document.getElementById('edit_desc').value = desc ?? '';
         document.getElementById('edit_web').value = web ?? '';
         document.getElementById('edit_industria').value = industria ?? '';
-        document.getElementById('alertaErrorModal').style.display = 'none';
+
+        limpiarErroresMarca();
+
         new bootstrap.Modal(document.getElementById('modalEditarMarca')).show();
+    }
+
+    function obtenerCampoLimpio(campoOriginal) {
+        if (!campoOriginal) {
+            return "";
+        }
+
+        return campoOriginal
+            .replace("marca.", "")
+            .replace("Marca.", "")
+            .replace("MarcaEditar.", "");
+    }
+
+    function mostrarErrorCampo(campo, mensaje) {
+        const alerta = document.getElementById('alertaErrorModal');
+
+        if (campo === "Nombre") {
+            document.getElementById('error_Nombre').textContent = mensaje;
+        }
+        else if (campo === "Industria") {
+            document.getElementById('error_Industria').textContent = mensaje;
+        }
+        else if (campo === "PaginaWeb") {
+            document.getElementById('error_PaginaWeb').textContent = mensaje;
+        }
+        else if (campo === "Descripcion") {
+            document.getElementById('error_Descripcion').textContent = mensaje;
+        }
+        else {
+            alerta.innerHTML += `<div>${mensaje}</div>`;
+            alerta.style.display = 'block';
+        }
     }
 
     function enviarUpdate() {
         const form = document.querySelector('#formEditarMarca');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
+
+        limpiarErroresMarca();
+
         fetch('?handler=Update', {
             method: 'POST',
             body: new FormData(form),
@@ -175,11 +224,32 @@
         .then(data => {
             if (data.success) {
                 location.reload();
-            } else {
-                const alerta = document.getElementById('alertaErrorModal');
-                alerta.innerHTML = data.message;
-                alerta.style.display = 'block';
+                return;
             }
+
+            if (data.errores) {
+                data.errores.forEach(error => {
+                    const campoOriginal = error.campo || error.Campo || "";
+                    const mensaje = error.mensaje || error.Mensaje || "Error de validación.";
+
+                    const campo = obtenerCampoLimpio(campoOriginal);
+
+                    mostrarErrorCampo(campo, mensaje);
+                });
+
+                return;
+            }
+
+            const alerta = document.getElementById('alertaErrorModal');
+            alerta.innerHTML = data.message || "Ocurrió un error al actualizar la marca.";
+            alerta.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            const alerta = document.getElementById('alertaErrorModal');
+            alerta.innerHTML = "Ocurrió un error al comunicarse con el servidor.";
+            alerta.style.display = 'block';
         });
     }
 </script>

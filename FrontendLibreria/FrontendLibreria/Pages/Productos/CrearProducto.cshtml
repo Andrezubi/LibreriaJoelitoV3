@@ -16,13 +16,13 @@
     <form method="post">
         
         <div class="form-group mb-3">
-            <label>Nombre</label>
+            <label>Nombre <span class="text-danger">*</span></label>
             <input asp-for="@Model.Nombre" type="text" required class="form-control" placeholder="Ej: Lapiz" />
             <span asp-validation-for="Nombre" class="text-danger"></span>
         </div>
 
         <div class="form-group mb-3">
-            <label>Categoría</label>
+            <label>Categoría <span class="text-danger">*</span></label>
             <select asp-for="@Model.IdCategoria" class="form-control">
                 <option value=0>Elija una categoría</option>
                 @foreach (var categoria in Model.Categorias)
@@ -37,7 +37,7 @@
         </div>
 
         <div class="form-group mb-3">
-            <label>Marca</label>
+            <label>Marca <span class="text-danger">*</span></label>
             <select asp-for="@Model.IdMarca" class="form-control">
                 <option value=0>Elija una marca</option>
                 @foreach (var marca in Model.Marcas)
@@ -50,7 +50,7 @@
         </div>
 
         <div class="form-group mb-4">
-            <label>Stock Inicial</label>
+            <label>Stock Inicial <span class="text-danger">*</span></label>
             <input asp-for="@Model.Stock" type="number" required class="form-control" placeholder="Ej: 20" />
             <span asp-validation-for="Stock" class="text-danger"></span>
         </div>
@@ -60,7 +60,7 @@
 
         <div class="row">
             <div class="col-md-4 form-group mb-3">
-                <label>Presentación</label>
+                <label>Presentación <span class="text-danger">*</span></label>
                 <select asp-for="IdPresentacionSeleccionada" class="form-control" id="selectPresentacion" required>
                     <option value="">Elija una presentación</option>
                     @foreach (var pres in Model.Presentaciones)
@@ -73,13 +73,13 @@
             </div>
 
             <div class="col-md-4 form-group mb-3" id="grupoFactor" style="display:none;">
-                <label>Unidades por Presentación</label>
+                <label>Unidades por Presentación <span class="text-danger">*</span></label>
                 <input asp-for="FactorConversion" type="number" min="1" class="form-control" id="inputFactor" />
                 <small class="text-muted">Ej: Si es "Caja", ¿cuántas unidades trae?</small>
             </div>
 
             <div class="col-md-4 form-group mb-3">
-                <label>Precio de Venta (Bs.)</label>
+                <label>Precio de Venta (Bs.) <span class="text-danger">*</span></label>
                 <input asp-for="PrecioVenta" type="number" step="0.01" min="0.1" class="form-control" placeholder="Ej: 15.50" required />
             </div>
         </div>

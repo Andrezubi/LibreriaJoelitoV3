@@ -40,26 +40,38 @@ namespace FrontendLibreria.Adaptadores.Marca
             return await response.Content.ReadFromJsonAsync<List<MarcaDto>>() ?? new();
         }
 
-        public async Task<ResultadoApi> InsertarAsync(MarcaDto marca)
+        public async Task<ResultadoProductoApi> InsertarAsync(MarcaDto marca)
         {
             var response = await _http.PostAsJsonAsync("api/Marca", marca);
 
             if (response.IsSuccessStatusCode)
-                return ResultadoApi.Ok();
+                return ResultadoProductoApi.Ok();
 
-            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorApi>();
-            return ResultadoApi.Fail(error?.Errores ?? new List<string> { "Error desconocido" });
+            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorProductoApi>();
+            return ResultadoProductoApi.Fail(error?.Errores ?? new List<ErrorValidacionDto> {
+                new ErrorValidacionDto
+                {
+                    Campo = "",
+                    Mensaje = "Error desconocido"
+                }
+            });
         }
 
-        public async Task<ResultadoApi> ActualizarAsync(MarcaDto marca)
+        public async Task<ResultadoProductoApi> ActualizarAsync(MarcaDto marca)
         {
             var response = await _http.PutAsJsonAsync($"api/Marca/{marca.Id}", marca);
 
             if (response.IsSuccessStatusCode)
-                return ResultadoApi.Ok();
+                return ResultadoProductoApi.Ok();
 
-            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorApi>();
-            return ResultadoApi.Fail(error?.Errores ?? new List<string> { "Error desconocido" });
+            var error = await response.Content.ReadFromJsonAsync<RespuestaErrorProductoApi>();
+            return ResultadoProductoApi.Fail(error?.Errores ?? new List<ErrorValidacionDto> {
+                new ErrorValidacionDto
+                {
+                    Campo = "",
+                    Mensaje = "Error desconocido"
+                }
+            });
         }
 
         public async Task<ResultadoApi> EliminarAsync(int id, int idUsuario)

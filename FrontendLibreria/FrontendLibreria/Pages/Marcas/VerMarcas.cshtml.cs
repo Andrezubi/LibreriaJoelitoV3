@@ -42,8 +42,11 @@ namespace FrontendLibreria.Pages.Marcas
 
                 if (!resultado.Success)
                 {
-                    string errorAgrupado = string.Join("<br/>• ", resultado.Errors);
-                    return new JsonResult(new { success = false, message = "• " + errorAgrupado });
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        errores = resultado.Errors
+                    });
                 }
 
                 TempData["MensajeExito"] = $"Marca '{MarcaEditar.Nombre}' actualizada correctamente.";
