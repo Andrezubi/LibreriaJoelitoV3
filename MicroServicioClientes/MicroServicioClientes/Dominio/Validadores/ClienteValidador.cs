@@ -28,18 +28,24 @@ namespace MicroServicioClientes.Dominio.Validadores
 
         void ValidarRazonSocial(string razonSocial, List<ValidationResult> errores)
         {
+            razonSocial = Regex.Replace((razonSocial ?? string.Empty).Trim(), @"\s+", " ");
+
             if (string.IsNullOrWhiteSpace(razonSocial))
             {
                 errores.Add(new ValidationResult("La Razón Social es obligatoria.", new[] { "_cliente.RazonSocial" }));
                 return;
             }
+
             if (!Regex.IsMatch(razonSocial, @"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$"))
             {
                 errores.Add(new ValidationResult("La Razón Social solo puede contener letras y espacios.", new[] { "_cliente.RazonSocial" }));
             }
         }
+
         void ValidarCI(string ci, List<ValidationResult> errores)
         {
+            ci = Regex.Replace((ci ?? string.Empty).Trim(), @"\s+", " ");
+
             if (string.IsNullOrWhiteSpace(ci))
             {
                 errores.Add(new ValidationResult("El CI es obligatorio."));
@@ -49,7 +55,7 @@ namespace MicroServicioClientes.Dominio.Validadores
             if (!Regex.IsMatch(ci, @"^\d+$"))
             {
                 errores.Add(new ValidationResult("El CI solo puede contener números."));
-                return; 
+                return;
             }
 
             if (ci.Length < 6 || ci.Length > 10)
@@ -73,6 +79,8 @@ namespace MicroServicioClientes.Dominio.Validadores
 
         void ValidarEmail(string? email, List<ValidationResult> errores)
         {
+            email = Regex.Replace((email ?? string.Empty).Trim(), @"\s+", " ");
+
             if (!string.IsNullOrWhiteSpace(email))
             {
                 if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
@@ -84,6 +92,8 @@ namespace MicroServicioClientes.Dominio.Validadores
 
         void ValidarComplemento(string? complemento, List<ValidationResult> errores)
         {
+            complemento = Regex.Replace((complemento ?? string.Empty).Trim(), @"\s+", " ");
+
             if (!string.IsNullOrWhiteSpace(complemento))
             {
                 if (!Regex.IsMatch(complemento, @"^[0-9][A-Z]$"))

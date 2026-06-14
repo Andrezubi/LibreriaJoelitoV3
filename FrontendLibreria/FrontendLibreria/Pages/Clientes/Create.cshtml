@@ -11,21 +11,21 @@
     </div>
 
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
     <form method="post">
 
         <div class="form-group mb-3">
-            <label>Razón Social</label>
+            <label>Razón Social <strong class="text-danger">*</strong></label>
             <input asp-for="RazonSocial" type="text" required class="form-control" placeholder="Ej: Juan Pérez López" />
             <span asp-validation-for="RazonSocial" class="text-danger"></span>
         </div>
 
         <div class="row">
             <div class="col-md-8 form-group mb-3">
-                <label>Carnet de Identidad</label>
+                <label>Carnet de Identidad <strong class="text-danger">*</strong></label>
                 <input asp-for="Ci" type="text" required class="form-control" placeholder="Ej: 1234567" />
                 <span asp-validation-for="Ci" class="text-danger"></span>
-            </div>
+            </div> 
+
             <div class="col-md-4 form-group mb-3">
                 <label>Complemento</label>
                 <input asp-for="Complemento" type="text" class="form-control" placeholder="Ej: 1A" />
