@@ -1,0 +1,689 @@
+@page
+@model FrontendLibreria.Pages.Ventas.RegistrarModel
+
+@{
+    ViewData["Title"] = "Registrar Venta";
+}
+
+<div class="ventas-page">
+    <div class="content-area">
+        <div class="ventas-card">
+            <h2 class="ventas-titulo">REGISTRO DE VENTA</h2>
+
+            <div class="card p-4 shadow-sm mb-4">
+                <form method="post" id="ventaForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3 align-items-center bg-light p-3 rounded border">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Fecha:</label>
+                            <input type="text" class="form-control" value="@DateTime.Now.ToString("dd/MM/yyyy")" disabled>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="ciCliente" class="form-label fw-bold">
+                                CI/NIT Cliente: <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="input-group">
+                                <input type="text" id="ciCliente" class="form-control" placeholder="Buscar CI/NIT..." required autocomplete="off">
+                                <span class="input-group-text bg-white">🔍</span>
+                                <div id="ciDropdown" class="dropdown-ci"></div>
+                            </div>
+
+                            <small id="clienteFeedback" class="form-text text-muted"></small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="nombreCliente" class="form-label fw-bold">Cliente/Razón Social:</label>
+
+                            <div class="input-group">
+                                <input type="hidden" id="idCliente" name="IdCliente" required>
+                                <input type="text" 
+                                       id="nombreCliente" 
+                                       class="form-control" 
+                                       readonly 
+                                       placeholder="La razón social aparecerá automáticamente"
+                                       style="cursor: not-allowed; user-select: none; background-color: #e9ecef; color: #6c757d;">ontrol" 
+                                       readonly 
+                                       placeholder="La razón social aparecerá automáticamente"
+                                       style="cursor: not-allowed; user-select: none; background-color: #e9ecef; color: #6c757d;">
+                                <button type="button" class="btn btn-crear" id="btnCrearClienteRapido">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br />
+
+                    <div class="row mb-4 justify-content-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" id="productoBusqueda" class="form-control"
+                                       placeholder="Buscar producto para vender..." autocomplete="off">
+
+                                <button type="button" class="btn btn-primary" onclick="prepararProducto()">
+                                    🔍
+                                </button>
+
+                                <button type="button" class="btn btn-success" id="btnAñadirLista" disabled onclick="confirmarAñadir()">
+                                    + Añadir a la venta
+                                </button>
+                            </div>
+
+                            <ul id="listaProductos" class="list-group position-absolute w-50 shadow"
+                                style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;">
+                            </ul>
+
+                            <small id="productoFeedback" class="form-text d-block mt-1"></small>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="tablaProductos">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 100px;">Cantidad</th>
+                                    <th>Descripción</th>
+                                    <th>P. Unit (Bs.)</th>
+                                    <th>Importe (Bs.)</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="table-secondary">
+                                    <th colspan="3" class="text-end">TOTAL Bs.</th>
+                                    <th id="totalVenta" class="fw-bold">0.00</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="ventas-footer mt-4">
+                        <button type="submit" class="btn btn-guardar" id="btnGuardarVenta">
+                            Registrar Venta
+                        </button>
+                    </div>
+                </form>
+
+                <div class="modal fade" id="modalCliente" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header modal-header-morado">
+                                <h5 class="modal-title">Nuevo Cliente</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="form-container" style="box-shadow:none; border:none; padding:0;">
+                                    <form id="formClienteModal">
+                                        @Html.AntiForgeryToken()
+
+                                        <div class="form-group mb-3">
+                                            <label class="form-label fw-bold">Razón Social</label>
+                                            <input type="text" id="modalRazonSocial" class="form-control" placeholder="Ej: Juan Pérez / Empresa SRL" required>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">CI/NIT</label>
+                                                <input type="text" id="modalCi" class="form-control" required>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Complemento</label>
+                                                <input type="text" id="modalComplemento" class="form-control">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" id="modalEmail" class="form-control">
+                                        </div>
+
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" id="modalFrecuente" class="form-check-input">
+                                            <label class="form-check-label" for="modalFrecuente">
+                                                Cliente frecuente
+                                            </label>
+                                        </div>
+
+                                        <div id="modalFeedback" class="text-danger mb-2"></div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cancelar
+                                </button>
+
+                                <button type="button" class="btn btn-primary" id="btnGuardarClienteModal">
+                                    Guardar Cliente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalConfirmarVenta" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-primary">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">Confirmar venta</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body text-center">
+                                <p class="mb-2">¿Está seguro de registrar esta venta?</p>
+                                <h5>Total: <strong id="lblTotalConfirmar">0.00 Bs.</strong></h5>
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cancelar
+                                </button>
+
+                                <button type="button" class="btn btn-success" id="btnConfirmarVentaReal">
+                                    Sí, Registrar Venta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalVentaExitosa" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-success">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">Venta registrada</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body text-center">
+                                <p id="textoVentaExitosa"></p>
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" id="btnRegistrarOtraVenta">
+                                    Registrar Otra Venta
+                                </button>
+
+                                <button type="button" class="btn btn-primary" id="btnImprimirComprobante" data-id-venta="">
+                                    Imprimir Comprobante
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalVentaError" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-danger">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">Error</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body text-center">
+                                <p id="textoVentaError"></p>
+                            </div>
+
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let seleccionTemp = null;
+        let productoTemporal = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const ciInput = document.getElementById('ciCliente');
+            const dropdown = document.getElementById('ciDropdown');
+            const nombreInput = document.getElementById('nombreCliente');
+            const idClienteInput = document.getElementById('idCliente');
+            const feedback = document.getElementById('clienteFeedback');
+
+            ciInput.addEventListener('input', function () {
+                const ci = this.value.trim();
+
+                nombreInput.value = '';
+                idClienteInput.value = '';
+                ciInput.classList.remove('is-valid', 'is-invalid');
+                feedback.textContent = '';
+
+                if (ci.length < 2) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                fetch(`?handler=BuscarClientesParcial&ci=${encodeURIComponent(ci)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        dropdown.innerHTML = '';
+
+                        if (!data.success || !data.clientes || data.clientes.length === 0) {
+                            dropdown.style.display = 'none';
+                            return;
+                        }
+
+                        data.clientes.forEach(c => {
+                            const item = document.createElement('div');
+                            item.className = 'dropdown-ci-item';
+                            item.textContent = `${c.ciCompleto} - ${c.razonSocial}`;
+
+                            item.addEventListener('click', () => {
+                                ciInput.value = c.ciCompleto;
+                                nombreInput.value = c.razonSocial;
+                                idClienteInput.value = c.id;
+                                dropdown.style.display = 'none';
+
+                                ciInput.classList.remove('is-invalid');
+                                ciInput.classList.add('is-valid');
+
+                                feedback.textContent = "Cliente seleccionado.";
+                                feedback.className = "form-text text-success";
+                            });
+
+                            dropdown.appendChild(item);
+                        });
+
+                        dropdown.style.display = 'block';
+                    })
+                    .catch(() => {
+                        dropdown.style.display = 'none';
+                    });
+            });
+
+            document.addEventListener('click', e => {
+                if (!e.target.closest('.input-group')) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            document.getElementById('ventaForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const idCliente = document.getElementById('idCliente').value;
+
+                if (!idCliente) {
+                    feedback.textContent = "Debe seleccionar un cliente válido.";
+                    feedback.className = "form-text text-danger fw-bold";
+                    ciInput.classList.add('is-invalid');
+                    return;
+                }
+
+                const filas = document.querySelectorAll('#tablaProductos tbody tr');
+
+                if (filas.length === 0) {
+                    document.getElementById('textoVentaError').textContent =
+                        "Debe agregar al menos un producto a la venta antes de registrarla.";
+
+                    const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
+                    modalError.show();
+                    return;
+                }
+
+                const totalActual = document.getElementById('totalVenta').textContent;
+                document.getElementById('lblTotalConfirmar').textContent = totalActual + " Bs.";
+
+                const modalConfirmar = new bootstrap.Modal(document.getElementById('modalConfirmarVenta'));
+                modalConfirmar.show();
+            });
+
+            document.getElementById('btnConfirmarVentaReal').addEventListener('click', function () {
+                const idCliente = document.getElementById('idCliente').value;
+                const filas = document.querySelectorAll('#tablaProductos tbody tr');
+                const detalles = [];
+
+                filas.forEach(fila => {
+                    const cantidad = parseInt(fila.querySelector('input[type="hidden"]').value);
+                    const precioUnitario = parseFloat(fila.dataset.precio);
+
+                    detalles.push({
+                        idProducto: parseInt(fila.dataset.idProducto),
+                        idPresentacion: parseInt(fila.dataset.idPresentacion),
+                        cantidad: cantidad,
+                        precioUnitario: precioUnitario,
+                        subtotal: cantidad * precioUnitario
+                    });
+                });
+
+                const payload = {
+                    idCliente: parseInt(idCliente),
+                    detalles: detalles
+                };
+
+                const btnConfirmar = this;
+                btnConfirmar.disabled = true;
+                btnConfirmar.innerHTML =
+                    '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+
+                fetch('?handler=RegistrarVenta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`HTTP error! status: ${r.status}`);
+                        }
+                        return r.json();
+                    })
+                    .then(data => {
+                        const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarVenta'));
+                        if (modalConfirmar) modalConfirmar.hide();
+
+                        if (data.success) {
+                            document.getElementById('textoVentaExitosa').innerHTML =
+                                `La venta número <strong>#${data.idVenta}</strong> se ha guardado correctamente.`;
+
+                            const modalExito = new bootstrap.Modal(document.getElementById('modalVentaExitosa'));
+                            modalExito.show();
+
+                            document.getElementById('btnImprimirComprobante').dataset.idVenta = data.idVenta;
+
+                            document.getElementById('ciCliente').value = '';
+                            document.getElementById('nombreCliente').value = '';
+                            document.getElementById('idCliente').value = '';
+                            document.querySelector('#tablaProductos tbody').innerHTML = '';
+                            document.getElementById('totalVenta').textContent = '0.00';
+                            document.getElementById('ciCliente').classList.remove('is-valid');
+                            document.getElementById('clienteFeedback').textContent = '';
+                        } else {
+                            document.getElementById('textoVentaError').textContent = data.message || "Error al registrar la venta.";
+                            const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
+                            modalError.show();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarVenta'));
+                        if (modalConfirmar) modalConfirmar.hide();
+
+                        document.getElementById('textoVentaError').textContent =
+                            "Error de conexión al registrar la venta. Verifique su red e intente nuevamente.";
+
+                        const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
+                        modalError.show();
+                    })
+                    .finally(() => {
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.textContent = "Sí, Registrar Venta";
+                    });
+            });
+
+            const modalCliente = new bootstrap.Modal(document.getElementById('modalCliente'));
+            const modalCi = document.getElementById('modalCi');
+            const modalRazonSocial = document.getElementById('modalRazonSocial');
+            const modalComplemento = document.getElementById('modalComplemento');
+            const modalEmail = document.getElementById('modalEmail');
+            const modalFrecuente = document.getElementById('modalFrecuente');
+            const modalFeedback = document.getElementById('modalFeedback');
+
+            document.getElementById('btnCrearClienteRapido').addEventListener('click', () => {
+                modalCi.value = ciInput.value;
+                modalFeedback.textContent = '';
+                modalCliente.show();
+            });
+
+            document.getElementById('btnGuardarClienteModal').addEventListener('click', () => {
+                modalFeedback.textContent = '';
+
+                fetch('?handler=CrearCliente', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        razonSocial: modalRazonSocial.value,
+                        ci: modalCi.value,
+                        complemento: modalComplemento.value,
+                        email: modalEmail.value,
+                        clienteFrecuente: modalFrecuente.checked
+                    })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            const c = data.cliente;
+
+                            nombreInput.value = c.razonSocial;
+                            idClienteInput.value = c.id;
+                            ciInput.value = c.complemento
+                                ? `${c.ci}-${c.complemento}`
+                                : c.ci;
+
+                            ciInput.classList.add('is-valid');
+                            feedback.textContent = "Cliente creado y seleccionado.";
+                            feedback.className = "form-text text-success";
+
+                            modalCliente.hide();
+                        } else {
+                            modalFeedback.textContent = data.message;
+                        }
+                    });
+            });
+
+            const inputProducto = document.getElementById('productoBusqueda');
+            const listaSugerencias = document.getElementById('listaProductos');
+
+            inputProducto.addEventListener('input', function () {
+                const term = this.value.trim();
+
+                seleccionTemp = null;
+                document.getElementById('btnAñadirLista').disabled = true;
+                document.getElementById('productoFeedback').textContent = '';
+
+                if (term.length < 2) {
+                    listaSugerencias.style.display = 'none';
+                    return;
+                }
+
+                fetch(`?handler=BuscarNombre&termino=${encodeURIComponent(term)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        listaSugerencias.innerHTML = '';
+
+                        if (!data || data.length === 0) {
+                            listaSugerencias.style.display = 'none';
+                            return;
+                        }
+
+                        data.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item list-group-item-action';
+                            li.textContent = item.texto;
+
+                            li.onclick = () => {
+                                inputProducto.value = item.texto;
+
+                                seleccionTemp = {
+                                    texto: item.texto,
+                                    idProducto: item.idProducto,
+                                    idPresentacion: item.idPresentacion
+                                };
+
+                                listaSugerencias.style.display = 'none';
+                                prepararProducto();
+                            };
+
+                            listaSugerencias.appendChild(li);
+                        });
+
+                        listaSugerencias.style.display = 'block';
+                    });
+            });
+        });
+
+        window.prepararProducto = function () {
+            const feedback = document.getElementById('productoFeedback');
+            const btnAñadir = document.getElementById('btnAñadirLista');
+
+            if (!seleccionTemp) {
+                feedback.textContent = "Selecciona un producto de la lista de sugerencias.";
+                feedback.className = "form-text text-warning";
+                btnAñadir.disabled = true;
+                return;
+            }
+
+            fetch(`?handler=ObtenerDetalleProducto` +
+                `&frase=${encodeURIComponent(seleccionTemp.texto)}` +
+                `&idProducto=${seleccionTemp.idProducto}` +
+                `&idPresentacion=${seleccionTemp.idPresentacion}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        productoTemporal = data.producto;
+
+                        feedback.textContent =
+                            `✔ ${data.producto.nombre} — Bs. ${Number(data.producto.precioUnitario).toFixed(2)}`;
+
+                        feedback.className = "form-text text-success fw-bold";
+                        btnAñadir.disabled = false;
+                    } else {
+                        productoTemporal = null;
+                        feedback.textContent = data.message || "Producto no encontrado.";
+                        feedback.className = "form-text text-danger";
+                        btnAñadir.disabled = true;
+                    }
+                });
+        };
+
+        window.confirmarAñadir = function () {
+            if (!productoTemporal) return;
+
+            const tbody = document.querySelector('#tablaProductos tbody');
+            const idProducto = productoTemporal.idProducto;
+            const idPresentacion = productoTemporal.idPresentacion;
+
+            // Buscar si el producto ya existe en la tabla
+            const filaExistente = Array.from(tbody.querySelectorAll('tr')).find(tr => 
+                tr.dataset.idProducto == idProducto && 
+                tr.dataset.idPresentacion == idPresentacion
+            );
+
+            if (filaExistente) {
+                // Si existe, incrementar la cantidad
+                const inputCantidad = filaExistente.querySelector('input[type="hidden"]');
+                const cantidadActual = parseInt(inputCantidad.value) || 1;
+                inputCantidad.value = cantidadActual + 1;
+                actualizarDisplayCantidad(filaExistente);
+                recalcularTotal();
+            } else {
+                // Si no existe, crear nueva fila
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr data-id-producto="${productoTemporal.idProducto}"
+                        data-id-presentacion="${productoTemporal.idPresentacion}"
+                        data-precio="${productoTemporal.precioUnitario}">
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="disminuirCantidad(this)">−</button>
+                                <span class="cantidad-display px-3 py-2" style="min-width: 50px; display: inline-block; border: 1px solid #dee2e6; border-left: none; border-right: none;">1</span>
+                                <input type="hidden" value="1">
+                                <button type="button" class="btn btn-outline-secondary" onclick="aumentarCantidad(this)">+</button>
+                            </div>
+                        </td>
+                        <td>${productoTemporal.nombre}</td>
+                        <td>${Number(productoTemporal.precioUnitario).toFixed(2)}</td>
+                        <td class="importe-col">${Number(productoTemporal.precioUnitario).toFixed(2)}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    onclick="this.closest('tr').remove(); recalcularTotal();">×</button>
+                        </td>
+                    </tr>
+                `);
+            }
+
+            document.getElementById('productoBusqueda').value = '';
+            document.getElementById('btnAñadirLista').disabled = true;
+            document.getElementById('productoFeedback').textContent = '';
+
+            seleccionTemp = null;
+            productoTemporal = null;
+
+            recalcularTotal();
+        };
+
+        window.aumentarCantidad = function (btn) {
+            const fila = btn.closest('tr');
+            const inputCantidad = fila.querySelector('input[type="hidden"]');
+            const cantidadActual = parseInt(inputCantidad.value) || 1;
+            inputCantidad.value = cantidadActual + 1;
+            actualizarDisplayCantidad(fila);
+            recalcularTotal();
+        };
+
+        window.disminuirCantidad = function (btn) {
+            const fila = btn.closest('tr');
+            const inputCantidad = fila.querySelector('input[type="hidden"]');
+            const cantidadActual = parseInt(inputCantidad.value) || 1;
+
+            if (cantidadActual > 1) {
+                inputCantidad.value = cantidadActual - 1;
+                actualizarDisplayCantidad(fila);
+                recalcularTotal();
+            }
+        };
+
+        function actualizarDisplayCantidad(fila) {
+            const displayCantidad = fila.querySelector('.cantidad-display');
+            const inputCantidad = fila.querySelector('input[type="hidden"]');
+            displayCantidad.textContent = inputCantidad.value;
+        }
+
+        function recalcularTotal() {
+            let total = 0;
+
+            document.querySelectorAll('#tablaProductos tbody tr').forEach(fila => {
+                const cantidad = parseInt(fila.querySelector('input[type="hidden"]').value) || 0;
+                const precio = parseFloat(fila.dataset.precio) || 0;
+
+                fila.querySelector('.importe-col').textContent = (cantidad * precio).toFixed(2);
+                total += cantidad * precio;
+            });
+
+            const etiqueta = document.getElementById('totalVenta');
+
+            if (etiqueta) {
+                etiqueta.textContent = total.toFixed(2);
+            }
+        }
+
+        document.getElementById('btnImprimirComprobante').addEventListener('click', function () {
+            const idVenta = this.dataset.idVenta;
+
+            if (idVenta) {
+                window.open(`?handler=ImprimirComprobante&idVenta=${idVenta}`, '_blank');
+
+                const modalExito = bootstrap.Modal.getInstance(document.getElementById('modalVentaExitosa'));
+                if (modalExito) modalExito.hide();
+            } else {
+                alert("Error al intentar imprimir el comprobante: ID de venta no encontrado.");
+            }
+        });
+
+        document.getElementById('btnRegistrarOtraVenta').addEventListener('click', function () {
+            location.reload();
+        });
+    </script>
+}
