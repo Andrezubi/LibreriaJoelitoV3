@@ -8,7 +8,7 @@ using System.Data;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
 {
-    public class RealizarVentaServicio 
+    public class FachadaRealizarVenta 
     {
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
@@ -16,7 +16,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly ClienteRepositorio _clienteRepositorio;
         private readonly PresentacionProductoRepositorio _presentaProdRepositorio;
 
-        public RealizarVentaServicio(
+        public FachadaRealizarVenta(
             PresentacionProductoRepositorio presentProdRepositorio,
             VentaRepositorio ventaRepositorio,
             DetalleVentaRepositorio detalleVentaRepositorio,

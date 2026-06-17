@@ -1,5 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
-using MicroServicioVentas.Aplicacion.DTOs.ServicioVentaDTOs;
+using MicroServicioVentas.Aplicacion.DTOs;
 using MicroServicioVentas.Aplicacion.Results;
 using MicroServicioVentas.Dominio.Modelos;
 using MicroServicioVentas.Infraestructura.Persistencia;
@@ -7,13 +7,13 @@ using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
 {
-    public class AnularVentaServicio 
+    public class FachadaAnularVenta 
     {
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
         private readonly ProductoRepositorio _productoRepositorio;
 
-        public AnularVentaServicio(
+        public FachadaAnularVenta(
             ProductoRepositorio productoRepositorio,
             VentaRepositorio ventaRepositorio,
             DetalleVentaRepositorio detalleVentaRepositorio)

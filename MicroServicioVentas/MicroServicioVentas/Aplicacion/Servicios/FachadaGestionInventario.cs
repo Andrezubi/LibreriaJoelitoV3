@@ -3,14 +3,14 @@ using MicroServicioVentas.Dominio.Modelos;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
 {
-    public class GestionInventarioServicio
+    public class FachadaGestionInventario
     {
-        private readonly RealizarVentaServicio _realizarVentaServicio;
-        private readonly AnularVentaServicio _anularVentaServicio;
+        private readonly FachadaRealizarVenta _realizarVentaServicio;
+        private readonly FachadaAnularVenta _anularVentaServicio;
 
-        public GestionInventarioServicio(
-            RealizarVentaServicio realizarVentaServicio,
-            AnularVentaServicio anularVentaServicio)
+        public FachadaGestionInventario(
+            FachadaRealizarVenta realizarVentaServicio,
+            FachadaAnularVenta anularVentaServicio)
         {
             _realizarVentaServicio = realizarVentaServicio;
             _anularVentaServicio = anularVentaServicio;

@@ -12,9 +12,9 @@ namespace MicroServicioVentas.Controllers
     [Route("api/[controller]")]
     public class VentaController : ControllerBase
     {
-        GestionInventarioServicio _gestionInventarioServicio;
+        FachadaGestionInventario _gestionInventarioServicio;
         ConsultaVentaServicio _consultaVentaServicio;
-        public VentaController(GestionInventarioServicio gestionInventarioServicio, ConsultaVentaServicio consultaVentaServicio)
+        public VentaController(FachadaGestionInventario gestionInventarioServicio, ConsultaVentaServicio consultaVentaServicio)
         {
             _gestionInventarioServicio = gestionInventarioServicio;
             _consultaVentaServicio = consultaVentaServicio;
