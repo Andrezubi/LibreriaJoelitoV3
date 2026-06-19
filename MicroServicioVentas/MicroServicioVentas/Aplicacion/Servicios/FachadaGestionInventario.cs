@@ -1,4 +1,5 @@
-﻿using MicroServicioVentas.Aplicacion.Results;
+﻿using MicroServicioVentas.Aplicacion.DTOs.Sagas;
+using MicroServicioVentas.Aplicacion.Results;
 using MicroServicioVentas.Dominio.Modelos;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
@@ -16,7 +17,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             _anularVentaServicio = anularVentaServicio;
         }
 
-        public Result<int> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
+        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
         {
             return _realizarVentaServicio.RegistrarVenta(venta, detalles);
         }

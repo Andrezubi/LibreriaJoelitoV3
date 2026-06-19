@@ -1,103 +1,133 @@
-﻿using MySql.Data.MySqlClient;
-using MicroServicioVentas.Aplicacion.Interfaces;
+﻿using System.Text.Json;
+using MicroServicioVentas.Aplicacion.DTOs.Sagas;
 using MicroServicioVentas.Aplicacion.Results;
 using MicroServicioVentas.Dominio.Modelos;
+using MicroServicioVentas.Dominio.Modelos.Enum;
+using MicroServicioVentas.Infraestructura.FactoriaCreadores;
 using MicroServicioVentas.Infraestructura.Persistencia;
 using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
-using System.Data;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
 {
-    public class FachadaRealizarVenta 
+    public class FachadaRealizarVenta
     {
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
-        private readonly ProductoRepositorio _productoRepositorio;
-        private readonly ClienteRepositorio _clienteRepositorio;
-        private readonly PresentacionProductoRepositorio _presentaProdRepositorio;
+        private readonly OutboxMessageRepositorio _outboxMessageRepositorio;
 
-        public FachadaRealizarVenta(
-            PresentacionProductoRepositorio presentProdRepositorio,
-            VentaRepositorio ventaRepositorio,
-            DetalleVentaRepositorio detalleVentaRepositorio,
-            ProductoRepositorio productoRepositorio,
-            ClienteRepositorio clienteRepositorio
-        )
+        public FachadaRealizarVenta()
         {
-            _ventaRepositorio = ventaRepositorio;
-            _detalleVentaRepositorio = detalleVentaRepositorio;
-            _productoRepositorio = productoRepositorio;
-            _clienteRepositorio = clienteRepositorio;
-            _presentaProdRepositorio = presentProdRepositorio;
+            _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
+            _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
+            _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
         }
 
-        public Result<int> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
+        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
         {
             try
             {
-                // 1. Validaciones previas (Fuera de transacción para no bloquear)
+                if (venta == null)
+                    return Result<ResultadoInicioVentaSagaDto>.Failure("La venta es obligatoria.");
+
                 if (detalles == null || !detalles.Any())
-                    return Result<int>.Failure("La venta debe tener al menos un producto.");
+                    return Result<ResultadoInicioVentaSagaDto>.Failure("La venta debe tener al menos un producto.");
 
-                var clienteFila = _clienteRepositorio.ObtenerPorIdDR(venta.IdCliente);
-                if (clienteFila == null)
-                    return Result<int>.Failure("El cliente seleccionado no es válido.");
+                if (venta.IdCliente <= 0)
+                    return Result<ResultadoInicioVentaSagaDto>.Failure("Debe seleccionar un cliente válido.");
 
-                // 2. Iniciar Proceso Atómico
+                if (venta.IdUsuario <= 0)
+                    return Result<ResultadoInicioVentaSagaDto>.Failure("Debe existir un usuario responsable de la venta.");
+
+                foreach (var detalle in detalles)
+                {
+                    if (detalle.IdProducto <= 0)
+                        return Result<ResultadoInicioVentaSagaDto>.Failure("Cada detalle debe tener un producto válido.");
+
+                    if (detalle.IdPresentacion <= 0)
+                        return Result<ResultadoInicioVentaSagaDto>.Failure("Cada detalle debe tener una presentación válida.");
+
+                    if (detalle.Cantidad <= 0)
+                        return Result<ResultadoInicioVentaSagaDto>.Failure("La cantidad debe ser mayor a cero.");
+
+                    if (detalle.PrecioUnitario < 0)
+                        return Result<ResultadoInicioVentaSagaDto>.Failure("El precio unitario no puede ser negativo.");
+                }
+
+                if (string.IsNullOrWhiteSpace(venta.CorrelationId))
+                    venta.CorrelationId = Guid.NewGuid().ToString();
+
+                venta.Estado = EstadosVenta.Pendiente;
+                venta.MotivoFallo = null;
+                venta.Total = detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+
                 RepositorioBD.Instancia.BeginTransaction();
 
                 try
                 {
-                    // 3. Insertar Cabecera de Venta
-                    int ventaId = _ventaRepositorio.Insertar(venta);
-                    if (ventaId <= 0)
-                        throw new Exception("No se pudo generar la cabecera de la venta.");
+                    int idVenta = _ventaRepositorio.Insertar(venta);
 
-                    // 4. Procesar Detalles y Stock
+                    if (idVenta <= 0)
+                        throw new Exception("No se pudo registrar la cabecera de la venta.");
+
                     foreach (var detalle in detalles)
                     {
-                        detalle.IdVenta = ventaId;
+                        detalle.IdVenta = idVenta;
+                        detalle.Estado = EstadosDetalleVenta.Pendiente;
 
-                        // Insertar Detalle
                         int filasDetalle = _detalleVentaRepositorio.Insertar(detalle);
+
                         if (filasDetalle <= 0)
-                            throw new Exception($"Error al insertar el detalle para el producto: {_productoRepositorio.ObtenerPorIdP(detalle.IdProducto)?["Nombre"]}");
-
-                        // --- NUEVA LÓGICA DE FACTOR DE CONVERSIÓN ---
-
-                        // A) Consultamos la presentación a la base de datos para obtener el factor de forma segura
-                        DataRow presentacionFila = _presentaProdRepositorio.ObtenerPorIds(detalle.IdProducto, detalle.IdPresentacion);
-                        if (presentacionFila == null)
-                            throw new Exception("No se encontró la presentación del producto especificado.");
-
-                        int factorConversion = Convert.ToInt32(presentacionFila["FactorConversion"]);
-
-                        // B) Calculamos la cantidad real a descontar del inventario general (unidades)
-                        int cantidadRealADescontar = detalle.Cantidad * factorConversion;
-
-                        // C) Descontamos el stock usando la cantidad real multiplicada
-                        int filasStock = _productoRepositorio.DescontarStock(detalle.IdProducto, cantidadRealADescontar);
-                        if (filasStock <= 0)
-                        {
-                            // Si no afectó filas es porque el Stock < CantidadReal (validación lógica en el SQL)
-                            throw new Exception($"Stock insuficiente para el producto: {_productoRepositorio.ObtenerPorIdP(detalle.IdProducto)?["Nombre"]}");
-                        }
+                            throw new Exception($"No se pudo registrar el detalle del producto {detalle.IdProducto}.");
                     }
 
-                    // 5. Confirmar todo
+                    string messageId = Guid.NewGuid().ToString();
+
+                    var validarClienteMessage = new ValidarClienteMessageDto
+                    {
+                        MessageId = messageId,
+                        CorrelationId = venta.CorrelationId,
+                        IdVenta = idVenta,
+                        IdCliente = venta.IdCliente,
+                        IdUsuario = venta.IdUsuario
+                    };
+
+                    string payload = JsonSerializer.Serialize(validarClienteMessage);
+
+                    var outboxMessage = new OutboxMessage(
+                        correlationId: venta.CorrelationId,
+                        routingKey: "cliente.validar",
+                        messageType: nameof(ValidarClienteMessageDto),
+                        payload: payload
+                    );
+
+                    outboxMessage.MessageId = messageId;
+
+                    int filasOutbox = _outboxMessageRepositorio.Insertar(outboxMessage);
+
+                    if (filasOutbox <= 0)
+                        throw new Exception("No se pudo registrar el mensaje Outbox para validar cliente.");
+
                     RepositorioBD.Instancia.Commit();
-                    return Result<int>.Success(ventaId);
+
+                    var respuesta = new ResultadoInicioVentaSagaDto
+                    {
+                        IdVenta = idVenta,
+                        CorrelationId = venta.CorrelationId,
+                        Estado = EstadosVenta.Pendiente,
+                        Mensaje = "Venta registrada como pendiente. La saga fue iniciada correctamente."
+                    };
+
+                    return Result<ResultadoInicioVentaSagaDto>.Success(respuesta);
                 }
                 catch (Exception ex)
                 {
-                    // 6. Revertir si algo falló
                     RepositorioBD.Instancia.Rollback();
-                    return Result<int>.Failure($"Error en la transacción: {ex.Message}");
+                    return Result<ResultadoInicioVentaSagaDto>.Failure($"Error al iniciar la saga de venta: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                return Result<int>.Failure($"Error inesperado: {ex.Message}");
+                return Result<ResultadoInicioVentaSagaDto>.Failure($"Error inesperado: {ex.Message}");
             }
         }
     }

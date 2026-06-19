@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-
-using MicroServicioVentas.Aplicacion.DTOs.ServicioVentaDTOs;
+﻿using MicroServicioVentas.Aplicacion.DTOs;
 using MicroServicioVentas.Aplicacion.Servicios;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MicroServicioVentas.Controllers
 {
@@ -47,8 +46,9 @@ namespace MicroServicioVentas.Controllers
             if (!resultado.IsSuccess)
                 return BadRequest(resultado);
 
-            return Ok(resultado);
+            return Accepted(resultado);
         }
+
 
         [HttpPut("{idVenta}/anular")]
         public IActionResult AnularVenta(int idVenta, [FromQuery] int idEmpleado)
