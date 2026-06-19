@@ -1,29 +1,67 @@
-﻿namespace MicroServicioVentas.Dominio.Modelos
+﻿using MicroServicioVentas.Dominio.Modelos.Enum;
+
+namespace MicroServicioVentas.Dominio.Modelos
 {
     public class DetalleVenta
     {
-        #region Atributos
+        public int Id { get; set; }
+
         public int IdVenta { get; set; }
+
         public int IdProducto { get; set; }
 
         public int IdPresentacion { get; set; }
+
         public int Cantidad { get; set; }
+
         public decimal PrecioUnitario { get; set; }
 
-        public decimal Subtotal => Cantidad * PrecioUnitario;
-        #endregion
+        public decimal Subtotal { get; set; }
 
-        #region Constructores
-        public DetalleVenta() { }
-        public DetalleVenta(int idVenta, int idProducto, int idPresentacion, int cantidad, decimal precioUnitario)
+        public string Estado { get; set; } = EstadosDetalleVenta.Pendiente;
+
+        public DateTime FechaRegistro { get; set; }
+
+        public DateTime? FechaUltimaActualizacion { get; set; }
+
+        public DetalleVenta()
+        {
+            Estado = EstadosDetalleVenta.Pendiente;
+        }
+
+        public DetalleVenta(
+            int idVenta,
+            int idProducto,
+            int idPresentacion,
+            int cantidad,
+            decimal precioUnitario)
         {
             IdVenta = idVenta;
             IdProducto = idProducto;
             IdPresentacion = idPresentacion;
             Cantidad = cantidad;
             PrecioUnitario = precioUnitario;
-        }   
-        #endregion
-    }
+            Estado = EstadosDetalleVenta.Pendiente;
+        }
 
+        public void MarcarReservado()
+        {
+            Estado = EstadosDetalleVenta.Reservado;
+        }
+
+        public void MarcarConfirmado()
+        {
+            Estado = EstadosDetalleVenta.Confirmado;
+        }
+
+        public void MarcarLiberado()
+        {
+            Estado = EstadosDetalleVenta.Liberado;
+        }
+
+        public void MarcarFallido()
+        {
+            Estado = EstadosDetalleVenta.Fallido;
+        }
+    }
 }
