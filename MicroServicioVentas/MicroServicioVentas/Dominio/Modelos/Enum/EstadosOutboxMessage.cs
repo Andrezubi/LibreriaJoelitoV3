@@ -1,4 +1,4 @@
-﻿namespace MicroServicioVentas.Dominio.Modelos
+﻿namespace MicroServicioVentas.Dominio.Modelos.Enum
 {
     public static class EstadosOutboxMessage
     {

@@ -3,11 +3,11 @@ using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 
 namespace MicroServicioVentas.Infraestructura.FactoriaCreadores
 {
-    public class DetalleVentaCreadorRepositorio : CreadorRepositorio<DetalleVenta>
+    public class ProcessedMessageCreadorRepositorio : CreadorRepositorio<ProcessedMessage>
     {
-        public override DetalleVentaRepositorio CrearRepositorio()
+        public override ProcessedMessageRepositorio CrearRepositorio()
         {
-            return new DetalleVentaRepositorio();
+            return new ProcessedMessageRepositorio();
         }
     }
 }
