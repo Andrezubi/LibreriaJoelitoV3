@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MicroServicioReportes.API/MicroServicioReportes.API.csproj" />
+  <Project Path="MicroServicioReportes.Aplicacion/MicroServicioReportes.Aplicacion.csproj" />
+  <Project Path="MicroServicioReportes.Dominio/MicroServicioReportes.Dominio.csproj" />
+  <Project Path="MicroServicioReportes.Infraestructura/MicroServicioReportes.Infraestructura.csproj" />
+</Solution>
