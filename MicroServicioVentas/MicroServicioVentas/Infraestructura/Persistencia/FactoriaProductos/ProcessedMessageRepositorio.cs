@@ -47,28 +47,29 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
         public List<ProcessedMessage> ObtenerTodo()
         {
             string consulta = @"SELECT MessageId,
-                                       CorrelationId,
-                                       RoutingKey,
-                                       ProcessedAt
-                                FROM ProcessedMessages
-                                ORDER BY ProcessedAt DESC;";
+                               CorrelationId,
+                               RoutingKey,
+                               ProcessedAt
+                        FROM ProcessedMessages
+                        ORDER BY ProcessedAt DESC;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
             var result = new List<ProcessedMessage>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {
                 result.Add(new ProcessedMessage
                 {
-                    MessageId = reader.GetString("MessageId"),
-                    CorrelationId = reader.IsDBNull(reader.GetOrdinal("CorrelationId"))
+                    MessageId = reader["MessageId"]?.ToString() ?? string.Empty,
+                    CorrelationId = reader["CorrelationId"] == DBNull.Value
                         ? null
-                        : reader.GetString("CorrelationId"),
-                    RoutingKey = reader.IsDBNull(reader.GetOrdinal("RoutingKey"))
+                        : reader["CorrelationId"]?.ToString(),
+                    RoutingKey = reader["RoutingKey"] == DBNull.Value
                         ? null
-                        : reader.GetString("RoutingKey"),
+                        : reader["RoutingKey"]?.ToString(),
                     ProcessedAt = reader.GetDateTime("ProcessedAt")
                 });
             }

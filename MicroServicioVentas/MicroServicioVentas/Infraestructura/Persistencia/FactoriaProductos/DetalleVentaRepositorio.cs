@@ -97,7 +97,8 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             MySqlCommand comando = new MySqlCommand(consulta);
 
             var detalles = new List<DetalleVenta>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {
@@ -129,7 +130,8 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@idVenta", idVenta);
 
             var detalles = new List<DetalleVenta>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {

@@ -100,7 +100,8 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@estadoAnulada", EstadosVenta.Anulada);
 
             var ventas = new List<Venta>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {
@@ -131,7 +132,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             MySqlCommand comando = new MySqlCommand(consulta);
             comando.Parameters.AddWithValue("@id", id);
 
-            var reader = ExecuteReader(comando);
+            using var reader = ExecuteReader(comando);
 
             if (!reader.Read())
                 return null;
@@ -160,7 +161,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             MySqlCommand comando = new MySqlCommand(consulta);
             comando.Parameters.AddWithValue("@correlationId", correlationId);
 
-            var reader = ExecuteReader(comando);
+            using var reader = ExecuteReader(comando);
 
             if (!reader.Read())
                 return null;
@@ -213,20 +214,38 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             return new Venta
             {
                 Id = reader.GetInt32("Id"),
-                CorrelationId = reader.GetString("CorrelationId"),
+                CorrelationId = ObtenerString(reader, "CorrelationId"),
                 IdCliente = reader.GetInt32("IdCliente"),
                 IdUsuario = reader.GetInt32("IdUsuario"),
                 Fecha = reader.GetDateTime("Fecha"),
                 Total = reader.GetDecimal("Total"),
-                Estado = reader.GetString("Estado"),
-                MotivoFallo = reader.IsDBNull(reader.GetOrdinal("MotivoFallo"))
-                    ? null
-                    : reader.GetString("MotivoFallo"),
+                Estado = ObtenerString(reader, "Estado"),
+                MotivoFallo = ObtenerStringNullable(reader, "MotivoFallo"),
                 FechaRegistro = reader.GetDateTime("FechaRegistro"),
                 FechaUltimaActualizacion = reader.IsDBNull(reader.GetOrdinal("FechaUltimaActualizacion"))
                     ? null
                     : reader.GetDateTime("FechaUltimaActualizacion")
             };
+        }
+
+        private string ObtenerString(MySqlDataReader reader, string columna)
+        {
+            var valor = reader[columna];
+
+            if (valor == null || valor == DBNull.Value)
+                return string.Empty;
+
+            return valor.ToString() ?? string.Empty;
+        }
+
+        private string? ObtenerStringNullable(MySqlDataReader reader, string columna)
+        {
+            var valor = reader[columna];
+
+            if (valor == null || valor == DBNull.Value)
+                return null;
+
+            return valor.ToString();
         }
     }
 }

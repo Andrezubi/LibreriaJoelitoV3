@@ -2,6 +2,7 @@ using MicroServicioVentas.Aplicacion.Servicios;
 using MicroServicioVentas.Infraestructura.Mensajeria.Outbox;
 using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioVentas.Infraestructura.Persistencia;
+using MicroServicioVentas.Infraestructura.Mensajeria.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +31,10 @@ builder.Services.AddScoped<FachadaAnularVenta>();
 builder.Services.AddScoped<FachadaGestionInventario>();
 builder.Services.AddScoped<ConsultaVentaServicio>();
 
+builder.Services.AddSingleton<VentaSagaServicio>();
+
 builder.Services.AddHostedService<OutboxPublisherService>();
+builder.Services.AddHostedService<VentasSagaConsumerService>();
 
 var app = builder.Build();
 

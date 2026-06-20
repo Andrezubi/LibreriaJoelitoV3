@@ -13,6 +13,8 @@
         public string ExchangeName { get; set; } = "saga.exchange";
 
         public RabbitMqRoutingKeys RoutingKeys { get; set; } = new();
+
+        public RabbitMqQueueNames QueueNames { get; set; } = new();
     }
 
     public class RabbitMqRoutingKeys
@@ -28,5 +30,10 @@
         public string StockReservado { get; set; } = "stock.reservado";
 
         public string StockRechazado { get; set; } = "stock.rechazado";
+    }
+
+    public class RabbitMqQueueNames
+    {
+        public string VentasRespuestas { get; set; } = "ventas.saga.respuestas";
     }
 }
