@@ -1,97 +1,229 @@
-﻿using MicroServicioReportes.Aplicacion.Factoria;
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
 using MicroServicioReportes.Dominio.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace MicroServicioReportes.Aplicacion.Servicios
+namespace MicroServicioReportes.Aplicacion.Servicios;
+
+public class ReporteServicio : IReporteServicio
 {
-    public class ReporteServicio : IReporteServicio
+    private readonly IReporteRepositorio _repositorio;
+    private readonly IReporteBuilder _builder;
+    private readonly IPlantillaReporteProveedor _plantillas;
+    private readonly IGeneradorReporte _generador;
+
+    public ReporteServicio(
+        IReporteRepositorio repositorio,
+        IReporteBuilder builder,
+        IPlantillaReporteProveedor plantillas,
+        IGeneradorReporte generador)
     {
-        private readonly IReporteServicio _repositorio;
+        _repositorio = repositorio;
+        _builder = builder;
+        _plantillas = plantillas;
+        _generador = generador;
+    }
 
-        private readonly IReporteBuilder _listaUsuariosBuilder;
-        private readonly IReporteBuilder _resumenUsuariosBuilder;
-
-        public ReporteServicio(IReporteServicio repositorio, IReporteBuilder listaUsuariosBuilder, IReporteBuilder resumenUsuariosBuilder)
+    public async Task<ReporteResponseDto> GenerarComprobanteVentaAsync(
+        int idVenta,
+        ReporteRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var venta = await _repositorio.ObtenerComprobanteVentaAsync(idVenta, cancellationToken);
+        if (venta is null)
         {
-            _repositorio = repositorio;
-            _listaUsuariosBuilder = listaUsuariosBuilder;
-            _resumenUsuariosBuilder = resumenUsuariosBuilder;
-        }
-        public async Task<ReporteResponseDto> GenerarListaUsuariosAsync(
-           ReporteRequestDto request)
-        {
-            var usuarios = await _repositorio.ObtenerUsuariosAsync();
-            var config = MapConfig(request, "Lista de Usuarios");
-
-            // El Director dirige pasos sobre la interfaz, sin saber el concreto
-            _listaUsuariosBuilder
-                .AgregarEncabezado(config)
-                .AgregarDetalle()
-                .AgregarResumen()
-                .AgregarGrafico()
-                .AgregarPie(request.Usuario);
-
-            return Renderizar(
-                _listaUsuariosBuilder.Construir(), request, "ListaUsuarios");
+            throw new InvalidOperationException($"No se encontro la venta {idVenta}.");
         }
 
-        public async Task<ReporteResponseDto> GenerarResumenUsuariosAsync(
-            ReporteRequestDto request)
+        var usuario = ObtenerUsuario(request, venta.UsuarioGenerador);
+        var plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ComprobanteVenta);
+        var detalle = venta.Detalles.Select(d => new Dictionary<string, string>
         {
-            var usuarios = await _repositorio.ObtenerUsuariosAsync();
-            var config = MapConfig(request, "Resumen de Usuarios");
+            ["Cantidad"] = d.Cantidad.ToString(),
+            ["Producto"] = d.Producto,
+            ["Categoria"] = d.Categoria,
+            ["Precio Unitario Bs"] = FormatoMoneda(d.PrecioUnitario),
+            ["Importe Bs"] = FormatoMoneda(d.Importe)
+        });
 
-            _resumenUsuariosBuilder
-                .AgregarEncabezado(config)
-                .AgregarDetalle()
-                .AgregarResumen()
-                .AgregarGrafico()
-                .AgregarPie(request.Usuario);
-
-            return Renderizar(
-                _resumenUsuariosBuilder.Construir(), request, "ResumenUsuarios");
-        }
-
-        // Stubs ventas
-        public Task<ReporteResponseDto> GenerarComprobanteVentaAsync(ReporteRequestDto r)
-            => throw new NotImplementedException("Pendiente: Servicio_Ventas.");
-        public Task<ReporteResponseDto> GenerarListaVentasAsync(ReporteRequestDto r)
-            => throw new NotImplementedException("Pendiente: Servicio_Ventas.");
-        public Task<ReporteResponseDto> GenerarResumenVentasAsync(ReporteRequestDto r)
-            => throw new NotImplementedException("Pendiente: Servicio_Ventas.");
-
-        // Helpers
-        private static ConfigReporteDto MapConfig(
-            ReporteRequestDto r, string titulo) => new()
+        var documento = _builder
+            .UsarPlantilla(plantilla)
+            .AgregarEncabezado(
+                $"Comprobante de Venta Nro. {venta.IdVenta}",
+                venta.Estado.Equals("Anulada", StringComparison.OrdinalIgnoreCase)
+                    ? "VENTA ANULADA"
+                    : "Venta confirmada",
+                usuario)
+            .AgregarDatosGenerales(new[]
             {
-                FechaDesde = r.FechaDesde,
-                FechaHasta = r.FechaHasta,
-                Usuario = r.Usuario,
-                TipoReporte = titulo
-            };
+                Campo("Nro. venta", venta.IdVenta.ToString()),
+                Campo("Fecha venta", venta.FechaVenta.ToString("dd/MM/yyyy HH:mm")),
+                Campo("Cliente", venta.Cliente.RazonSocial),
+                Campo("CI/NIT", venta.Cliente.CiNit),
+                Campo("Estado", venta.Estado)
+            })
+            .AgregarTabla(
+                "Detalle de la venta",
+                new[] { "Cantidad", "Producto", "Categoria", "Precio Unitario Bs", "Importe Bs" },
+                detalle)
+            .AgregarResumen(new[]
+            {
+                Campo("Total Bs", FormatoMoneda(venta.Total)),
+                Campo("Monto literal", string.IsNullOrWhiteSpace(venta.TotalLiteral)
+                    ? "Pendiente de conversion literal"
+                    : venta.TotalLiteral)
+            })
+            .AgregarPie(usuario)
+            .Construir();
 
-        private static ReporteResponseDto Renderizar(
-            DocumentoReporte doc,
-            ReporteRequestDto request,
-            string nombreBase)
+        return Renderizar(documento, $"ComprobanteVenta_{venta.IdVenta:000000}");
+    }
+
+    public async Task<ReporteResponseDto> GenerarListaVentasPorProductoAsync(
+        ReporteRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ValidarRangoFechas(request);
+
+        var ventas = await _repositorio.ObtenerVentasPorProductoAsync(request, cancellationToken);
+        var usuario = ObtenerUsuario(request);
+        var filas = ventas
+            .OrderBy(v => v.Producto)
+            .ThenBy(v => v.FechaVenta)
+            .Select(v => new Dictionary<string, string>
+            {
+                ["Nro."] = v.NumeroVenta.ToString(),
+                ["Fecha"] = v.FechaVenta.ToString("dd/MM/yyyy"),
+                ["Producto"] = v.Producto,
+                ["Categoria"] = v.Categoria,
+                ["Cantidad"] = v.CantidadVendida.ToString(),
+                ["Precio Unitario Bs"] = FormatoMoneda(v.PrecioUnitario),
+                ["Importe Bs"] = FormatoMoneda(v.Importe),
+                ["Cliente"] = v.Cliente,
+                ["Estado"] = v.EstadoVenta
+            });
+
+        var totalCantidad = ventas.Sum(v => v.CantidadVendida);
+        var totalImporte = ventas.Sum(v => v.Importe);
+        var plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ListaVentasPorProducto);
+
+        var documento = _builder
+            .UsarPlantilla(plantilla)
+            .AgregarEncabezado(
+                "Reporte de Ventas por Producto",
+                "Lista ordenada combinando informacion de Ventas y Productos",
+                usuario)
+            .AgregarDatosGenerales(CamposFiltro(request))
+            .AgregarTabla(
+                "Ventas detalladas por producto",
+                new[] { "Nro.", "Fecha", "Producto", "Categoria", "Cantidad", "Precio Unitario Bs", "Importe Bs", "Cliente", "Estado" },
+                filas)
+            .AgregarResumen(new[]
+            {
+                Campo("Total unidades vendidas", totalCantidad.ToString()),
+                Campo("Total recaudado Bs", FormatoMoneda(totalImporte))
+            })
+            .AgregarPie(usuario)
+            .Construir();
+
+        return Renderizar(documento, $"VentasPorProducto_{DateTime.Now:yyyyMMddHHmm}");
+    }
+
+    public async Task<ReporteResponseDto> GenerarResumenRecaudacionAsync(
+        ReporteRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ValidarRangoFechas(request);
+
+        var resumen = await _repositorio.ObtenerResumenRecaudacionAsync(request, cancellationToken);
+        var usuario = ObtenerUsuario(request);
+        var filas = resumen
+            .OrderByDescending(r => r.TotalRecaudado)
+            .Select(r => new Dictionary<string, string>
+            {
+                ["Producto/Categoria"] = r.Grupo,
+                ["Cantidad Vendida"] = r.CantidadVendida.ToString(),
+                ["Total Recaudado Bs"] = FormatoMoneda(r.TotalRecaudado),
+                ["Participacion"] = $"{r.Porcentaje:N2}%"
+            });
+
+        var plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ResumenRecaudacion);
+
+        var documento = _builder
+            .UsarPlantilla(plantilla)
+            .AgregarEncabezado(
+                "Reporte Sumariado de Recaudacion",
+                "Resumen con grafico estadistico para analizar el rendimiento de ventas",
+                usuario)
+            .AgregarDatosGenerales(CamposFiltro(request))
+            .AgregarTabla(
+                "Resumen de recaudacion",
+                new[] { "Producto/Categoria", "Cantidad Vendida", "Total Recaudado Bs", "Participacion" },
+                filas)
+            .AgregarResumen(new[]
+            {
+                Campo("Total unidades vendidas", resumen.Sum(r => r.CantidadVendida).ToString()),
+                Campo("Total recaudado Bs", FormatoMoneda(resumen.Sum(r => r.TotalRecaudado)))
+            })
+            .AgregarGrafico(
+                "Distribucion de recaudacion",
+                "Barras",
+                resumen.Select(r => Campo(r.Grupo, $"{r.Porcentaje:N2}%")))
+            .AgregarPie(usuario)
+            .Construir();
+
+        return Renderizar(documento, $"ResumenRecaudacion_{DateTime.Now:yyyyMMddHHmm}");
+    }
+
+    private ReporteResponseDto Renderizar(DocumentoReporte documento, string nombreBase)
+    {
+        return new ReporteResponseDto
         {
-            GeneradorCreador creador = request.Format.ToLower() switch
-            {
-                "excel" => new ExcelCreador(),
-                _ => new PdfGenerador()
-            };
+            Archivo = _generador.Generar(documento),
+            ContentType = _generador.ContentType,
+            NombreArchivo = $"{nombreBase}{_generador.Extension}"
+        };
+    }
 
-            return new ReporteResponseDto
-            {
-                Archivo = creador.Generar(doc),
-                ContentType = creador.ObtenerContentType(),
-                NombreArchivo = $"{nombreBase}_{DateTime.Now:yyyyMMdd}{creador.ObtenerExtension()}"
-            };
+    private static string ObtenerUsuario(ReporteRequestDto request, string? fallback = null)
+    {
+        if (!string.IsNullOrWhiteSpace(request.Usuario))
+        {
+            return request.Usuario.Trim();
         }
+
+        return string.IsNullOrWhiteSpace(fallback) ? "Sistema" : fallback.Trim();
+    }
+
+    private static void ValidarRangoFechas(ReporteRequestDto request)
+    {
+        if (request.FechaDesde.HasValue &&
+            request.FechaHasta.HasValue &&
+            request.FechaDesde.Value.Date > request.FechaHasta.Value.Date)
+        {
+            throw new ArgumentException("La fecha desde no puede ser mayor que la fecha hasta.");
+        }
+    }
+
+    private static IEnumerable<CampoReporte> CamposFiltro(ReporteRequestDto request)
+    {
+        yield return Campo("Fecha desde", request.FechaDesde?.ToString("dd/MM/yyyy") ?? "Sin filtro");
+        yield return Campo("Fecha hasta", request.FechaHasta?.ToString("dd/MM/yyyy") ?? "Sin filtro");
+        yield return Campo("Producto", request.IdProducto?.ToString() ?? "Todos");
+        yield return Campo("Cliente", request.IdCliente?.ToString() ?? "Todos");
+    }
+
+    private static CampoReporte Campo(string etiqueta, string valor)
+    {
+        return new CampoReporte
+        {
+            Etiqueta = etiqueta,
+            Valor = valor
+        };
+    }
+
+    private static string FormatoMoneda(decimal valor)
+    {
+        return valor.ToString("N2");
     }
 }
