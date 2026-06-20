@@ -83,26 +83,27 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
         public List<OutboxMessage> ObtenerTodo()
         {
             string consulta = @"SELECT Id,
-                                       MessageId,
-                                       CorrelationId,
-                                       ExchangeName,
-                                       RoutingKey,
-                                       MessageType,
-                                       Payload,
-                                       Status,
-                                       RetryCount,
-                                       LastError,
-                                       CreatedAt,
-                                       PublishedAt,
-                                       LastAttemptAt,
-                                       UpdatedAt
-                                FROM OutboxMessages
-                                ORDER BY CreatedAt DESC;";
+                               MessageId,
+                               CorrelationId,
+                               ExchangeName,
+                               RoutingKey,
+                               MessageType,
+                               Payload,
+                               Status,
+                               RetryCount,
+                               LastError,
+                               CreatedAt,
+                               PublishedAt,
+                               LastAttemptAt,
+                               UpdatedAt
+                        FROM OutboxMessages
+                        ORDER BY CreatedAt DESC;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
             var result = new List<OutboxMessage>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {
@@ -115,23 +116,23 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
         public List<OutboxMessage> ObtenerPendientes(int limite = 20)
         {
             string consulta = @"SELECT Id,
-                                       MessageId,
-                                       CorrelationId,
-                                       ExchangeName,
-                                       RoutingKey,
-                                       MessageType,
-                                       Payload,
-                                       Status,
-                                       RetryCount,
-                                       LastError,
-                                       CreatedAt,
-                                       PublishedAt,
-                                       LastAttemptAt,
-                                       UpdatedAt
-                                FROM OutboxMessages
-                                WHERE Status IN (@pending, @failed)
-                                ORDER BY CreatedAt ASC
-                                LIMIT @limite;";
+                               MessageId,
+                               CorrelationId,
+                               ExchangeName,
+                               RoutingKey,
+                               MessageType,
+                               Payload,
+                               Status,
+                               RetryCount,
+                               LastError,
+                               CreatedAt,
+                               PublishedAt,
+                               LastAttemptAt,
+                               UpdatedAt
+                        FROM OutboxMessages
+                        WHERE Status IN (@pending, @failed)
+                        ORDER BY CreatedAt ASC
+                        LIMIT @limite;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
@@ -140,7 +141,8 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@limite", limite);
 
             var result = new List<OutboxMessage>();
-            var reader = ExecuteReader(comando);
+
+            using var reader = ExecuteReader(comando);
 
             while (reader.Read())
             {
@@ -190,28 +192,53 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             return new OutboxMessage
             {
                 Id = reader.GetInt64("Id"),
-                MessageId = reader.GetString("MessageId"),
-                CorrelationId = reader.GetString("CorrelationId"),
-                ExchangeName = reader.GetString("ExchangeName"),
-                RoutingKey = reader.GetString("RoutingKey"),
-                MessageType = reader.GetString("MessageType"),
-                Payload = reader.GetString("Payload"),
-                Status = reader.GetString("Status"),
+
+                MessageId = ObtenerString(reader, "MessageId"),
+                CorrelationId = ObtenerString(reader, "CorrelationId"),
+                ExchangeName = ObtenerString(reader, "ExchangeName"),
+                RoutingKey = ObtenerString(reader, "RoutingKey"),
+                MessageType = ObtenerString(reader, "MessageType"),
+                Payload = ObtenerString(reader, "Payload"),
+                Status = ObtenerString(reader, "Status"),
+
                 RetryCount = reader.GetInt32("RetryCount"),
-                LastError = reader.IsDBNull(reader.GetOrdinal("LastError"))
-                    ? null
-                    : reader.GetString("LastError"),
+
+                LastError = ObtenerStringNullable(reader, "LastError"),
+
                 CreatedAt = reader.GetDateTime("CreatedAt"),
+
                 PublishedAt = reader.IsDBNull(reader.GetOrdinal("PublishedAt"))
                     ? null
                     : reader.GetDateTime("PublishedAt"),
+
                 LastAttemptAt = reader.IsDBNull(reader.GetOrdinal("LastAttemptAt"))
                     ? null
                     : reader.GetDateTime("LastAttemptAt"),
+
                 UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt"))
                     ? null
                     : reader.GetDateTime("UpdatedAt")
             };
+        }
+
+        private string ObtenerString(MySqlDataReader reader, string columna)
+        {
+            var valor = reader[columna];
+
+            if (valor == null || valor == DBNull.Value)
+                return string.Empty;
+
+            return valor.ToString() ?? string.Empty;
+        }
+
+        private string? ObtenerStringNullable(MySqlDataReader reader, string columna)
+        {
+            var valor = reader[columna];
+
+            if (valor == null || valor == DBNull.Value)
+                return null;
+
+            return valor.ToString();
         }
     }
 }

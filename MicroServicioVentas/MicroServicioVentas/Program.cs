@@ -1,41 +1,47 @@
+using MicroServicioVentas.Aplicacion.Servicios;
+using MicroServicioVentas.Infraestructura.Mensajeria.Outbox;
+using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
+using MicroServicioVentas.Infraestructura.Persistencia;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var connectionString = builder.Configuration.GetConnectionString("MySqlVentas");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("No se encontró la cadena de conexión MySqlVentas.");
+}
+
+RepositorioBD.Instancia.Initiate(connectionString);
+
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection("RabbitMQ")
+);
+
+builder.Services.AddSingleton<RabbitPublisher>();
+
+builder.Services.AddScoped<FachadaRealizarVenta>();
+builder.Services.AddScoped<FachadaAnularVenta>();
+builder.Services.AddScoped<FachadaGestionInventario>();
+builder.Services.AddScoped<ConsultaVentaServicio>();
+
+builder.Services.AddHostedService<OutboxPublisherService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

@@ -1,9 +1,11 @@
 ﻿using System.Text.Json;
+using Microsoft.Extensions.Options;
 using MicroServicioVentas.Aplicacion.DTOs.Sagas;
 using MicroServicioVentas.Aplicacion.Results;
 using MicroServicioVentas.Dominio.Modelos;
 using MicroServicioVentas.Dominio.Modelos.Enum;
 using MicroServicioVentas.Infraestructura.FactoriaCreadores;
+using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioVentas.Infraestructura.Persistencia;
 using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 
@@ -14,12 +16,14 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
         private readonly OutboxMessageRepositorio _outboxMessageRepositorio;
+        private readonly RabbitMqOptions _rabbitMqOptions;
 
-        public FachadaRealizarVenta()
+        public FachadaRealizarVenta(IOptions<RabbitMqOptions> rabbitMqOptions)
         {
             _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
             _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
             _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
+            _rabbitMqOptions = rabbitMqOptions.Value;
         }
 
         public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
@@ -94,13 +98,13 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                     string payload = JsonSerializer.Serialize(validarClienteMessage);
 
                     var outboxMessage = new OutboxMessage(
+                        messageId: messageId,
                         correlationId: venta.CorrelationId,
-                        routingKey: "cliente.validar",
+                        exchangeName: _rabbitMqOptions.ExchangeName,
+                        routingKey: _rabbitMqOptions.RoutingKeys.ClienteValidar,
                         messageType: nameof(ValidarClienteMessageDto),
                         payload: payload
                     );
-
-                    outboxMessage.MessageId = messageId;
 
                     int filasOutbox = _outboxMessageRepositorio.Insertar(outboxMessage);
 

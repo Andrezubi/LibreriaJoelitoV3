@@ -10,7 +10,7 @@ namespace MicroServicioVentas.Dominio.Modelos
 
         public string CorrelationId { get; set; } = string.Empty;
 
-        public string ExchangeName { get; set; } = "saga.exchange";
+        public string ExchangeName { get; set; } = string.Empty;
 
         public string RoutingKey { get; set; } = string.Empty;
 
@@ -39,17 +39,19 @@ namespace MicroServicioVentas.Dominio.Modelos
         }
 
         public OutboxMessage(
+            string messageId,
             string correlationId,
+            string exchangeName,
             string routingKey,
             string messageType,
             string payload)
         {
-            MessageId = Guid.NewGuid().ToString();
+            MessageId = messageId;
             CorrelationId = correlationId;
+            ExchangeName = exchangeName;
             RoutingKey = routingKey;
             MessageType = messageType;
             Payload = payload;
-            ExchangeName = "saga.exchange";
             Status = EstadosOutboxMessage.Pending;
         }
 
