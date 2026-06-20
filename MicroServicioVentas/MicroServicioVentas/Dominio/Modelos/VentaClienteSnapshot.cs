@@ -8,16 +8,30 @@ namespace MicroServicioVentas.Dominio.Modelos
 
         public int IdCliente { get; set; }
 
-        public string NombreCliente { get; set; } = string.Empty;
+        public string RazonSocialCliente { get; set; } = string.Empty;
 
-        public string? DocumentoCliente { get; set; }
+        public string CiCliente { get; set; } = string.Empty;
 
-        public string? NitCliente { get; set; }
+        public string? ComplementoCliente { get; set; }
 
-        public string? TelefonoCliente { get; set; }
+        public string? EmailCliente { get; set; }
 
-        public string? DireccionCliente { get; set; }
+        public bool ClienteFrecuente { get; set; }
 
         public DateTime FechaRegistro { get; set; }
+
+        public VentaClienteSnapshot()
+        {
+        }
+
+        public string CiCompleto
+        {
+            get
+            {
+                return string.IsNullOrWhiteSpace(ComplementoCliente)
+                    ? CiCliente
+                    : $"{CiCliente}-{ComplementoCliente}";
+            }
+        }
     }
 }

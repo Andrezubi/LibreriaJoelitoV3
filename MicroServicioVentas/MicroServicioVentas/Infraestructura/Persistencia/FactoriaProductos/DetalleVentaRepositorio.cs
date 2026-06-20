@@ -17,8 +17,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     IdPresentacion,
                     NombreProducto,
                     NombrePresentacion,
-                    CodigoProducto,
-                    UnidadPresentacion,
                     Cantidad,
                     PrecioUnitario,
                     Estado
@@ -29,8 +27,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     @idPresentacion,
                     @nombreProducto,
                     @nombrePresentacion,
-                    @codigoProducto,
-                    @unidadPresentacion,
                     @cantidad,
                     @precioUnitario,
                     @estado
@@ -43,8 +39,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@idPresentacion", detalleVenta.IdPresentacion);
             comando.Parameters.AddWithValue("@nombreProducto", detalleVenta.NombreProducto);
             comando.Parameters.AddWithValue("@nombrePresentacion", detalleVenta.NombrePresentacion);
-            comando.Parameters.AddWithValue("@codigoProducto", detalleVenta.CodigoProducto);
-            comando.Parameters.AddWithValue("@unidadPresentacion", detalleVenta.UnidadPresentacion);
             comando.Parameters.AddWithValue("@cantidad", detalleVenta.Cantidad);
             comando.Parameters.AddWithValue("@precioUnitario", detalleVenta.PrecioUnitario);
             comando.Parameters.AddWithValue("@estado", detalleVenta.Estado);
@@ -60,8 +54,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     IdPresentacion = @idPresentacion,
                     NombreProducto = @nombreProducto,
                     NombrePresentacion = @nombrePresentacion,
-                    CodigoProducto = @codigoProducto,
-                    UnidadPresentacion = @unidadPresentacion,
                     Cantidad = @cantidad,
                     PrecioUnitario = @precioUnitario,
                     Estado = @estado
@@ -73,8 +65,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@idPresentacion", detalleVenta.IdPresentacion);
             comando.Parameters.AddWithValue("@nombreProducto", detalleVenta.NombreProducto);
             comando.Parameters.AddWithValue("@nombrePresentacion", detalleVenta.NombrePresentacion);
-            comando.Parameters.AddWithValue("@codigoProducto", detalleVenta.CodigoProducto);
-            comando.Parameters.AddWithValue("@unidadPresentacion", detalleVenta.UnidadPresentacion);
             comando.Parameters.AddWithValue("@cantidad", detalleVenta.Cantidad);
             comando.Parameters.AddWithValue("@precioUnitario", detalleVenta.PrecioUnitario);
             comando.Parameters.AddWithValue("@estado", detalleVenta.Estado);
@@ -107,8 +97,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                        IdPresentacion,
                        NombreProducto,
                        NombrePresentacion,
-                       CodigoProducto,
-                       UnidadPresentacion,
                        Cantidad,
                        PrecioUnitario,
                        Subtotal,
@@ -141,8 +129,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                        IdPresentacion,
                        NombreProducto,
                        NombrePresentacion,
-                       CodigoProducto,
-                       UnidadPresentacion,
                        Cantidad,
                        PrecioUnitario,
                        Subtotal,
@@ -176,8 +162,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                        IdPresentacion,
                        NombreProducto,
                        NombrePresentacion,
-                       CodigoProducto,
-                       UnidadPresentacion,
                        Cantidad,
                        PrecioUnitario,
                        Subtotal,
@@ -202,8 +186,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     IdPresentacion = reader.GetInt32("IdPresentacion"),
                     Producto = ObtenerString(reader, "NombreProducto"),
                     Presentacion = ObtenerString(reader, "NombrePresentacion"),
-                    CodigoProducto = ObtenerStringNullable(reader, "CodigoProducto"),
-                    UnidadPresentacion = ObtenerStringNullable(reader, "UnidadPresentacion"),
                     Cantidad = reader.GetInt32("Cantidad"),
                     PrecioUnitario = reader.GetDecimal("PrecioUnitario"),
                     Subtotal = reader.GetDecimal("Subtotal"),
@@ -279,8 +261,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 IdPresentacion = reader.GetInt32("IdPresentacion"),
                 NombreProducto = ObtenerString(reader, "NombreProducto"),
                 NombrePresentacion = ObtenerString(reader, "NombrePresentacion"),
-                CodigoProducto = ObtenerStringNullable(reader, "CodigoProducto"),
-                UnidadPresentacion = ObtenerStringNullable(reader, "UnidadPresentacion"),
                 Cantidad = reader.GetInt32("Cantidad"),
                 PrecioUnitario = reader.GetDecimal("PrecioUnitario"),
                 Subtotal = reader.GetDecimal("Subtotal"),
@@ -300,16 +280,6 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 return string.Empty;
 
             return valor.ToString() ?? string.Empty;
-        }
-
-        private string? ObtenerStringNullable(MySqlDataReader reader, string columna)
-        {
-            var valor = reader[columna];
-
-            if (valor == null || valor == DBNull.Value)
-                return null;
-
-            return valor.ToString();
         }
     }
 }

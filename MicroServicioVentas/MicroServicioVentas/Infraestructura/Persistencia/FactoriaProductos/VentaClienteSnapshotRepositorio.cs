@@ -12,31 +12,31 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 INSERT INTO venta_cliente_snapshot (
                     IdVenta,
                     IdCliente,
-                    NombreCliente,
-                    DocumentoCliente,
-                    NitCliente,
-                    TelefonoCliente,
-                    DireccionCliente
+                    RazonSocialCliente,
+                    CiCliente,
+                    ComplementoCliente,
+                    EmailCliente,
+                    ClienteFrecuente
                 )
                 VALUES (
                     @idVenta,
                     @idCliente,
-                    @nombreCliente,
-                    @documentoCliente,
-                    @nitCliente,
-                    @telefonoCliente,
-                    @direccionCliente
+                    @razonSocialCliente,
+                    @ciCliente,
+                    @complementoCliente,
+                    @emailCliente,
+                    @clienteFrecuente
                 );";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
             comando.Parameters.AddWithValue("@idVenta", snapshot.IdVenta);
             comando.Parameters.AddWithValue("@idCliente", snapshot.IdCliente);
-            comando.Parameters.AddWithValue("@nombreCliente", snapshot.NombreCliente);
-            comando.Parameters.AddWithValue("@documentoCliente", snapshot.DocumentoCliente);
-            comando.Parameters.AddWithValue("@nitCliente", snapshot.NitCliente);
-            comando.Parameters.AddWithValue("@telefonoCliente", snapshot.TelefonoCliente);
-            comando.Parameters.AddWithValue("@direccionCliente", snapshot.DireccionCliente);
+            comando.Parameters.AddWithValue("@razonSocialCliente", snapshot.RazonSocialCliente);
+            comando.Parameters.AddWithValue("@ciCliente", snapshot.CiCliente);
+            comando.Parameters.AddWithValue("@complementoCliente", snapshot.ComplementoCliente);
+            comando.Parameters.AddWithValue("@emailCliente", snapshot.EmailCliente);
+            comando.Parameters.AddWithValue("@clienteFrecuente", snapshot.ClienteFrecuente);
 
             return ExecuteNonQuery(comando);
         }
@@ -45,20 +45,20 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
         {
             string consulta = @"
                 UPDATE venta_cliente_snapshot
-                SET NombreCliente = @nombreCliente,
-                    DocumentoCliente = @documentoCliente,
-                    NitCliente = @nitCliente,
-                    TelefonoCliente = @telefonoCliente,
-                    DireccionCliente = @direccionCliente
+                SET RazonSocialCliente = @razonSocialCliente,
+                    CiCliente = @ciCliente,
+                    ComplementoCliente = @complementoCliente,
+                    EmailCliente = @emailCliente,
+                    ClienteFrecuente = @clienteFrecuente
                 WHERE Id = @id;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
-            comando.Parameters.AddWithValue("@nombreCliente", snapshot.NombreCliente);
-            comando.Parameters.AddWithValue("@documentoCliente", snapshot.DocumentoCliente);
-            comando.Parameters.AddWithValue("@nitCliente", snapshot.NitCliente);
-            comando.Parameters.AddWithValue("@telefonoCliente", snapshot.TelefonoCliente);
-            comando.Parameters.AddWithValue("@direccionCliente", snapshot.DireccionCliente);
+            comando.Parameters.AddWithValue("@razonSocialCliente", snapshot.RazonSocialCliente);
+            comando.Parameters.AddWithValue("@ciCliente", snapshot.CiCliente);
+            comando.Parameters.AddWithValue("@complementoCliente", snapshot.ComplementoCliente);
+            comando.Parameters.AddWithValue("@emailCliente", snapshot.EmailCliente);
+            comando.Parameters.AddWithValue("@clienteFrecuente", snapshot.ClienteFrecuente);
             comando.Parameters.AddWithValue("@id", snapshot.Id);
 
             return ExecuteNonQuery(comando);
@@ -80,11 +80,11 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 SELECT Id,
                        IdVenta,
                        IdCliente,
-                       NombreCliente,
-                       DocumentoCliente,
-                       NitCliente,
-                       TelefonoCliente,
-                       DireccionCliente,
+                       RazonSocialCliente,
+                       CiCliente,
+                       ComplementoCliente,
+                       EmailCliente,
+                       ClienteFrecuente,
                        FechaRegistro
                 FROM venta_cliente_snapshot
                 ORDER BY Id DESC;";
@@ -109,11 +109,11 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 SELECT Id,
                        IdVenta,
                        IdCliente,
-                       NombreCliente,
-                       DocumentoCliente,
-                       NitCliente,
-                       TelefonoCliente,
-                       DireccionCliente,
+                       RazonSocialCliente,
+                       CiCliente,
+                       ComplementoCliente,
+                       EmailCliente,
+                       ClienteFrecuente,
                        FechaRegistro
                 FROM venta_cliente_snapshot
                 WHERE IdVenta = @idVenta
@@ -137,11 +137,11 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 Id = reader.GetInt32("Id"),
                 IdVenta = reader.GetInt32("IdVenta"),
                 IdCliente = reader.GetInt32("IdCliente"),
-                NombreCliente = ObtenerString(reader, "NombreCliente"),
-                DocumentoCliente = ObtenerStringNullable(reader, "DocumentoCliente"),
-                NitCliente = ObtenerStringNullable(reader, "NitCliente"),
-                TelefonoCliente = ObtenerStringNullable(reader, "TelefonoCliente"),
-                DireccionCliente = ObtenerStringNullable(reader, "DireccionCliente"),
+                RazonSocialCliente = ObtenerString(reader, "RazonSocialCliente"),
+                CiCliente = ObtenerString(reader, "CiCliente"),
+                ComplementoCliente = ObtenerStringNullable(reader, "ComplementoCliente"),
+                EmailCliente = ObtenerStringNullable(reader, "EmailCliente"),
+                ClienteFrecuente = reader.GetBoolean("ClienteFrecuente"),
                 FechaRegistro = reader.GetDateTime("FechaRegistro")
             };
         }

@@ -43,7 +43,6 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                     CorrelationId = Guid.NewGuid().ToString(),
                     IdCliente = request.Venta.IdCliente,
                     IdUsuario = request.Venta.IdUsuario,
-                    NombreUsuario = request.Venta.NombreUsuario,
                     Estado = EstadosVenta.Pendiente,
                     MotivoFallo = null,
                     Total = request.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario)
@@ -62,11 +61,15 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                     {
                         IdVenta = idVenta,
                         IdCliente = request.Cliente.IdCliente,
-                        NombreCliente = request.Cliente.NombreCliente.Trim(),
-                        DocumentoCliente = request.Cliente.DocumentoCliente,
-                        NitCliente = request.Cliente.NitCliente,
-                        TelefonoCliente = request.Cliente.TelefonoCliente,
-                        DireccionCliente = request.Cliente.DireccionCliente
+                        RazonSocialCliente = request.Cliente.RazonSocial.Trim(),
+                        CiCliente = request.Cliente.Ci.Trim(),
+                        ComplementoCliente = string.IsNullOrWhiteSpace(request.Cliente.Complemento)
+                            ? null
+                            : request.Cliente.Complemento.Trim(),
+                        EmailCliente = string.IsNullOrWhiteSpace(request.Cliente.Email)
+                            ? null
+                            : request.Cliente.Email.Trim(),
+                        ClienteFrecuente = request.Cliente.ClienteFrecuente
                     };
 
                     int filasClienteSnapshot = _clienteSnapshotRepositorio.Insertar(clienteSnapshot);
@@ -83,8 +86,6 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                             IdPresentacion = detalleRequest.IdPresentacion,
                             NombreProducto = detalleRequest.NombreProducto.Trim(),
                             NombrePresentacion = detalleRequest.NombrePresentacion.Trim(),
-                            CodigoProducto = detalleRequest.CodigoProducto,
-                            UnidadPresentacion = detalleRequest.UnidadPresentacion,
                             Cantidad = detalleRequest.Cantidad,
                             PrecioUnitario = detalleRequest.PrecioUnitario,
                             Estado = EstadosDetalleVenta.Pendiente
@@ -96,13 +97,6 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                             throw new Exception($"No se pudo registrar el detalle del producto {detalle.IdProducto}.");
                     }
 
-                    var detallesStock = request.Detalles.Select(d => new DetalleReservarStockMessageDto
-                    {
-                        IdProducto = d.IdProducto,
-                        IdPresentacion = d.IdPresentacion,
-                        Cantidad = d.Cantidad
-                    }).ToList();
-
                     string messageId = Guid.NewGuid().ToString();
 
                     var reservarStockMessage = new ReservarStockMessageDto
@@ -111,7 +105,12 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                         CorrelationId = venta.CorrelationId,
                         IdVenta = idVenta,
                         IdUsuario = venta.IdUsuario,
-                        Detalles = detallesStock
+                        Detalles = request.Detalles.Select(d => new DetalleReservarStockMessageDto
+                        {
+                            IdProducto = d.IdProducto,
+                            IdPresentacion = d.IdPresentacion,
+                            Cantidad = d.Cantidad
+                        }).ToList()
                     };
 
                     string payload = JsonSerializer.Serialize(reservarStockMessage);
@@ -137,7 +136,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                         IdVenta = idVenta,
                         CorrelationId = venta.CorrelationId,
                         Estado = EstadosVenta.Pendiente,
-                        Mensaje = "Venta registrada como pendiente. Se creó el snapshot y se inició la saga de reserva de stock."
+                        Mensaje = "Venta registrada como pendiente. Se guardó el snapshot del cliente y se inició la saga de reserva de stock."
                     };
 
                     return Result<ResultadoInicioVentaSagaDto>.Success(respuesta);
@@ -145,7 +144,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                 catch (Exception ex)
                 {
                     RepositorioBD.Instancia.Rollback();
-                    return Result<ResultadoInicioVentaSagaDto>.Failure($"Error al iniciar la saga de venta: {ex.Message}");
+                    return Result<ResultadoInicioVentaSagaDto>.Failure($"Error al iniciar la venta: {ex.Message}");
                 }
             }
             catch (Exception ex)
@@ -162,7 +161,9 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                 return Result.Failure("La solicitud es obligatoria.");
 
             if (request.Venta == null)
+            {
                 errores.Add("La venta es obligatoria.");
+            }
             else
             {
                 if (request.Venta.IdCliente <= 0)
@@ -173,14 +174,19 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             }
 
             if (request.Cliente == null)
+            {
                 errores.Add("El snapshot del cliente es obligatorio.");
+            }
             else
             {
                 if (request.Cliente.IdCliente <= 0)
                     errores.Add("El cliente del snapshot no es válido.");
 
-                if (string.IsNullOrWhiteSpace(request.Cliente.NombreCliente))
-                    errores.Add("El nombre del cliente es obligatorio para el comprobante.");
+                if (string.IsNullOrWhiteSpace(request.Cliente.RazonSocial))
+                    errores.Add("La razón social del cliente es obligatoria.");
+
+                if (string.IsNullOrWhiteSpace(request.Cliente.Ci))
+                    errores.Add("El CI del cliente es obligatorio.");
 
                 if (request.Venta != null && request.Cliente.IdCliente != request.Venta.IdCliente)
                     errores.Add("El IdCliente de la venta y del snapshot no coinciden.");

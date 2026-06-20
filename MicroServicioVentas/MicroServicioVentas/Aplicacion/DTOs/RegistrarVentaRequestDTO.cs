@@ -2,35 +2,33 @@ namespace MicroServicioVentas.Aplicacion.DTOs
 {
     public class RegistrarVentaRequestDto
     {
-        public VentaRequestDto Venta { get; set; } = new();
+        public VentaRegistroDto Venta { get; set; } = new();
 
-        public ClienteSnapshotRequestDto Cliente { get; set; } = new();
+        public ClienteVentaSnapshotRequestDto Cliente { get; set; } = new();
 
         public List<DetalleVentaRequestDto> Detalles { get; set; } = new();
     }
 
-    public class VentaRequestDto
+    public class VentaRegistroDto
     {
         public int IdCliente { get; set; }
 
         public int IdUsuario { get; set; }
-
-        public string? NombreUsuario { get; set; }
     }
 
-    public class ClienteSnapshotRequestDto
+    public class ClienteVentaSnapshotRequestDto
     {
         public int IdCliente { get; set; }
 
-        public string NombreCliente { get; set; } = string.Empty;
+        public string RazonSocial { get; set; } = string.Empty;
 
-        public string? DocumentoCliente { get; set; }
+        public string Ci { get; set; } = string.Empty;
 
-        public string? NitCliente { get; set; }
+        public string? Complemento { get; set; }
 
-        public string? TelefonoCliente { get; set; }
+        public string? Email { get; set; }
 
-        public string? DireccionCliente { get; set; }
+        public bool ClienteFrecuente { get; set; }
     }
 
     public class DetalleVentaRequestDto
@@ -42,10 +40,6 @@ namespace MicroServicioVentas.Aplicacion.DTOs
         public string NombreProducto { get; set; } = string.Empty;
 
         public string NombrePresentacion { get; set; } = string.Empty;
-
-        public string? CodigoProducto { get; set; }
-
-        public string? UnidadPresentacion { get; set; }
 
         public int Cantidad { get; set; }
 
