@@ -1,6 +1,6 @@
-﻿using MicroServicioVentas.Aplicacion.DTOs.Sagas;
+using MicroServicioVentas.Aplicacion.DTOs;
+using MicroServicioVentas.Aplicacion.DTOs.Sagas;
 using MicroServicioVentas.Aplicacion.Results;
-using MicroServicioVentas.Dominio.Modelos;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
 {
@@ -17,14 +17,14 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             _anularVentaServicio = anularVentaServicio;
         }
 
-        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
+        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(RegistrarVentaRequestDto request)
         {
-            return _realizarVentaServicio.RegistrarVenta(venta, detalles);
+            return _realizarVentaServicio.RegistrarVenta(request);
         }
 
-        public Result<int> AnularVenta(int idVenta, int idEmpleado)
+        public Result<int> AnularVenta(int idVenta, int idUsuario)
         {
-            return _anularVentaServicio.AnularVenta(idVenta, idEmpleado);
+            return _anularVentaServicio.AnularVenta(idVenta, idUsuario);
         }
     }
 }

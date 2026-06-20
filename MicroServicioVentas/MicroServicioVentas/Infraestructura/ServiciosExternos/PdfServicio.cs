@@ -1,17 +1,13 @@
-﻿using MicroServicioVentas.Aplicacion.Interfaces;
-using MicroServicioVentas.Dominio.Modelos;
-using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
+using MicroServicioVentas.Aplicacion.DTOs;
+using MicroServicioVentas.Aplicacion.Interfaces;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using System.Data;
-using System.IO;
 
 namespace MicroServicioVentas.Infraestructura.ServiciosExternos
 {
     public class PdfServicio : IPdfServicio
     {
-
         private readonly IWebHostEnvironment _env;
 
         public PdfServicio(IWebHostEnvironment env)
@@ -19,16 +15,22 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
             _env = env;
         }
 
-        public byte[] GenerarComprobanteVenta(DataTable dt)
+        public byte[] GenerarComprobanteVenta(VentaCompletaDTO ventaCompleta)
         {
-            if (dt.Rows.Count == 0) return Array.Empty<byte>();
+            if (ventaCompleta == null || ventaCompleta.Detalles.Count == 0)
+                return Array.Empty<byte>();
 
-            DataRow cabecera = dt.Rows[0];
-            decimal total = Convert.ToDecimal(cabecera["Total"]);
+            var cabecera = ventaCompleta.Venta;
+            decimal total = cabecera.Total;
 
             string rutaLogo = Path.Combine(_env.ContentRootPath, "Recursos", "Imagenes", "logo-lib.png");
-            string nombreEmpleado = cabecera["NombreEmpleado"].ToString() ?? string.Empty;
-            string razonSocial = cabecera["RS"].ToString() ?? string.Empty;
+            string nombreEmpleado = string.IsNullOrWhiteSpace(cabecera.NombreEmpleado)
+                ? $"Usuario {cabecera.IdUsuario}"
+                : cabecera.NombreEmpleado;
+
+            string documentoCliente = !string.IsNullOrWhiteSpace(cabecera.NitCliente)
+                ? cabecera.NitCliente!
+                : cabecera.DocumentoCliente ?? string.Empty;
 
             string colorPrincipal = "#7B2CBF";
             string colorSecundario = "#9D4EDD";
@@ -71,7 +73,7 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                                     .SemiBold()
                                     .FontColor(colorMoradoClaro);
 
-                                titulo.Item().PaddingTop(2).Text("Gracias por confiar en nosotros")
+                                titulo.Item().PaddingTop(2).Text($"Venta Nro. {cabecera.Id}")
                                     .FontSize(9)
                                     .FontColor(colorMoradoMuyClaro);
                             });
@@ -82,16 +84,23 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                             fila.RelativeItem().Background(colorFondo).Border(1).BorderColor(colorBorde).Padding(10).Column(datos =>
                             {
                                 datos.Item().Text("Datos del cliente").FontSize(10).Bold().FontColor(colorPrincipal);
-                                datos.Item().PaddingTop(5).Text($"Fecha: {Convert.ToDateTime(cabecera["Fecha"]):dd/MM/yyyy}").Bold();
-                                datos.Item().Text($"CI/NIT: {cabecera["Ci"]}").Bold();
-                                datos.Item().Text($"Razón Social: {razonSocial}").Bold();
+                                datos.Item().PaddingTop(5).Text($"Fecha: {cabecera.Fecha:dd/MM/yyyy HH:mm}").Bold();
+                                datos.Item().Text($"Cliente: {cabecera.NombreCliente}").Bold();
+                                datos.Item().Text($"CI/NIT: {documentoCliente}").Bold();
+
+                                if (!string.IsNullOrWhiteSpace(cabecera.TelefonoCliente))
+                                    datos.Item().Text($"Teléfono: {cabecera.TelefonoCliente}");
+
+                                if (!string.IsNullOrWhiteSpace(cabecera.DireccionCliente))
+                                    datos.Item().Text($"Dirección: {cabecera.DireccionCliente}");
                             });
 
-                            fila.ConstantItem(150).PaddingLeft(10).Background(colorMoradoMuyClaro).Border(1).BorderColor(colorBorde).Padding(10).Column(info =>
+                            fila.ConstantItem(165).PaddingLeft(10).Background(colorMoradoMuyClaro).Border(1).BorderColor(colorBorde).Padding(10).Column(info =>
                             {
                                 info.Item().Text("Comprobante").FontSize(10).Bold().FontColor(colorPrincipal);
-                                info.Item().PaddingTop(5).Text("Estado: Emitido").FontSize(9);
-                                info.Item().Text($"Hora: {DateTime.Now:HH:mm}").FontSize(9);
+                                info.Item().PaddingTop(5).Text($"Estado: {cabecera.EstadoVenta}").FontSize(9);
+                                info.Item().Text($"Vendedor: {nombreEmpleado}").FontSize(9);
+                                info.Item().Text($"Hora emisión: {DateTime.Now:HH:mm}").FontSize(9);
                             });
                         });
                     });
@@ -123,19 +132,27 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                                     .Text("Importe Bs.").Bold().FontColor(Colors.White);
                             });
 
-                            foreach (DataRow fila in dt.Rows)
+                            foreach (var detalle in ventaCompleta.Detalles)
                             {
-                                tabla.Cell().BorderBottom(1).BorderColor(colorBorde).Padding(6)
-                                    .Text(fila["Cantidad"].ToString());
+                                string descripcion = detalle.Producto;
+
+                                if (!string.IsNullOrWhiteSpace(detalle.Presentacion))
+                                    descripcion += $" - {detalle.Presentacion}";
+
+                                if (!string.IsNullOrWhiteSpace(detalle.CodigoProducto))
+                                    descripcion += $" ({detalle.CodigoProducto})";
 
                                 tabla.Cell().BorderBottom(1).BorderColor(colorBorde).Padding(6)
-                                    .Text(fila["DescripcionProducto"].ToString());
+                                    .Text(detalle.Cantidad.ToString());
+
+                                tabla.Cell().BorderBottom(1).BorderColor(colorBorde).Padding(6)
+                                    .Text(descripcion);
 
                                 tabla.Cell().BorderBottom(1).BorderColor(colorBorde).Padding(6).AlignRight()
-                                    .Text($"{Convert.ToDecimal(fila["PrecioUnitario"]):N2} Bs.");
+                                    .Text($"{detalle.PrecioUnitario:N2} Bs.");
 
                                 tabla.Cell().BorderBottom(1).BorderColor(colorBorde).Padding(6).AlignRight()
-                                    .Text($"{Convert.ToDecimal(fila["Subtotal"]):N2} Bs.");
+                                    .Text($"{detalle.Subtotal:N2} Bs.");
                             }
                         });
 
@@ -155,7 +172,7 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                         });
 
                         col.Item().PaddingTop(18).Background(colorMoradoMuyClaro).Border(1).BorderColor(colorBorde).Padding(10).Text(
-                            "Este comprobante respalda la venta realizada. Conserve este documento para cualquier consulta posterior."
+                            "Este comprobante se genera con los datos históricos guardados en Ventas. Los cambios posteriores en Clientes o Productos no modifican este documento."
                         ).FontSize(9).FontColor(colorMoradoOscuro);
                     });
 
@@ -176,7 +193,6 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
             return documento.GeneratePdf();
         }
 
-
         private string NumeroALetras(decimal numero)
         {
             long entero = (long)Math.Truncate(numero);
@@ -189,8 +205,6 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
             return $"{letras} {centavos:00}/100";
         }
 
-
-        //TODO cambiar por una librería externa para convertir números a letras, o extraer a una clase de constantes aparte , o al menos optimizar este método que es muy largo y repetitivo
         private string ConvertirEnteroALetras(long numero)
         {
             if (numero == 0) return "";

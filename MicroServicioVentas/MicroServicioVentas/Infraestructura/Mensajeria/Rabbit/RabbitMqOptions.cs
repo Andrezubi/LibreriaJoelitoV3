@@ -1,4 +1,4 @@
-﻿namespace MicroServicioVentas.Infraestructura.Mensajeria.Rabbit
+namespace MicroServicioVentas.Infraestructura.Mensajeria.Rabbit
 {
     public class RabbitMqOptions
     {
@@ -19,17 +19,15 @@
 
     public class RabbitMqRoutingKeys
     {
-        public string ClienteValidar { get; set; } = "cliente.validar";
-
-        public string ClienteValidado { get; set; } = "cliente.validado";
-
-        public string ClienteRechazado { get; set; } = "cliente.rechazado";
-
         public string StockReservar { get; set; } = "stock.reservar";
 
         public string StockReservado { get; set; } = "stock.reservado";
 
         public string StockRechazado { get; set; } = "stock.rechazado";
+
+        public string StockLiberar { get; set; } = "stock.liberar";
+
+        public string StockLiberado { get; set; } = "stock.liberado";
     }
 
     public class RabbitMqQueueNames

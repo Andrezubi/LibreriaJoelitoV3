@@ -1,10 +1,9 @@
-﻿using MicroServicioVentas.Dominio.Modelos.Enum;
+using MicroServicioVentas.Dominio.Modelos.Enum;
 
 namespace MicroServicioVentas.Dominio.Modelos
 {
     public class Venta
     {
-        #region Atributos
         public int Id { get; set; }
 
         public string CorrelationId { get; set; } = string.Empty;
@@ -12,6 +11,8 @@ namespace MicroServicioVentas.Dominio.Modelos
         public int IdCliente { get; set; }
 
         public int IdUsuario { get; set; }
+
+        public string? NombreUsuario { get; set; }
 
         public DateTime Fecha { get; set; }
 
@@ -24,9 +25,7 @@ namespace MicroServicioVentas.Dominio.Modelos
         public DateTime FechaRegistro { get; set; }
 
         public DateTime? FechaUltimaActualizacion { get; set; }
-        #endregion
 
-        #region Constructores
         public Venta()
         {
             CorrelationId = Guid.NewGuid().ToString();
@@ -40,20 +39,6 @@ namespace MicroServicioVentas.Dominio.Modelos
             IdUsuario = idUsuario;
             Total = total;
             Estado = EstadosVenta.Pendiente;
-        }
-        #endregion
-
-        #region Metodos
-        public void MarcarClienteValidado()
-        {
-            Estado = EstadosVenta.ClienteValidado;
-            MotivoFallo = null;
-        }
-
-        public void MarcarClienteRechazado(string motivo)
-        {
-            Estado = EstadosVenta.ClienteRechazado;
-            MotivoFallo = motivo;
         }
 
         public void MarcarStockReservado()
@@ -90,6 +75,5 @@ namespace MicroServicioVentas.Dominio.Modelos
             Estado = EstadosVenta.Anulada;
             MotivoFallo = null;
         }
-        #endregion
     }
 }

@@ -1,6 +1,6 @@
 namespace MicroServicioVentas.Aplicacion.DTOs.Sagas
 {
-    public class DetalleReservarStockMessageDto
+    public class DetalleLiberarStockMessageDto
     {
         public int IdProducto { get; set; }
         public int IdPresentacion { get; set; }

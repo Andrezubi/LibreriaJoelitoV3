@@ -1,8 +1,13 @@
+using MicroServicioVentas.Aplicacion.Interfaces;
 using MicroServicioVentas.Aplicacion.Servicios;
+using MicroServicioVentas.Infraestructura.Mensajeria.Consumers;
 using MicroServicioVentas.Infraestructura.Mensajeria.Outbox;
 using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioVentas.Infraestructura.Persistencia;
-using MicroServicioVentas.Infraestructura.Mensajeria.Consumers;
+using MicroServicioVentas.Infraestructura.ServiciosExternos;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +31,7 @@ builder.Services.Configure<RabbitMqOptions>(
 
 builder.Services.AddSingleton<RabbitPublisher>();
 
+builder.Services.AddScoped<IPdfServicio, PdfServicio>();
 builder.Services.AddScoped<FachadaRealizarVenta>();
 builder.Services.AddScoped<FachadaAnularVenta>();
 builder.Services.AddScoped<FachadaGestionInventario>();

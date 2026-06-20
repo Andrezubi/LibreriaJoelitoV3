@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using MicroServicioVentas.Aplicacion.Interfaces;
+using MicroServicioVentas.Aplicacion.DTOs;
 using MicroServicioVentas.Dominio.Modelos;
 using MicroServicioVentas.Dominio.Modelos.Enum;
 
@@ -14,6 +15,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     CorrelationId,
                     IdCliente,
                     IdUsuario,
+                    NombreUsuario,
                     Total,
                     Estado,
                     MotivoFallo
@@ -22,6 +24,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     @correlationId,
                     @idCliente,
                     @idUsuario,
+                    @nombreUsuario,
                     @total,
                     @estado,
                     @motivoFallo
@@ -33,6 +36,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@correlationId", venta.CorrelationId);
             comando.Parameters.AddWithValue("@idCliente", venta.IdCliente);
             comando.Parameters.AddWithValue("@idUsuario", venta.IdUsuario);
+            comando.Parameters.AddWithValue("@nombreUsuario", venta.NombreUsuario);
             comando.Parameters.AddWithValue("@total", venta.Total);
             comando.Parameters.AddWithValue("@estado", venta.Estado);
             comando.Parameters.AddWithValue("@motivoFallo", venta.MotivoFallo);
@@ -46,6 +50,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 UPDATE venta
                 SET IdCliente = @idCliente,
                     IdUsuario = @idUsuario,
+                    NombreUsuario = @nombreUsuario,
                     Total = @total,
                     Estado = @estado,
                     MotivoFallo = @motivoFallo
@@ -55,6 +60,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
 
             comando.Parameters.AddWithValue("@idCliente", venta.IdCliente);
             comando.Parameters.AddWithValue("@idUsuario", venta.IdUsuario);
+            comando.Parameters.AddWithValue("@nombreUsuario", venta.NombreUsuario);
             comando.Parameters.AddWithValue("@total", venta.Total);
             comando.Parameters.AddWithValue("@estado", venta.Estado);
             comando.Parameters.AddWithValue("@motivoFallo", venta.MotivoFallo);
@@ -65,17 +71,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
 
         public int Eliminar(Venta venta)
         {
-            string consulta = @"
-                UPDATE venta
-                SET Estado = @estado
-                WHERE Id = @id;";
-
-            MySqlCommand comando = new MySqlCommand(consulta);
-
-            comando.Parameters.AddWithValue("@estado", EstadosVenta.Anulada);
-            comando.Parameters.AddWithValue("@id", venta.Id);
-
-            return ExecuteNonQuery(comando);
+            return ActualizarEstadoPorId(venta.Id, EstadosVenta.Anulada);
         }
 
         public List<Venta> ObtenerTodo()
@@ -86,6 +82,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     CorrelationId,
                     IdCliente,
                     IdUsuario,
+                    NombreUsuario,
                     Fecha,
                     Total,
                     Estado,
@@ -111,6 +108,46 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             return ventas;
         }
 
+        public List<VentaDTO> ObtenerResumenVentas()
+        {
+            string consulta = @"
+                SELECT 
+                    v.Id,
+                    v.CorrelationId,
+                    v.IdCliente,
+                    COALESCE(s.NombreCliente, '') AS NombreCliente,
+                    v.Fecha,
+                    v.Total,
+                    v.Estado
+                FROM venta v
+                LEFT JOIN venta_cliente_snapshot s ON s.IdVenta = v.Id
+                WHERE v.Estado <> @estadoAnulada
+                ORDER BY v.Fecha DESC;";
+
+            MySqlCommand comando = new MySqlCommand(consulta);
+            comando.Parameters.AddWithValue("@estadoAnulada", EstadosVenta.Anulada);
+
+            var ventas = new List<VentaDTO>();
+
+            using var reader = ExecuteReader(comando);
+
+            while (reader.Read())
+            {
+                ventas.Add(new VentaDTO
+                {
+                    Id = reader.GetInt32("Id"),
+                    CorrelationId = ObtenerString(reader, "CorrelationId"),
+                    IdCliente = reader.GetInt32("IdCliente"),
+                    NombreCliente = ObtenerString(reader, "NombreCliente"),
+                    Fecha = reader.GetDateTime("Fecha"),
+                    Total = reader.GetDecimal("Total"),
+                    Estado = ObtenerString(reader, "Estado")
+                });
+            }
+
+            return ventas;
+        }
+
         public Venta? ObtenerPorId(int id)
         {
             string consulta = @"
@@ -119,6 +156,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     CorrelationId,
                     IdCliente,
                     IdUsuario,
+                    NombreUsuario,
                     Fecha,
                     Total,
                     Estado,
@@ -148,6 +186,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     CorrelationId,
                     IdCliente,
                     IdUsuario,
+                    NombreUsuario,
                     Fecha,
                     Total,
                     Estado,
@@ -217,6 +256,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                 CorrelationId = ObtenerString(reader, "CorrelationId"),
                 IdCliente = reader.GetInt32("IdCliente"),
                 IdUsuario = reader.GetInt32("IdUsuario"),
+                NombreUsuario = ObtenerStringNullable(reader, "NombreUsuario"),
                 Fecha = reader.GetDateTime("Fecha"),
                 Total = reader.GetDecimal("Total"),
                 Estado = ObtenerString(reader, "Estado"),

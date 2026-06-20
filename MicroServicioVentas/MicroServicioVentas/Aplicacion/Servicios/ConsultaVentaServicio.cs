@@ -1,6 +1,6 @@
-﻿using MicroServicioVentas.Aplicacion.DTOs;
+using MicroServicioVentas.Aplicacion.DTOs;
+using MicroServicioVentas.Aplicacion.Interfaces;
 using MicroServicioVentas.Aplicacion.Results;
-using MicroServicioVentas.Dominio.Modelos;
 using MicroServicioVentas.Infraestructura.FactoriaCreadores;
 using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 
@@ -10,50 +10,92 @@ namespace MicroServicioVentas.Aplicacion.Servicios
     {
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
+        private readonly VentaClienteSnapshotRepositorio _clienteSnapshotRepositorio;
+        private readonly IPdfServicio _pdfServicio;
 
-        public ConsultaVentaServicio()
+        public ConsultaVentaServicio(IPdfServicio pdfServicio)
         {
             _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
             _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
+            _clienteSnapshotRepositorio = new VentaClienteSnapshotCreadorRepositorio().CrearRepositorio();
+            _pdfServicio = pdfServicio;
         }
 
-        public List<Venta> CargarVentas()
+        public List<VentaDTO> CargarVentas()
         {
-            return _ventaRepositorio.ObtenerTodo();
-        }
-
-        public List<PresentacionProductoVentaDTO> getPresentacionProductosByFrase(string frase)
-        {
-            // Temporal:
-            // Productos ya no pertenece al MicroServicioVentas.
-            // Esto luego debe consultarse desde MicroServicioProductos.
-            return new List<PresentacionProductoVentaDTO>();
-        }
-
-        public Result<PresentacionProductoVentaDTO> GetPresentacionProductoByIds(int idProducto, int idPresentacion)
-        {
-            return Result<PresentacionProductoVentaDTO>.Failure(
-                "Consulta de presentación/producto deshabilitada temporalmente. Debe resolverse desde MicroServicioProductos."
-            );
-        }
-
-        public Result<byte[]> GenerarComprobantePdf(int idVenta)
-        {
-            return Result<byte[]>.Failure(
-                "Generación de PDF deshabilitada temporalmente mientras se refactoriza la consulta de ventas."
-            );
+            return _ventaRepositorio.ObtenerResumenVentas();
         }
 
         public Result<VentaCompletaDTO> ObtenerVentaCompleta(int idVenta)
         {
-            return Result<VentaCompletaDTO>.Failure(
-                "Consulta de venta completa deshabilitada temporalmente mientras se refactoriza la lectura de ventas."
-            );
+            try
+            {
+                var venta = _ventaRepositorio.ObtenerPorId(idVenta);
+
+                if (venta == null)
+                    return Result<VentaCompletaDTO>.Failure("No se encontró la venta.");
+
+                var clienteSnapshot = _clienteSnapshotRepositorio.ObtenerPorIdVenta(idVenta);
+
+                if (clienteSnapshot == null)
+                    return Result<VentaCompletaDTO>.Failure("No se encontró el snapshot del cliente para esta venta.");
+
+                var detalles = _detalleVentaRepositorio.ObtenerDetalleExtraPorIdVenta(idVenta);
+
+                var ventaCompleta = new VentaCompletaDTO
+                {
+                    Venta = new VentaCabeceraDTO
+                    {
+                        Id = venta.Id,
+                        CorrelationId = venta.CorrelationId,
+                        EstadoVenta = venta.Estado,
+                        IdCliente = venta.IdCliente,
+                        NombreCliente = clienteSnapshot.NombreCliente,
+                        DocumentoCliente = clienteSnapshot.DocumentoCliente,
+                        NitCliente = clienteSnapshot.NitCliente,
+                        TelefonoCliente = clienteSnapshot.TelefonoCliente,
+                        DireccionCliente = clienteSnapshot.DireccionCliente,
+                        IdUsuario = venta.IdUsuario,
+                        NombreEmpleado = venta.NombreUsuario ?? string.Empty,
+                        Fecha = venta.Fecha,
+                        Total = venta.Total
+                    },
+                    Detalles = detalles
+                };
+
+                return Result<VentaCompletaDTO>.Success(ventaCompleta);
+            }
+            catch (Exception ex)
+            {
+                return Result<VentaCompletaDTO>.Failure($"Error al obtener venta completa: {ex.Message}");
+            }
+        }
+
+        public Result<byte[]> GenerarComprobantePdf(int idVenta)
+        {
+            try
+            {
+                var resultadoVenta = ObtenerVentaCompleta(idVenta);
+
+                if (!resultadoVenta.IsSuccess)
+                    return Result<byte[]>.Failure(resultadoVenta.Errors);
+
+                byte[] pdf = _pdfServicio.GenerarComprobanteVenta(resultadoVenta.Value);
+
+                if (pdf.Length == 0)
+                    return Result<byte[]>.Failure("No se pudo generar el comprobante de venta.");
+
+                return Result<byte[]>.Success(pdf);
+            }
+            catch (Exception ex)
+            {
+                return Result<byte[]>.Failure($"Error al generar comprobante PDF: {ex.Message}");
+            }
         }
 
         public List<Reporte1DTO> ObtenerReporteServicios()
         {
-            return new List<Reporte1DTO>();
+            return _detalleVentaRepositorio.ObtenerReporteServicios();
         }
     }
 }

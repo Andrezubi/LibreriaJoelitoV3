@@ -1,6 +1,12 @@
-﻿using MicroServicioVentas.Aplicacion.Results;
+using System.Text.Json;
+using Microsoft.Extensions.Options;
+using MicroServicioVentas.Aplicacion.DTOs.Sagas;
+using MicroServicioVentas.Aplicacion.Results;
+using MicroServicioVentas.Dominio.Modelos;
 using MicroServicioVentas.Dominio.Modelos.Enum;
 using MicroServicioVentas.Infraestructura.FactoriaCreadores;
+using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
+using MicroServicioVentas.Infraestructura.Persistencia;
 using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 
 namespace MicroServicioVentas.Aplicacion.Servicios
@@ -8,37 +14,92 @@ namespace MicroServicioVentas.Aplicacion.Servicios
     public class FachadaAnularVenta
     {
         private readonly VentaRepositorio _ventaRepositorio;
+        private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
+        private readonly OutboxMessageRepositorio _outboxMessageRepositorio;
+        private readonly RabbitMqOptions _rabbitMqOptions;
 
-        public FachadaAnularVenta()
+        public FachadaAnularVenta(IOptions<RabbitMqOptions> rabbitMqOptions)
         {
             _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
+            _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
+            _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
+            _rabbitMqOptions = rabbitMqOptions.Value;
         }
 
-        public Result<int> AnularVenta(int idVenta, int idEmpleado)
+        public Result<int> AnularVenta(int idVenta, int idUsuario)
         {
             try
             {
-                var venta = _ventaRepositorio.ObtenerPorId(idVenta);
+                RepositorioBD.Instancia.BeginTransaction();
 
-                if (venta == null)
-                    return Result<int>.Failure("No se encontró la venta.");
+                try
+                {
+                    var venta = _ventaRepositorio.ObtenerPorId(idVenta);
 
-                if (venta.Estado == EstadosVenta.Anulada)
-                    return Result<int>.Failure("La venta ya fue anulada.");
+                    if (venta == null)
+                        throw new Exception("No se encontró la venta.");
 
-                if (venta.Estado == EstadosVenta.AnulacionPendiente)
-                    return Result<int>.Failure("La venta ya tiene una anulación pendiente.");
+                    if (venta.Estado == EstadosVenta.Anulada)
+                        throw new Exception("La venta ya fue anulada.");
 
-                int filas = _ventaRepositorio.ActualizarEstadoPorId(
-                    idVenta,
-                    EstadosVenta.AnulacionPendiente,
-                    "Anulación iniciada. Pendiente de compensación por saga."
-                );
+                    if (venta.Estado == EstadosVenta.AnulacionPendiente)
+                        throw new Exception("La venta ya tiene una anulación pendiente.");
 
-                if (filas <= 0)
-                    return Result<int>.Failure("No se pudo iniciar la anulación de la venta.");
+                    if (venta.Estado != EstadosVenta.Confirmada && venta.Estado != EstadosVenta.StockReservado)
+                        throw new Exception("Solo se puede anular una venta confirmada o con stock reservado.");
 
-                return Result<int>.Success(idVenta);
+                    var detalles = _detalleVentaRepositorio.ObtenerPorIdVenta(idVenta);
+
+                    if (!detalles.Any())
+                        throw new Exception("La venta no tiene detalles para liberar stock.");
+
+                    _ventaRepositorio.ActualizarEstadoPorId(
+                        idVenta,
+                        EstadosVenta.AnulacionPendiente,
+                        "Anulación iniciada. Pendiente de liberación de stock."
+                    );
+
+                    string messageId = Guid.NewGuid().ToString();
+
+                    var liberarStockMessage = new LiberarStockMessageDto
+                    {
+                        MessageId = messageId,
+                        CorrelationId = venta.CorrelationId,
+                        IdVenta = venta.Id,
+                        IdUsuario = idUsuario,
+                        Detalles = detalles.Select(d => new DetalleLiberarStockMessageDto
+                        {
+                            IdProducto = d.IdProducto,
+                            IdPresentacion = d.IdPresentacion,
+                            Cantidad = d.Cantidad
+                        }).ToList()
+                    };
+
+                    string payload = JsonSerializer.Serialize(liberarStockMessage);
+
+                    var outboxMessage = new OutboxMessage(
+                        messageId: messageId,
+                        correlationId: venta.CorrelationId,
+                        exchangeName: _rabbitMqOptions.ExchangeName,
+                        routingKey: _rabbitMqOptions.RoutingKeys.StockLiberar,
+                        messageType: nameof(LiberarStockMessageDto),
+                        payload: payload
+                    );
+
+                    int filasOutbox = _outboxMessageRepositorio.Insertar(outboxMessage);
+
+                    if (filasOutbox <= 0)
+                        throw new Exception("No se pudo registrar el mensaje Outbox para liberar stock.");
+
+                    RepositorioBD.Instancia.Commit();
+
+                    return Result<int>.Success(idVenta);
+                }
+                catch (Exception ex)
+                {
+                    RepositorioBD.Instancia.Rollback();
+                    return Result<int>.Failure($"Error al iniciar anulación: {ex.Message}");
+                }
             }
             catch (Exception ex)
             {

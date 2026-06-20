@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
+using MicroServicioVentas.Aplicacion.DTOs;
 using MicroServicioVentas.Aplicacion.DTOs.Sagas;
 using MicroServicioVentas.Aplicacion.Results;
 using MicroServicioVentas.Dominio.Modelos;
@@ -15,6 +16,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
     {
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
+        private readonly VentaClienteSnapshotRepositorio _clienteSnapshotRepositorio;
         private readonly OutboxMessageRepositorio _outboxMessageRepositorio;
         private readonly RabbitMqOptions _rabbitMqOptions;
 
@@ -22,47 +24,30 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         {
             _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
             _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
+            _clienteSnapshotRepositorio = new VentaClienteSnapshotCreadorRepositorio().CrearRepositorio();
             _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
             _rabbitMqOptions = rabbitMqOptions.Value;
         }
 
-        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(Venta venta, List<DetalleVenta> detalles)
+        public Result<ResultadoInicioVentaSagaDto> RegistrarVenta(RegistrarVentaRequestDto request)
         {
             try
             {
-                if (venta == null)
-                    return Result<ResultadoInicioVentaSagaDto>.Failure("La venta es obligatoria.");
+                var validacion = ValidarSolicitud(request);
 
-                if (detalles == null || !detalles.Any())
-                    return Result<ResultadoInicioVentaSagaDto>.Failure("La venta debe tener al menos un producto.");
+                if (validacion.IsFailure)
+                    return Result<ResultadoInicioVentaSagaDto>.Failure(validacion.Errors);
 
-                if (venta.IdCliente <= 0)
-                    return Result<ResultadoInicioVentaSagaDto>.Failure("Debe seleccionar un cliente válido.");
-
-                if (venta.IdUsuario <= 0)
-                    return Result<ResultadoInicioVentaSagaDto>.Failure("Debe existir un usuario responsable de la venta.");
-
-                foreach (var detalle in detalles)
+                var venta = new Venta
                 {
-                    if (detalle.IdProducto <= 0)
-                        return Result<ResultadoInicioVentaSagaDto>.Failure("Cada detalle debe tener un producto válido.");
-
-                    if (detalle.IdPresentacion <= 0)
-                        return Result<ResultadoInicioVentaSagaDto>.Failure("Cada detalle debe tener una presentación válida.");
-
-                    if (detalle.Cantidad <= 0)
-                        return Result<ResultadoInicioVentaSagaDto>.Failure("La cantidad debe ser mayor a cero.");
-
-                    if (detalle.PrecioUnitario < 0)
-                        return Result<ResultadoInicioVentaSagaDto>.Failure("El precio unitario no puede ser negativo.");
-                }
-
-                if (string.IsNullOrWhiteSpace(venta.CorrelationId))
-                    venta.CorrelationId = Guid.NewGuid().ToString();
-
-                venta.Estado = EstadosVenta.Pendiente;
-                venta.MotivoFallo = null;
-                venta.Total = detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+                    CorrelationId = Guid.NewGuid().ToString(),
+                    IdCliente = request.Venta.IdCliente,
+                    IdUsuario = request.Venta.IdUsuario,
+                    NombreUsuario = request.Venta.NombreUsuario,
+                    Estado = EstadosVenta.Pendiente,
+                    MotivoFallo = null,
+                    Total = request.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario)
+                };
 
                 RepositorioBD.Instancia.BeginTransaction();
 
@@ -73,10 +58,37 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                     if (idVenta <= 0)
                         throw new Exception("No se pudo registrar la cabecera de la venta.");
 
-                    foreach (var detalle in detalles)
+                    var clienteSnapshot = new VentaClienteSnapshot
                     {
-                        detalle.IdVenta = idVenta;
-                        detalle.Estado = EstadosDetalleVenta.Pendiente;
+                        IdVenta = idVenta,
+                        IdCliente = request.Cliente.IdCliente,
+                        NombreCliente = request.Cliente.NombreCliente.Trim(),
+                        DocumentoCliente = request.Cliente.DocumentoCliente,
+                        NitCliente = request.Cliente.NitCliente,
+                        TelefonoCliente = request.Cliente.TelefonoCliente,
+                        DireccionCliente = request.Cliente.DireccionCliente
+                    };
+
+                    int filasClienteSnapshot = _clienteSnapshotRepositorio.Insertar(clienteSnapshot);
+
+                    if (filasClienteSnapshot <= 0)
+                        throw new Exception("No se pudo registrar el snapshot del cliente.");
+
+                    foreach (var detalleRequest in request.Detalles)
+                    {
+                        var detalle = new DetalleVenta
+                        {
+                            IdVenta = idVenta,
+                            IdProducto = detalleRequest.IdProducto,
+                            IdPresentacion = detalleRequest.IdPresentacion,
+                            NombreProducto = detalleRequest.NombreProducto.Trim(),
+                            NombrePresentacion = detalleRequest.NombrePresentacion.Trim(),
+                            CodigoProducto = detalleRequest.CodigoProducto,
+                            UnidadPresentacion = detalleRequest.UnidadPresentacion,
+                            Cantidad = detalleRequest.Cantidad,
+                            PrecioUnitario = detalleRequest.PrecioUnitario,
+                            Estado = EstadosDetalleVenta.Pendiente
+                        };
 
                         int filasDetalle = _detalleVentaRepositorio.Insertar(detalle);
 
@@ -84,32 +96,39 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                             throw new Exception($"No se pudo registrar el detalle del producto {detalle.IdProducto}.");
                     }
 
+                    var detallesStock = request.Detalles.Select(d => new DetalleReservarStockMessageDto
+                    {
+                        IdProducto = d.IdProducto,
+                        IdPresentacion = d.IdPresentacion,
+                        Cantidad = d.Cantidad
+                    }).ToList();
+
                     string messageId = Guid.NewGuid().ToString();
 
-                    var validarClienteMessage = new ValidarClienteMessageDto
+                    var reservarStockMessage = new ReservarStockMessageDto
                     {
                         MessageId = messageId,
                         CorrelationId = venta.CorrelationId,
                         IdVenta = idVenta,
-                        IdCliente = venta.IdCliente,
-                        IdUsuario = venta.IdUsuario
+                        IdUsuario = venta.IdUsuario,
+                        Detalles = detallesStock
                     };
 
-                    string payload = JsonSerializer.Serialize(validarClienteMessage);
+                    string payload = JsonSerializer.Serialize(reservarStockMessage);
 
                     var outboxMessage = new OutboxMessage(
                         messageId: messageId,
                         correlationId: venta.CorrelationId,
                         exchangeName: _rabbitMqOptions.ExchangeName,
-                        routingKey: _rabbitMqOptions.RoutingKeys.ClienteValidar,
-                        messageType: nameof(ValidarClienteMessageDto),
+                        routingKey: _rabbitMqOptions.RoutingKeys.StockReservar,
+                        messageType: nameof(ReservarStockMessageDto),
                         payload: payload
                     );
 
                     int filasOutbox = _outboxMessageRepositorio.Insertar(outboxMessage);
 
                     if (filasOutbox <= 0)
-                        throw new Exception("No se pudo registrar el mensaje Outbox para validar cliente.");
+                        throw new Exception("No se pudo registrar el mensaje Outbox para reservar stock.");
 
                     RepositorioBD.Instancia.Commit();
 
@@ -118,7 +137,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                         IdVenta = idVenta,
                         CorrelationId = venta.CorrelationId,
                         Estado = EstadosVenta.Pendiente,
-                        Mensaje = "Venta registrada como pendiente. La saga fue iniciada correctamente."
+                        Mensaje = "Venta registrada como pendiente. Se creó el snapshot y se inició la saga de reserva de stock."
                     };
 
                     return Result<ResultadoInicioVentaSagaDto>.Success(respuesta);
@@ -133,6 +152,71 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             {
                 return Result<ResultadoInicioVentaSagaDto>.Failure($"Error inesperado: {ex.Message}");
             }
+        }
+
+        private Result ValidarSolicitud(RegistrarVentaRequestDto request)
+        {
+            var errores = new List<string>();
+
+            if (request == null)
+                return Result.Failure("La solicitud es obligatoria.");
+
+            if (request.Venta == null)
+                errores.Add("La venta es obligatoria.");
+            else
+            {
+                if (request.Venta.IdCliente <= 0)
+                    errores.Add("Debe seleccionar un cliente válido.");
+
+                if (request.Venta.IdUsuario <= 0)
+                    errores.Add("Debe existir un usuario responsable de la venta.");
+            }
+
+            if (request.Cliente == null)
+                errores.Add("El snapshot del cliente es obligatorio.");
+            else
+            {
+                if (request.Cliente.IdCliente <= 0)
+                    errores.Add("El cliente del snapshot no es válido.");
+
+                if (string.IsNullOrWhiteSpace(request.Cliente.NombreCliente))
+                    errores.Add("El nombre del cliente es obligatorio para el comprobante.");
+
+                if (request.Venta != null && request.Cliente.IdCliente != request.Venta.IdCliente)
+                    errores.Add("El IdCliente de la venta y del snapshot no coinciden.");
+            }
+
+            if (request.Detalles == null || !request.Detalles.Any())
+            {
+                errores.Add("La venta debe tener al menos un producto.");
+            }
+            else
+            {
+                foreach (var detalle in request.Detalles)
+                {
+                    if (detalle.IdProducto <= 0)
+                        errores.Add("Cada detalle debe tener un producto válido.");
+
+                    if (detalle.IdPresentacion <= 0)
+                        errores.Add("Cada detalle debe tener una presentación válida.");
+
+                    if (string.IsNullOrWhiteSpace(detalle.NombreProducto))
+                        errores.Add("Cada detalle debe tener el nombre del producto para el comprobante.");
+
+                    if (string.IsNullOrWhiteSpace(detalle.NombrePresentacion))
+                        errores.Add("Cada detalle debe tener el nombre de la presentación para el comprobante.");
+
+                    if (detalle.Cantidad <= 0)
+                        errores.Add("La cantidad debe ser mayor a cero.");
+
+                    if (detalle.PrecioUnitario < 0)
+                        errores.Add("El precio unitario no puede ser negativo.");
+                }
+            }
+
+            return errores.Any()
+                ? Result.Failure(errores)
+                : Result.Success();
         }
     }
 }

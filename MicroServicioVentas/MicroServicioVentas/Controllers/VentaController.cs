@@ -1,19 +1,19 @@
-﻿using MicroServicioVentas.Aplicacion.DTOs;
+using MicroServicioVentas.Aplicacion.DTOs;
 using MicroServicioVentas.Aplicacion.Servicios;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MicroServicioVentas.Controllers
 {
-    //[Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class VentaController : ControllerBase
     {
-        FachadaGestionInventario _gestionInventarioServicio;
-        ConsultaVentaServicio _consultaVentaServicio;
-        public VentaController(FachadaGestionInventario gestionInventarioServicio, ConsultaVentaServicio consultaVentaServicio)
+        private readonly FachadaGestionInventario _gestionInventarioServicio;
+        private readonly ConsultaVentaServicio _consultaVentaServicio;
+
+        public VentaController(
+            FachadaGestionInventario gestionInventarioServicio,
+            ConsultaVentaServicio consultaVentaServicio)
         {
             _gestionInventarioServicio = gestionInventarioServicio;
             _consultaVentaServicio = consultaVentaServicio;
@@ -25,23 +25,13 @@ namespace MicroServicioVentas.Controllers
             return Ok(_consultaVentaServicio.CargarVentas());
         }
 
-
         [HttpPost]
         public IActionResult Post([FromBody] RegistrarVentaRequestDto request)
         {
             if (request == null)
                 return BadRequest("La solicitud no puede estar vacía.");
 
-            if (request.Venta == null)
-                return BadRequest("La venta es obligatoria.");
-
-            if (request.Detalles == null || !request.Detalles.Any())
-                return BadRequest("La venta debe tener al menos un producto.");
-
-            var resultado = _gestionInventarioServicio.RegistrarVenta(
-                request.Venta,
-                request.Detalles
-            );
+            var resultado = _gestionInventarioServicio.RegistrarVenta(request);
 
             if (!resultado.IsSuccess)
                 return BadRequest(resultado);
@@ -49,40 +39,16 @@ namespace MicroServicioVentas.Controllers
             return Accepted(resultado);
         }
 
-
         [HttpPut("{idVenta}/anular")]
-        public IActionResult AnularVenta(int idVenta, [FromQuery] int idEmpleado)
+        public IActionResult AnularVenta(int idVenta, [FromQuery] int idUsuario)
         {
-            var resultado = _gestionInventarioServicio.AnularVenta(idVenta, idEmpleado);
+            var resultado = _gestionInventarioServicio.AnularVenta(idVenta, idUsuario);
 
             if (!resultado.IsSuccess)
                 return BadRequest(resultado);
 
             return Ok(resultado);
         }
-
-
-        [HttpGet("presentaciones")]
-        public IActionResult GetPresentacionProductosByFrase([FromQuery] string frase)
-        {
-
-            var resultado = _consultaVentaServicio.getPresentacionProductosByFrase(frase);
-            return Ok(resultado);
-        }
-
-
-
-        [HttpGet("productos/{idProducto}/presentaciones/{idPresentacion}")]
-        public IActionResult GetPresentacionProductoByIds(int idProducto, int idPresentacion)
-        {
-            var resultado = _consultaVentaServicio.GetPresentacionProductoByIds(idProducto, idPresentacion);
-
-            if (!resultado.IsSuccess)
-                return NotFound(resultado);
-
-            return Ok(resultado.Value);
-        }
-
 
         [HttpGet("{idVenta}/comprobante")]
         public IActionResult GenerarComprobantePdf(int idVenta)
@@ -98,7 +64,6 @@ namespace MicroServicioVentas.Controllers
                 $"comprobante-venta-{idVenta}.pdf"
             );
         }
-
 
         [HttpGet("{idVenta}/completa")]
         public IActionResult ObtenerVentaCompleta(int idVenta)
@@ -116,7 +81,7 @@ namespace MicroServicioVentas.Controllers
         {
             var resultado = _consultaVentaServicio.ObtenerReporteServicios();
 
-            if (resultado == null)
+            if (resultado == null || resultado.Count == 0)
                 return NoContent();
 
             return Ok(resultado);

@@ -1,7 +1,9 @@
-﻿namespace MicroServicioVentas.Aplicacion.Interfaces
+using MicroServicioVentas.Aplicacion.DTOs;
+
+namespace MicroServicioVentas.Aplicacion.Interfaces
 {
     public interface IPdfServicio
     {
-        byte[] GenerarComprobanteVenta(System.Data.DataTable datosVenta);
+        byte[] GenerarComprobanteVenta(VentaCompletaDTO ventaCompleta);
     }
 }

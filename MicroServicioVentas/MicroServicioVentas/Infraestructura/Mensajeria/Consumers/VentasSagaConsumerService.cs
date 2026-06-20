@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using MicroServicioVentas.Aplicacion.DTOs.Sagas;
@@ -72,22 +72,6 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
             await _channel.QueueBindAsync(
                 queue: _options.QueueNames.VentasRespuestas,
                 exchange: _options.ExchangeName,
-                routingKey: _options.RoutingKeys.ClienteValidado,
-                arguments: null,
-                cancellationToken: stoppingToken
-            );
-
-            await _channel.QueueBindAsync(
-                queue: _options.QueueNames.VentasRespuestas,
-                exchange: _options.ExchangeName,
-                routingKey: _options.RoutingKeys.ClienteRechazado,
-                arguments: null,
-                cancellationToken: stoppingToken
-            );
-
-            await _channel.QueueBindAsync(
-                queue: _options.QueueNames.VentasRespuestas,
-                exchange: _options.ExchangeName,
                 routingKey: _options.RoutingKeys.StockReservado,
                 arguments: null,
                 cancellationToken: stoppingToken
@@ -101,6 +85,14 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
                 cancellationToken: stoppingToken
             );
 
+            await _channel.QueueBindAsync(
+                queue: _options.QueueNames.VentasRespuestas,
+                exchange: _options.ExchangeName,
+                routingKey: _options.RoutingKeys.StockLiberado,
+                arguments: null,
+                cancellationToken: stoppingToken
+            );
+
             await _channel.BasicQosAsync(
                 prefetchSize: 0,
                 prefetchCount: 1,
@@ -109,7 +101,6 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
             );
 
             var consumer = new AsyncEventingBasicConsumer(_channel);
-
             consumer.ReceivedAsync += ProcesarMensajeAsync;
 
             await _channel.BasicConsumeAsync(
@@ -124,7 +115,14 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
                 _options.QueueNames.VentasRespuestas
             );
 
-            await Task.Delay(Timeout.Infinite, stoppingToken);
+            try
+            {
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("VentasSagaConsumerService detenido.");
+            }
         }
 
         private async Task ProcesarMensajeAsync(object sender, BasicDeliverEventArgs ea)
@@ -145,36 +143,9 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
 
                 Result resultado;
 
-                if (routingKey == _options.RoutingKeys.ClienteValidado)
+                if (routingKey == _options.RoutingKeys.StockReservado)
                 {
-                    var mensaje = JsonSerializer.Deserialize<ClienteValidadoMessageDto>(
-                        payload,
-                        _jsonOptions
-                    );
-
-                    if (mensaje == null)
-                        throw new Exception("No se pudo deserializar ClienteValidadoMessageDto.");
-
-                    resultado = _ventaSagaServicio.ProcesarClienteValidado(mensaje, routingKey);
-                }
-                else if (routingKey == _options.RoutingKeys.ClienteRechazado)
-                {
-                    var mensaje = JsonSerializer.Deserialize<ClienteRechazadoMessageDto>(
-                        payload,
-                        _jsonOptions
-                    );
-
-                    if (mensaje == null)
-                        throw new Exception("No se pudo deserializar ClienteRechazadoMessageDto.");
-
-                    resultado = _ventaSagaServicio.ProcesarClienteRechazado(mensaje, routingKey);
-                }
-                else if (routingKey == _options.RoutingKeys.StockReservado)
-                {
-                    var mensaje = JsonSerializer.Deserialize<StockReservadoMessageDto>(
-                        payload,
-                        _jsonOptions
-                    );
+                    var mensaje = JsonSerializer.Deserialize<StockReservadoMessageDto>(payload, _jsonOptions);
 
                     if (mensaje == null)
                         throw new Exception("No se pudo deserializar StockReservadoMessageDto.");
@@ -183,23 +154,25 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
                 }
                 else if (routingKey == _options.RoutingKeys.StockRechazado)
                 {
-                    var mensaje = JsonSerializer.Deserialize<StockRechazadoMessageDto>(
-                        payload,
-                        _jsonOptions
-                    );
+                    var mensaje = JsonSerializer.Deserialize<StockRechazadoMessageDto>(payload, _jsonOptions);
 
                     if (mensaje == null)
                         throw new Exception("No se pudo deserializar StockRechazadoMessageDto.");
 
                     resultado = _ventaSagaServicio.ProcesarStockRechazado(mensaje, routingKey);
                 }
+                else if (routingKey == _options.RoutingKeys.StockLiberado)
+                {
+                    var mensaje = JsonSerializer.Deserialize<StockLiberadoMessageDto>(payload, _jsonOptions);
+
+                    if (mensaje == null)
+                        throw new Exception("No se pudo deserializar StockLiberadoMessageDto.");
+
+                    resultado = _ventaSagaServicio.ProcesarStockLiberado(mensaje, routingKey);
+                }
                 else
                 {
-                    _logger.LogWarning(
-                        "RoutingKey no manejada por Ventas: {RoutingKey}",
-                        routingKey
-                    );
-
+                    _logger.LogWarning("RoutingKey no manejada por Ventas: {RoutingKey}", routingKey);
                     await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                     return;
                 }
@@ -207,19 +180,11 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
                 if (resultado.IsSuccess)
                 {
                     await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-
-                    _logger.LogInformation(
-                        "Mensaje procesado correctamente en Ventas. RoutingKey: {RoutingKey}",
-                        routingKey
-                    );
+                    _logger.LogInformation("Mensaje procesado correctamente en Ventas. RoutingKey: {RoutingKey}", routingKey);
                 }
                 else
                 {
-                    await _channel.BasicNackAsync(
-                        ea.DeliveryTag,
-                        multiple: false,
-                        requeue: false
-                    );
+                    await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
 
                     _logger.LogWarning(
                         "Mensaje rechazado por error de negocio. RoutingKey: {RoutingKey}. Errores: {Errores}",
@@ -230,17 +195,9 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
             }
             catch (Exception ex)
             {
-                await _channel.BasicNackAsync(
-                    ea.DeliveryTag,
-                    multiple: false,
-                    requeue: false
-                );
+                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
 
-                _logger.LogError(
-                    ex,
-                    "Error procesando mensaje en Ventas. RoutingKey: {RoutingKey}",
-                    routingKey
-                );
+                _logger.LogError(ex, "Error procesando mensaje en Ventas. RoutingKey: {RoutingKey}", routingKey);
             }
         }
 
@@ -248,7 +205,6 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Consumers
         {
             _channel?.Dispose();
             _connection?.Dispose();
-
             base.Dispose();
         }
     }
