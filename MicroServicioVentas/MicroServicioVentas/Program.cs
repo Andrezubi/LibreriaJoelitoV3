@@ -1,9 +1,11 @@
 using MicroServicioVentas.Aplicacion.Interfaces;
 using MicroServicioVentas.Aplicacion.Servicios;
+using MicroServicioVentas.Infraestructura.FactoriaCreadores;
 using MicroServicioVentas.Infraestructura.Mensajeria.Consumers;
 using MicroServicioVentas.Infraestructura.Mensajeria.Outbox;
 using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioVentas.Infraestructura.Persistencia;
+using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
 using MicroServicioVentas.Infraestructura.ServiciosExternos;
 using QuestPDF.Infrastructure;
 
@@ -29,9 +31,27 @@ builder.Services.Configure<RabbitMqOptions>(
     builder.Configuration.GetSection("RabbitMQ")
 );
 
-builder.Services.AddSingleton<RabbitPublisher>();
+// Repositorios
+builder.Services.AddSingleton<VentaRepositorio>(_ =>
+    new VentaCreadorRepositorio().CrearRepositorio());
 
+builder.Services.AddSingleton<DetalleVentaRepositorio>(_ =>
+    new DetalleVentaCreadorRepositorio().CrearRepositorio());
+
+builder.Services.AddSingleton<VentaClienteSnapshotRepositorio>(_ =>
+    new VentaClienteSnapshotCreadorRepositorio().CrearRepositorio());
+
+builder.Services.AddSingleton<OutboxMessageRepositorio>(_ =>
+    new OutboxMessageCreadorRepositorio().CrearRepositorio());
+
+builder.Services.AddSingleton<ProcessedMessageRepositorio>(_ =>
+    new ProcessedMessageCreadorRepositorio().CrearRepositorio());
+
+// Infraestructura
+builder.Services.AddSingleton<RabbitPublisher>();
 builder.Services.AddScoped<IPdfServicio, PdfServicio>();
+
+// Servicios de aplicación
 builder.Services.AddScoped<FachadaRealizarVenta>();
 builder.Services.AddScoped<FachadaAnularVenta>();
 builder.Services.AddScoped<FachadaGestionInventario>();
@@ -39,6 +59,7 @@ builder.Services.AddScoped<ConsultaVentaServicio>();
 
 builder.Services.AddSingleton<VentaSagaServicio>();
 
+// Servicios en segundo plano
 builder.Services.AddHostedService<OutboxPublisherService>();
 builder.Services.AddHostedService<VentasSagaConsumerService>();
 

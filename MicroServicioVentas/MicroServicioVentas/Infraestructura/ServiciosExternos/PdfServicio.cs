@@ -134,7 +134,8 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
 
         private static void AgregarCabecera(TableCellDescriptor celda, string texto)
         {
-            celda.Background(Colors.Grey.Lighten3)
+            celda.Cell()
+                .Background(Colors.Grey.Lighten3)
                 .Border(1)
                 .BorderColor(Colors.Grey.Lighten1)
                 .Padding(5)

@@ -20,12 +20,12 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly OutboxMessageRepositorio _outboxMessageRepositorio;
         private readonly RabbitMqOptions _rabbitMqOptions;
 
-        public FachadaRealizarVenta(IOptions<RabbitMqOptions> rabbitMqOptions)
+        public FachadaRealizarVenta(IOptions<RabbitMqOptions> rabbitMqOptions, VentaRepositorio ventaRepositorio, DetalleVentaRepositorio detalleVentaRepositorio, VentaClienteSnapshotRepositorio clienteSnapshotRepositorio, OutboxMessageRepositorio outboxMessageRepositorio)
         {
-            _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
-            _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
-            _clienteSnapshotRepositorio = new VentaClienteSnapshotCreadorRepositorio().CrearRepositorio();
-            _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
+            _ventaRepositorio = ventaRepositorio;
+            _detalleVentaRepositorio = detalleVentaRepositorio;
+            _clienteSnapshotRepositorio = clienteSnapshotRepositorio;
+            _outboxMessageRepositorio = outboxMessageRepositorio;
             _rabbitMqOptions = rabbitMqOptions.Value;
         }
 

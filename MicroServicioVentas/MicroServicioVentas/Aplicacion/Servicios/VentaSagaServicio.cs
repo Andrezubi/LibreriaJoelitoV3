@@ -14,11 +14,11 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
         private readonly ProcessedMessageRepositorio _processedMessageRepositorio;
 
-        public VentaSagaServicio()
+        public VentaSagaServicio(VentaRepositorio ventaRepositorio, DetalleVentaRepositorio detalleVentaRepositorio, ProcessedMessageRepositorio processedMessageRepositorio)
         {
-            _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
-            _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
-            _processedMessageRepositorio = new ProcessedMessageCreadorRepositorio().CrearRepositorio();
+            _ventaRepositorio = ventaRepositorio;
+            _detalleVentaRepositorio = detalleVentaRepositorio;
+            _processedMessageRepositorio = processedMessageRepositorio;
         }
 
         public Result ProcesarStockReservado(StockReservadoMessageDto mensaje, string routingKey)

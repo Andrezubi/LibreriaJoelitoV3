@@ -13,11 +13,11 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly VentaClienteSnapshotRepositorio _clienteSnapshotRepositorio;
         private readonly IPdfServicio _pdfServicio;
 
-        public ConsultaVentaServicio(IPdfServicio pdfServicio)
+        public ConsultaVentaServicio(IPdfServicio pdfServicio, VentaRepositorio ventaRepositorio, DetalleVentaRepositorio detalleVentaRepositorio, VentaClienteSnapshotRepositorio clienteSnapshotRepositorio)
         {
-            _ventaRepositorio = new VentaCreadorRepositorio().CrearRepositorio();
-            _detalleVentaRepositorio = new DetalleVentaCreadorRepositorio().CrearRepositorio();
-            _clienteSnapshotRepositorio = new VentaClienteSnapshotCreadorRepositorio().CrearRepositorio();
+            _ventaRepositorio = ventaRepositorio;
+            _detalleVentaRepositorio = detalleVentaRepositorio;
+            _clienteSnapshotRepositorio = clienteSnapshotRepositorio;
             _pdfServicio = pdfServicio;
         }
 
