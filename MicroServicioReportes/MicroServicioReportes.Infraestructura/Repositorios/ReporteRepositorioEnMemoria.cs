@@ -10,7 +10,7 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         new VentaProductoReporteDto
         {
             NumeroVenta = 1,
-            FechaVenta = DateTime.Today.AddDays(-2),
+            FechaVenta = new DateTime(2026, 6, 5),
             Producto = "Clean Code",
             Categoria = "Programacion",
             CantidadVendida = 2,
@@ -21,7 +21,7 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         new VentaProductoReporteDto
         {
             NumeroVenta = 1,
-            FechaVenta = DateTime.Today.AddDays(-2),
+            FechaVenta = new DateTime(2026, 6, 5),
             Producto = "Arquitectura Limpia",
             Categoria = "Programacion",
             CantidadVendida = 1,
@@ -32,12 +32,78 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         new VentaProductoReporteDto
         {
             NumeroVenta = 2,
-            FechaVenta = DateTime.Today.AddDays(-1),
+            FechaVenta = new DateTime(2026, 6, 10),
             Producto = "El Principito",
             Categoria = "Literatura",
             CantidadVendida = 3,
             PrecioUnitario = 45,
             Cliente = "Maria Gomez",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 3,
+            FechaVenta = new DateTime(2026, 6, 15),
+            Producto = "La Casa de los Espiritus",
+            Categoria = "Literatura",
+            CantidadVendida = 2,
+            PrecioUnitario = 55,
+            Cliente = "Juan Perez",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 4,
+            FechaVenta = new DateTime(2026, 6, 20),
+            Producto = "Design Patterns",
+            Categoria = "Programacion",
+            CantidadVendida = 1,
+            PrecioUnitario = 85,
+            Cliente = "Carlos Lopez",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 5,
+            FechaVenta = new DateTime(2026, 6, 22),
+            Producto = "Programacion en C#",
+            Categoria = "Programacion",
+            CantidadVendida = 2,
+            PrecioUnitario = 75,
+            Cliente = "Ana Rodriguez",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 6,
+            FechaVenta = new DateTime(2026, 6, 25),
+            Producto = "Cien Años de Soledad",
+            Categoria = "Literatura",
+            CantidadVendida = 1,
+            PrecioUnitario = 50,
+            Cliente = "Sofia Martinez",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 7,
+            FechaVenta = new DateTime(2026, 6, 28),
+            Producto = "RESTful Web Services",
+            Categoria = "Programacion",
+            CantidadVendida = 3,
+            PrecioUnitario = 90,
+            Cliente = "Roberto Garcia",
+            EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 8,
+            FechaVenta = new DateTime(2026, 6, 30),
+            Producto = "El Quijote",
+            Categoria = "Literatura",
+            CantidadVendida = 2,
+            PrecioUnitario = 65,
+            Cliente = "Patricia Sanchez",
             EstadoVenta = "Confirmada"
         }
     };

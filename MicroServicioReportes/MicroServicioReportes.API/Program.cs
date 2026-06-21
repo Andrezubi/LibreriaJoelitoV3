@@ -5,8 +5,12 @@ using MicroServicioReportes.Aplicacion.Servicios;
 using MicroServicioReportes.Dominio.Interfaces;
 using MicroServicioReportes.Infraestructura.Generadores;
 using MicroServicioReportes.Infraestructura.Repositorios;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar QuestPDF con licencia Community
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Add services to the container.
 

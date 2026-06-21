@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="QuestPDF" Version="2024.12.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.1" />
   </ItemGroup>
 
 </Project>
