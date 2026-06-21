@@ -8,17 +8,20 @@ namespace MicroServicioReportes.Aplicacion.Servicios;
 public class ReporteServicio : IReporteServicio
 {
     private readonly IReporteRepositorio _repositorio;
+    private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
     private readonly IReporteBuilder _builder;
     private readonly IPlantillaReporteProveedor _plantillas;
     private readonly IGeneradorReporte _generador;
 
     public ReporteServicio(
         IReporteRepositorio repositorio,
+        IBitacoraReporteRepositorio bitacoraRepositorio,
         IReporteBuilder builder,
         IPlantillaReporteProveedor plantillas,
         IGeneradorReporte generador)
     {
         _repositorio = repositorio;
+        _bitacoraRepositorio = bitacoraRepositorio;
         _builder = builder;
         _plantillas = plantillas;
         _generador = generador;
@@ -92,6 +95,7 @@ public class ReporteServicio : IReporteServicio
                 ["Fecha"] = v.FechaVenta.ToString("dd/MM/yyyy"),
                 ["Producto"] = v.Producto,
                 ["Categoria"] = v.Categoria,
+                ["Presentacion"] = v.Presentacion,
                 ["Cantidad"] = v.CantidadVendida.ToString(),
                 ["Precio Unitario Bs"] = FormatoMoneda(v.PrecioUnitario),
                 ["Importe Bs"] = FormatoMoneda(v.Importe),
@@ -108,9 +112,11 @@ public class ReporteServicio : IReporteServicio
                 "Lista ordenada combinando informacion de Ventas y Productos",
                 datosReporte.Usuario)
             .AgregarDatosGenerales(CamposFiltro(datosReporte.Filtros))
+            .AgregarDatosGenerales(datosReporte.MicroserviciosConsultados
+                .Select((servicio, indice) => Campo($"Fuente {indice + 1}", servicio)))
             .AgregarTabla(
                 "Ventas detalladas por producto",
-                new[] { "Nro.", "Fecha", "Producto", "Categoria", "Cantidad", "Precio Unitario Bs", "Importe Bs", "Cliente", "Estado" },
+                new[] { "Nro.", "Fecha", "Producto", "Categoria", "Presentacion", "Cantidad", "Precio Unitario Bs", "Importe Bs", "Cliente", "Estado" },
                 filas)
             .AgregarResumen(new[]
             {
@@ -120,7 +126,10 @@ public class ReporteServicio : IReporteServicio
             .AgregarPie(datosReporte.Usuario)
             .Construir();
 
-        return Renderizar(documento, $"VentasPorProducto_{datosReporte.FechaGeneracion:yyyyMMddHHmm}");
+        var reporte = Renderizar(documento, $"VentasPorProducto_{datosReporte.FechaGeneracion:yyyyMMddHHmm}");
+        await RegistrarBitacoraVentasPorProductoAsync(datosReporte, cancellationToken);
+
+        return reporte;
     }
 
     public async Task<ReporteVentasPorProductoDto> ObtenerDatosVentasPorProductoAsync(
@@ -128,11 +137,13 @@ public class ReporteServicio : IReporteServicio
         CancellationToken cancellationToken = default)
     {
         ValidarRangoFechas(request);
+        var ordenPor = NormalizarOrden(request.OrdenPor);
 
         var ventas = (await _repositorio.ObtenerVentasPorProductoAsync(request, cancellationToken))
-            .OrderBy(v => v.Producto)
-            .ThenBy(v => v.FechaVenta)
-            .ThenBy(v => v.NumeroVenta)
+            .Where(v => v.EstadoVenta.Equals("Confirmada", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var ventasOrdenadas = OrdenarVentas(ventas, ordenPor, request.Descendente)
             .ToList()
             .AsReadOnly();
 
@@ -140,10 +151,15 @@ public class ReporteServicio : IReporteServicio
         {
             FechaGeneracion = DateTime.Now,
             Usuario = ObtenerUsuario(request),
-            Filtros = CopiarFiltros(request),
-            Ventas = ventas,
-            TotalUnidadesVendidas = ventas.Sum(v => v.CantidadVendida),
-            TotalRecaudado = ventas.Sum(v => v.Importe)
+            Filtros = CopiarFiltros(request, ordenPor),
+            MicroserviciosConsultados = new[]
+            {
+                "MicroServicioVentas: ventas, detalle y cliente",
+                "MicroServicioProductos: nombre y categoria del producto"
+            },
+            Ventas = ventasOrdenadas,
+            TotalUnidadesVendidas = ventasOrdenadas.Sum(v => v.CantidadVendida),
+            TotalRecaudado = ventasOrdenadas.Sum(v => v.Importe)
         };
     }
 
@@ -223,15 +239,58 @@ public class ReporteServicio : IReporteServicio
         }
     }
 
+    private static IEnumerable<VentaProductoReporteDto> OrdenarVentas(
+        IEnumerable<VentaProductoReporteDto> ventas,
+        string ordenPor,
+        bool descendente)
+    {
+        return ordenPor switch
+        {
+            "fecha" => descendente
+                ? ventas.OrderByDescending(v => v.FechaVenta).ThenBy(v => v.NumeroVenta)
+                : ventas.OrderBy(v => v.FechaVenta).ThenBy(v => v.NumeroVenta),
+            "cantidad" => descendente
+                ? ventas.OrderByDescending(v => v.CantidadVendida).ThenBy(v => v.Producto)
+                : ventas.OrderBy(v => v.CantidadVendida).ThenBy(v => v.Producto),
+            "importe" => descendente
+                ? ventas.OrderByDescending(v => v.Importe).ThenBy(v => v.Producto)
+                : ventas.OrderBy(v => v.Importe).ThenBy(v => v.Producto),
+            _ => descendente
+                ? ventas.OrderByDescending(v => v.Producto).ThenBy(v => v.FechaVenta)
+                : ventas.OrderBy(v => v.Producto).ThenBy(v => v.FechaVenta)
+        };
+    }
+
+    private static string NormalizarOrden(string? ordenPor)
+    {
+        var orden = (ordenPor ?? "producto").Trim().ToLowerInvariant();
+
+        return orden switch
+        {
+            "" => "producto",
+            "producto" => "producto",
+            "fecha" => "fecha",
+            "cantidad" => "cantidad",
+            "cantidadvendida" => "cantidad",
+            "importe" => "importe",
+            "total" => "importe",
+            _ => throw new ArgumentException(
+                "El orden debe ser producto, fecha, cantidad o importe.")
+        };
+    }
+
     private static IEnumerable<CampoReporte> CamposFiltro(ReporteRequestDto request)
     {
         yield return Campo("Fecha desde", request.FechaDesde?.ToString("dd/MM/yyyy") ?? "Sin filtro");
         yield return Campo("Fecha hasta", request.FechaHasta?.ToString("dd/MM/yyyy") ?? "Sin filtro");
         yield return Campo("Producto", request.IdProducto?.ToString() ?? "Todos");
         yield return Campo("Cliente", request.IdCliente?.ToString() ?? "Todos");
+        yield return Campo("Orden", request.OrdenPor);
+        yield return Campo("Orden descendente", request.Descendente ? "Si" : "No");
+        yield return Campo("Usuario generador", ObtenerUsuario(request));
     }
 
-    private static ReporteRequestDto CopiarFiltros(ReporteRequestDto request)
+    private static ReporteRequestDto CopiarFiltros(ReporteRequestDto request, string ordenPor)
     {
         return new ReporteRequestDto
         {
@@ -239,7 +298,10 @@ public class ReporteServicio : IReporteServicio
             FechaHasta = request.FechaHasta,
             IdProducto = request.IdProducto,
             IdCliente = request.IdCliente,
-            Usuario = ObtenerUsuario(request)
+            IdUsuario = request.IdUsuario,
+            Usuario = ObtenerUsuario(request),
+            OrdenPor = ordenPor,
+            Descendente = request.Descendente
         };
     }
 
@@ -255,5 +317,32 @@ public class ReporteServicio : IReporteServicio
     private static string FormatoMoneda(decimal valor)
     {
         return valor.ToString("N2");
+    }
+
+    private async Task RegistrarBitacoraVentasPorProductoAsync(
+        ReporteVentasPorProductoDto datosReporte,
+        CancellationToken cancellationToken)
+    {
+        var filtros = datosReporte.Filtros;
+        var descripcion =
+            "Reporte de ventas por producto generado. " +
+            $"Desde: {filtros.FechaDesde?.ToString("dd/MM/yyyy") ?? "Sin filtro"}, " +
+            $"Hasta: {filtros.FechaHasta?.ToString("dd/MM/yyyy") ?? "Sin filtro"}, " +
+            $"Producto: {filtros.IdProducto?.ToString() ?? "Todos"}, " +
+            $"Cliente: {filtros.IdCliente?.ToString() ?? "Todos"}, " +
+            $"Orden: {filtros.OrdenPor}, " +
+            $"Descendente: {(filtros.Descendente ? "Si" : "No")}, " +
+            $"Filas: {datosReporte.Ventas.Count}.";
+
+        await _bitacoraRepositorio.RegistrarAsync(
+            new BitacoraReporteDto
+            {
+                IdUsuario = filtros.IdUsuario ?? 0,
+                Accion = "GENERAR",
+                Tabla = "ReporteVentasPorProducto",
+                Fecha = DateTime.Now,
+                Descripcion = descripcion
+            },
+            cancellationToken);
     }
 }

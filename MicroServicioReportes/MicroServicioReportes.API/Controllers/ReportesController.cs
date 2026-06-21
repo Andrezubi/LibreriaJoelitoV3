@@ -1,5 +1,6 @@
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
+using MicroServicioReportes.Dominio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -10,10 +11,14 @@ namespace MicroServicioReportes.API.Controllers;
 public class ReportesController : ControllerBase
 {
     private readonly IReporteServicio _reporteServicio;
+    private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
 
-    public ReportesController(IReporteServicio reporteServicio)
+    public ReportesController(
+        IReporteServicio reporteServicio,
+        IBitacoraReporteRepositorio bitacoraRepositorio)
     {
         _reporteServicio = reporteServicio;
+        _bitacoraRepositorio = bitacoraRepositorio;
     }
 
     [HttpGet("comprobante-venta/{idVenta:int}")]
@@ -102,10 +107,18 @@ public class ReportesController : ControllerBase
         }
     }
 
+    [HttpGet("bitacora")]
+    public async Task<IActionResult> ObtenerBitacora(CancellationToken cancellationToken)
+    {
+        var entradas = await _bitacoraRepositorio.ObtenerTodoAsync(cancellationToken);
+        return Ok(entradas);
+    }
+
     private void PrepararUsuario(ReporteRequestDto request)
     {
         if (!string.IsNullOrWhiteSpace(request.Usuario))
         {
+            PrepararIdUsuario(request);
             return;
         }
 
@@ -113,5 +126,31 @@ public class ReportesController : ControllerBase
             User.FindFirst("NombreCompleto")?.Value ??
             User.FindFirst(ClaimTypes.Name)?.Value ??
             "Sistema";
+
+        PrepararIdUsuario(request);
+    }
+
+    private void PrepararIdUsuario(ReporteRequestDto request)
+    {
+        if (request.IdUsuario.HasValue)
+        {
+            return;
+        }
+
+        var idUsuario =
+            User.FindFirst("IdUsuario")?.Value ??
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (int.TryParse(idUsuario, out var idDesdeToken))
+        {
+            request.IdUsuario = idDesdeToken;
+            return;
+        }
+
+        if (Request.Headers.TryGetValue("X-IdUsuario", out var idDesdeHeader) &&
+            int.TryParse(idDesdeHeader, out var idHeader))
+        {
+            request.IdUsuario = idHeader;
+        }
     }
 }
