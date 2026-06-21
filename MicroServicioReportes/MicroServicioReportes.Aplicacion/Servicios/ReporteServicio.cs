@@ -83,13 +83,9 @@ public class ReporteServicio : IReporteServicio
         ReporteRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        ValidarRangoFechas(request);
+        var datosReporte = await ObtenerDatosVentasPorProductoAsync(request, cancellationToken);
 
-        var ventas = await _repositorio.ObtenerVentasPorProductoAsync(request, cancellationToken);
-        var usuario = ObtenerUsuario(request);
-        var filas = ventas
-            .OrderBy(v => v.Producto)
-            .ThenBy(v => v.FechaVenta)
+        var filas = datosReporte.Ventas
             .Select(v => new Dictionary<string, string>
             {
                 ["Nro."] = v.NumeroVenta.ToString(),
@@ -103,8 +99,6 @@ public class ReporteServicio : IReporteServicio
                 ["Estado"] = v.EstadoVenta
             });
 
-        var totalCantidad = ventas.Sum(v => v.CantidadVendida);
-        var totalImporte = ventas.Sum(v => v.Importe);
         var plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ListaVentasPorProducto);
 
         var documento = _builder
@@ -112,21 +106,45 @@ public class ReporteServicio : IReporteServicio
             .AgregarEncabezado(
                 "Reporte de Ventas por Producto",
                 "Lista ordenada combinando informacion de Ventas y Productos",
-                usuario)
-            .AgregarDatosGenerales(CamposFiltro(request))
+                datosReporte.Usuario)
+            .AgregarDatosGenerales(CamposFiltro(datosReporte.Filtros))
             .AgregarTabla(
                 "Ventas detalladas por producto",
                 new[] { "Nro.", "Fecha", "Producto", "Categoria", "Cantidad", "Precio Unitario Bs", "Importe Bs", "Cliente", "Estado" },
                 filas)
             .AgregarResumen(new[]
             {
-                Campo("Total unidades vendidas", totalCantidad.ToString()),
-                Campo("Total recaudado Bs", FormatoMoneda(totalImporte))
+                Campo("Total unidades vendidas", datosReporte.TotalUnidadesVendidas.ToString()),
+                Campo("Total recaudado Bs", FormatoMoneda(datosReporte.TotalRecaudado))
             })
-            .AgregarPie(usuario)
+            .AgregarPie(datosReporte.Usuario)
             .Construir();
 
-        return Renderizar(documento, $"VentasPorProducto_{DateTime.Now:yyyyMMddHHmm}");
+        return Renderizar(documento, $"VentasPorProducto_{datosReporte.FechaGeneracion:yyyyMMddHHmm}");
+    }
+
+    public async Task<ReporteVentasPorProductoDto> ObtenerDatosVentasPorProductoAsync(
+        ReporteRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        ValidarRangoFechas(request);
+
+        var ventas = (await _repositorio.ObtenerVentasPorProductoAsync(request, cancellationToken))
+            .OrderBy(v => v.Producto)
+            .ThenBy(v => v.FechaVenta)
+            .ThenBy(v => v.NumeroVenta)
+            .ToList()
+            .AsReadOnly();
+
+        return new ReporteVentasPorProductoDto
+        {
+            FechaGeneracion = DateTime.Now,
+            Usuario = ObtenerUsuario(request),
+            Filtros = CopiarFiltros(request),
+            Ventas = ventas,
+            TotalUnidadesVendidas = ventas.Sum(v => v.CantidadVendida),
+            TotalRecaudado = ventas.Sum(v => v.Importe)
+        };
     }
 
     public async Task<ReporteResponseDto> GenerarResumenRecaudacionAsync(
@@ -211,6 +229,18 @@ public class ReporteServicio : IReporteServicio
         yield return Campo("Fecha hasta", request.FechaHasta?.ToString("dd/MM/yyyy") ?? "Sin filtro");
         yield return Campo("Producto", request.IdProducto?.ToString() ?? "Todos");
         yield return Campo("Cliente", request.IdCliente?.ToString() ?? "Todos");
+    }
+
+    private static ReporteRequestDto CopiarFiltros(ReporteRequestDto request)
+    {
+        return new ReporteRequestDto
+        {
+            FechaDesde = request.FechaDesde,
+            FechaHasta = request.FechaHasta,
+            IdProducto = request.IdProducto,
+            IdCliente = request.IdCliente,
+            Usuario = ObtenerUsuario(request)
+        };
     }
 
     private static CampoReporte Campo(string etiqueta, string valor)

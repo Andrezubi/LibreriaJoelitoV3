@@ -1,6 +1,16 @@
 @MicroServicioReportes.API_HostAddress = http://localhost:5291
 
-GET {{MicroServicioReportes.API_HostAddress}}/weatherforecast/
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto/datos?fechaDesde=2026-01-01&fechaHasta=2026-12-31&usuario=Admin%20Prueba
+Accept: application/json
+
+###
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto?fechaDesde=2026-01-01&fechaHasta=2026-12-31&usuario=Admin%20Prueba
+Accept: application/pdf
+
+###
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto/datos?idProducto=1&usuario=Admin%20Prueba
 Accept: application/json
 
 ###

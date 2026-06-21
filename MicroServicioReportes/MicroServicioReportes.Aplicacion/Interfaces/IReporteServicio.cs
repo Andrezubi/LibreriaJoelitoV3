@@ -13,6 +13,10 @@ public interface IReporteServicio
         ReporteRequestDto request,
         CancellationToken cancellationToken = default);
 
+    Task<ReporteVentasPorProductoDto> ObtenerDatosVentasPorProductoAsync(
+        ReporteRequestDto request,
+        CancellationToken cancellationToken = default);
+
     Task<ReporteResponseDto> GenerarResumenRecaudacionAsync(
         ReporteRequestDto request,
         CancellationToken cancellationToken = default);

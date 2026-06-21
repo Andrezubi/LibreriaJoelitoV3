@@ -60,6 +60,27 @@ public class ReportesController : ControllerBase
         }
     }
 
+    [HttpGet("ventas-producto/datos")]
+    public async Task<IActionResult> ObtenerDatosVentasPorProducto(
+        [FromQuery] ReporteRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        PrepararUsuario(request);
+
+        try
+        {
+            var reporte = await _reporteServicio.ObtenerDatosVentasPorProductoAsync(
+                request,
+                cancellationToken);
+
+            return Ok(reporte);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpGet("resumen-recaudacion")]
     public async Task<IActionResult> GenerarResumenRecaudacion(
         [FromQuery] ReporteRequestDto request,
