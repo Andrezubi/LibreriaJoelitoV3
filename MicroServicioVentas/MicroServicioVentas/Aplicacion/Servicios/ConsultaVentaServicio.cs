@@ -92,9 +92,9 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             }
         }
 
-        public List<Reporte1DTO> ObtenerReporteServicios()
-        {
-            return _detalleVentaRepositorio.ObtenerReporteServicios();
-        }
+        //public List<Reporte1DTO> ObtenerReporteServicios()
+        //{
+        //    return _detalleVentaRepositorio.ObtenerReporteServicios();
+        //}
     }
 }

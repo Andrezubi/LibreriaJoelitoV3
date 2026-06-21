@@ -76,15 +76,15 @@ namespace MicroServicioVentas.Controllers
             return Ok(resultado.Value);
         }
 
-        [HttpGet("reporte-servicios")]
-        public IActionResult ObtenerReporteServicios()
-        {
-            var resultado = _consultaVentaServicio.ObtenerReporteServicios();
+        //[HttpGet("reporte-servicios")]
+        //public IActionResult ObtenerReporteServicios()
+        //{
+        //    var resultado = _consultaVentaServicio.ObtenerReporteServicios();
 
-            if (resultado == null || resultado.Count == 0)
-                return NoContent();
+        //    if (resultado == null || resultado.Count == 0)
+        //        return NoContent();
 
-            return Ok(resultado);
-        }
+        //    return Ok(resultado);
+        //}
     }
 }
