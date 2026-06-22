@@ -221,13 +221,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
 
         var totalGeneral = ventas.Sum(v => v.Importe);
         var resumen = ventas
-            .GroupBy(v => v.Categoria)
+            .GroupBy(v => ObtenerClaveAgrupacion(v, request.AgruparPor))
             .Select(grupo =>
             {
                 var totalGrupo = grupo.Sum(v => v.Importe);
                 return new ResumenRecaudacionReporteDto
                 {
                     Grupo = grupo.Key,
+                    CantidadVentas = grupo.Select(v => v.NumeroVenta).Distinct().Count(),
                     CantidadVendida = grupo.Sum(v => v.CantidadVendida),
                     TotalRecaudado = totalGrupo,
                     Porcentaje = totalGeneral <= 0 ? 0 : totalGrupo * 100 / totalGeneral
@@ -266,5 +267,17 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         }
 
         return consulta;
+    }
+
+    private static string ObtenerClaveAgrupacion(VentaProductoReporteDto venta, string? agruparPor)
+    {
+        var criterio = (agruparPor ?? "categoria").Trim().ToLowerInvariant();
+
+        return criterio switch
+        {
+            "producto" => string.IsNullOrWhiteSpace(venta.Producto) ? "Sin producto" : venta.Producto.Trim(),
+            "categoria" => string.IsNullOrWhiteSpace(venta.Categoria) ? "Sin categoría" : venta.Categoria.Trim(),
+            _ => throw new ArgumentException("La agrupación debe ser producto o categoría.")
+        };
     }
 }

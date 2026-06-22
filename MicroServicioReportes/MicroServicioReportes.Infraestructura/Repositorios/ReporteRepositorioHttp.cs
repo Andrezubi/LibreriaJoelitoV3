@@ -39,7 +39,7 @@ public class ReporteRepositorioHttp : IReporteRepositorio
             return new DetalleVentaReporteDto
             {
                 Producto = ObtenerTexto(producto?.Nombre, detalle.Producto),
-                Categoria = ObtenerTexto(producto?.NombreCategoria, "Sin categoria"),
+                Categoria = ObtenerTexto(producto?.NombreCategoria, "Sin categoría"),
                 Cantidad = detalle.Cantidad,
                 PrecioUnitario = detalle.PrecioUnitario
             };
@@ -94,7 +94,7 @@ public class ReporteRepositorioHttp : IReporteRepositorio
                     IdProducto = detalle.IdProducto,
                     IdPresentacion = detalle.IdPresentacion,
                     Producto = ObtenerTexto(producto?.Nombre, detalle.Producto),
-                    Categoria = ObtenerTexto(producto?.NombreCategoria, "Sin categoria"),
+                    Categoria = ObtenerTexto(producto?.NombreCategoria, "Sin categoría"),
                     Presentacion = ObtenerTexto(detalle.Presentacion, "Sin presentacion"),
                     CantidadVendida = detalle.Cantidad,
                     PrecioUnitario = detalle.PrecioUnitario,
@@ -116,13 +116,14 @@ public class ReporteRepositorioHttp : IReporteRepositorio
         var totalGeneral = ventas.Sum(v => v.Importe);
 
         return ventas
-            .GroupBy(v => v.Categoria)
+            .GroupBy(v => ObtenerClaveAgrupacion(v, request.AgruparPor))
             .Select(grupo =>
             {
                 var totalGrupo = grupo.Sum(v => v.Importe);
                 return new ResumenRecaudacionReporteDto
                 {
                     Grupo = grupo.Key,
+                    CantidadVentas = grupo.Select(v => v.NumeroVenta).Distinct().Count(),
                     CantidadVendida = grupo.Sum(v => v.CantidadVendida),
                     TotalRecaudado = totalGrupo,
                     Porcentaje = totalGeneral <= 0 ? 0 : totalGrupo * 100 / totalGeneral
@@ -195,6 +196,18 @@ public class ReporteRepositorioHttp : IReporteRepositorio
                estado.Equals("Confirmado", StringComparison.OrdinalIgnoreCase) ||
                estado.Equals("CONFIRMADA", StringComparison.OrdinalIgnoreCase) ||
                estado.Equals("CONFIRMADO", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ObtenerClaveAgrupacion(VentaProductoReporteDto venta, string? agruparPor)
+    {
+        var criterio = (agruparPor ?? "categoria").Trim().ToLowerInvariant();
+
+        return criterio switch
+        {
+            "producto" => ObtenerTexto(venta.Producto, "Sin producto"),
+            "categoria" => ObtenerTexto(venta.Categoria, "Sin categoría"),
+            _ => throw new ArgumentException("La agrupación debe ser producto o categoría.")
+        };
     }
 
     private static string ObtenerTexto(string? valor, string fallback)

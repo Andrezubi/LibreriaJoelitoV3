@@ -174,13 +174,29 @@ public class ReporteServicio : IReporteServicio
     {
         ValidarRangoFechas(request);
 
-        var resumen = await _repositorio.ObtenerResumenRecaudacionAsync(request, cancellationToken);
-        var usuario = ObtenerUsuario(request);
-        var fechaDesde = request.FechaDesde ?? DateTime.MinValue;
-        var fechaHasta = request.FechaHasta ?? DateTime.MaxValue;
+        var agruparPor = NormalizarAgrupacion(request.AgruparPor);
+        request.AgruparPor = agruparPor;
 
-        decimal totalUnidades = resumen.Sum(r => r.CantidadVendida);
-        decimal totalRecaudado = resumen.Sum(r => r.TotalRecaudado);
+        var ventas = (await _repositorio.ObtenerVentasPorProductoAsync(request, cancellationToken))
+            .Where(EsVentaConfirmada)
+            .ToList();
+
+        var resumen = AgruparResumenRecaudacion(ventas, agruparPor)
+            .OrderByDescending(r => r.TotalRecaudado)
+            .ToList();
+
+        var usuario = ObtenerUsuario(request);
+        var etiquetaAgrupacion = ObtenerEtiquetaAgrupacion(agruparPor);
+        var tituloGrafico = $"Gráfico de torta por {etiquetaAgrupacion.ToLowerInvariant()}";
+
+        var totalVentas = ventas.Select(v => v.NumeroVenta).Distinct().Count();
+        var totalProductosVendidos = ventas.Sum(v => v.CantidadVendida);
+        var totalRecaudado = ventas.Sum(v => v.Importe);
+
+        static IContainer CeldaDatoGeneral(IContainer c) =>
+            c.Border(1)
+             .BorderColor(Colors.Grey.Lighten2)
+             .Padding(6);
 
         var document = Document.Create(container =>
         {
@@ -201,11 +217,11 @@ public class ReporteServicio : IReporteServicio
                            .FontColor(Color.FromHex("#1a237e"));
 
                         col.Item().AlignCenter()
-                           .Text("RECAUDACIÓN POR CATEGORÍA DE PRODUCTO")
+                           .Text($"RECAUDACIÓN POR {etiquetaAgrupacion.ToUpperInvariant()}")
                            .FontSize(11).Bold();
 
                         col.Item().AlignCenter()
-                           .Text($"Desde: {fechaDesde:dd/MM/yyyy}  al  {fechaHasta:dd/MM/yyyy}")
+                           .Text($"Desde: {FormatearFechaFiltro(request.FechaDesde)}  al  {FormatearFechaFiltro(request.FechaHasta)}")
                            .FontSize(9).FontColor(Colors.Grey.Darken2);
                     });
                 });
@@ -213,12 +229,35 @@ public class ReporteServicio : IReporteServicio
                 // CONTENIDO
                 page.Content().PaddingVertical(20).Column(col =>
                 {
+                    col.Item().PaddingBottom(12).Table(tabla =>
+                    {
+                        tabla.ColumnsDefinition(c =>
+                        {
+                            c.RelativeColumn();
+                            c.RelativeColumn();
+                            c.RelativeColumn();
+                            c.RelativeColumn();
+                        });
+
+                        tabla.Cell().Element(CeldaDatoGeneral).Text($"Agrupado por: {etiquetaAgrupacion}");
+                        tabla.Cell().Element(CeldaDatoGeneral).Text($"Ventas incluidas: {totalVentas}");
+                        tabla.Cell().Element(CeldaDatoGeneral).Text($"Productos vendidos: {totalProductosVendidos}");
+                        tabla.Cell().Element(CeldaDatoGeneral).Text($"Total Bs: {totalRecaudado:N2}");
+                    });
+
+                    col.Item().PaddingBottom(12)
+                       .Text("Fuentes consultadas: MicroServicioVentas (ventas, detalles, importes y cantidades) + MicroServicioProductos (producto y categoría). Se excluyen ventas anuladas o no confirmadas.")
+                       .FontSize(9)
+                       .FontColor(Colors.Grey.Darken2);
+
                     // Tabla sumariada
                     col.Item().Table(tabla =>
                     {
                         tabla.ColumnsDefinition(c =>
                         {
                             c.RelativeColumn(3);
+                            c.RelativeColumn(1);
+                            c.RelativeColumn(2);
                             c.RelativeColumn(2);
                             c.RelativeColumn(2);
                         });
@@ -232,16 +271,20 @@ public class ReporteServicio : IReporteServicio
                         tabla.Header(h =>
                         {
                             h.Cell().Element(CeldaHeader)
-                             .Text("Categoría").FontColor(Colors.White).Bold();
+                             .Text(etiquetaAgrupacion).FontColor(Colors.White).Bold();
                             h.Cell().Element(CeldaHeader)
-                             .Text("Total Unidades").FontColor(Colors.White).Bold();
+                             .Text("Ventas").FontColor(Colors.White).Bold();
+                            h.Cell().Element(CeldaHeader)
+                             .Text("Unidades").FontColor(Colors.White).Bold();
                             h.Cell().Element(CeldaHeader)
                              .Text("Total Recaudado Bs.").FontColor(Colors.White).Bold();
+                            h.Cell().Element(CeldaHeader)
+                             .Text("Participación").FontColor(Colors.White).Bold();
                         });
 
                         // Filas
                         bool par = false;
-                        foreach (var item in resumen.OrderByDescending(r => r.TotalRecaudado))
+                        foreach (var item in resumen)
                         {
                             var bg = par ? Color.FromHex("#e8eaf6") : Colors.White;
                             par = !par;
@@ -249,9 +292,13 @@ public class ReporteServicio : IReporteServicio
                             tabla.Cell().Background(bg).Padding(6)
                                  .Text(item.Grupo);
                             tabla.Cell().Background(bg).Padding(6).AlignCenter()
+                                 .Text(item.CantidadVentas.ToString());
+                            tabla.Cell().Background(bg).Padding(6).AlignCenter()
                                  .Text(item.CantidadVendida.ToString());
                             tabla.Cell().Background(bg).Padding(6).AlignRight()
                                  .Text(item.TotalRecaudado.ToString("N2"));
+                            tabla.Cell().Background(bg).Padding(6).AlignRight()
+                                 .Text($"{item.Porcentaje:N2}%");
                         }
 
                         // Fila totales
@@ -259,14 +306,20 @@ public class ReporteServicio : IReporteServicio
                              .Padding(6).Text("TOTAL").Bold();
                         tabla.Cell().Background(Color.FromHex("#c5cae9"))
                              .Padding(6).AlignCenter()
-                             .Text(totalUnidades.ToString()).Bold();
+                             .Text(totalVentas.ToString()).Bold();
+                        tabla.Cell().Background(Color.FromHex("#c5cae9"))
+                             .Padding(6).AlignCenter()
+                             .Text(totalProductosVendidos.ToString()).Bold();
                         tabla.Cell().Background(Color.FromHex("#c5cae9"))
                              .Padding(6).AlignRight()
                              .Text(totalRecaudado.ToString("N2")).Bold();
+                        tabla.Cell().Background(Color.FromHex("#c5cae9"))
+                             .Padding(6).AlignRight()
+                             .Text(totalRecaudado <= 0 ? "0.00%" : "100.00%").Bold();
                     });
 
                     // Gráfico de torta
-                    byte[] graficoPng = GenerarGraficoTorta(resumen.ToList());
+                    byte[] graficoPng = GenerarGraficoTorta(resumen, tituloGrafico);
                     col.Item().PaddingTop(24).AlignCenter()
                        .Width(300).Height(300)
                        .Image(graficoPng).FitArea();
@@ -276,8 +329,8 @@ public class ReporteServicio : IReporteServicio
                 page.Footer().AlignCenter()
                     .Text(txt =>
                     {
-                        txt.Span($"Reporte generado por: {usuario}  —  ");
-                        txt.Span($"{DateTime.Now:dd/MM/yyyy HH:mm:ss}  —  ");
+                        txt.Span($"Reporte generado por: {usuario} - ");
+                        txt.Span($"{DateTime.Now:dd/MM/yyyy HH:mm:ss} - ");
                         txt.Span("Página ").FontSize(9);
                         txt.CurrentPageNumber().FontSize(9);
                         txt.Span(" de ").FontSize(9);
@@ -287,6 +340,14 @@ public class ReporteServicio : IReporteServicio
         });
 
         byte[] pdfBytes = document.GeneratePdf();
+
+        await RegistrarBitacoraResumenRecaudacionAsync(
+            request,
+            resumen.Count,
+            totalVentas,
+            totalProductosVendidos,
+            totalRecaudado,
+            cancellationToken);
 
         return new ReporteResponseDto
         {
@@ -388,7 +449,8 @@ public class ReporteServicio : IReporteServicio
             IdUsuario = request.IdUsuario,
             Usuario = ObtenerUsuario(request),
             OrdenPor = ordenPor,
-            Descendente = request.Descendente
+            Descendente = request.Descendente,
+            AgruparPor = request.AgruparPor
         };
     }
 
@@ -406,7 +468,69 @@ public class ReporteServicio : IReporteServicio
         return valor.ToString("N2");
     }
 
-    private byte[] GenerarGraficoTorta(List<ResumenRecaudacionReporteDto> datos)
+    private static IEnumerable<ResumenRecaudacionReporteDto> AgruparResumenRecaudacion(
+        IReadOnlyCollection<VentaProductoReporteDto> ventas,
+        string agruparPor)
+    {
+        var totalGeneral = ventas.Sum(v => v.Importe);
+
+        return ventas
+            .GroupBy(v => ObtenerClaveAgrupacion(v, agruparPor))
+            .Select(grupo =>
+            {
+                var totalGrupo = grupo.Sum(v => v.Importe);
+
+                return new ResumenRecaudacionReporteDto
+                {
+                    Grupo = grupo.Key,
+                    CantidadVentas = grupo.Select(v => v.NumeroVenta).Distinct().Count(),
+                    CantidadVendida = grupo.Sum(v => v.CantidadVendida),
+                    TotalRecaudado = totalGrupo,
+                    Porcentaje = totalGeneral <= 0 ? 0 : totalGrupo * 100 / totalGeneral
+                };
+            });
+    }
+
+    private static string ObtenerClaveAgrupacion(VentaProductoReporteDto venta, string agruparPor)
+    {
+        return agruparPor switch
+        {
+            "producto" => string.IsNullOrWhiteSpace(venta.Producto) ? "Sin producto" : venta.Producto.Trim(),
+            "categoria" => string.IsNullOrWhiteSpace(venta.Categoria) ? "Sin categoría" : venta.Categoria.Trim(),
+            _ => throw new ArgumentException("La agrupación debe ser producto o categoría.")
+        };
+    }
+
+    private static string NormalizarAgrupacion(string? agruparPor)
+    {
+        var criterio = (agruparPor ?? "categoria").Trim().ToLowerInvariant();
+
+        return criterio switch
+        {
+            "" => "categoria",
+            "categoria" => "categoria",
+            "producto" => "producto",
+            _ => throw new ArgumentException("La agrupación debe ser producto o categoría.")
+        };
+    }
+
+    private static string ObtenerEtiquetaAgrupacion(string agruparPor)
+    {
+        return agruparPor == "producto" ? "Producto" : "Categoría";
+    }
+
+    private static string FormatearFechaFiltro(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy") ?? "Sin filtro";
+    }
+
+    private static bool EsVentaConfirmada(VentaProductoReporteDto venta)
+    {
+        return venta.EstadoVenta.Equals("Confirmada", StringComparison.OrdinalIgnoreCase) ||
+               venta.EstadoVenta.Equals("Confirmado", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private byte[] GenerarGraficoTorta(List<ResumenRecaudacionReporteDto> datos, string titulo)
     {
         const int W = 600, H = 400;
         using var surface = SKSurface.Create(new SKImageInfo(W, H));
@@ -429,6 +553,12 @@ public class ReporteServicio : IReporteServicio
         };
 
         decimal total = datos.Sum(d => d.TotalRecaudado);
+        if (total <= 0)
+        {
+            using var snap = surface.Snapshot();
+            return snap.Encode(SKEncodedImageFormat.Png, 100).ToArray();
+        }
+
         float startAngle = -90f;
         var rectTorta = new SKRect(60, 40, 360, 340);
 
@@ -472,12 +602,16 @@ public class ReporteServicio : IReporteServicio
             using var textPaint = new SKPaint
             {
                 Color = SKColors.Black,
-                IsAntialias = true,
-                TextSize = 11
+                IsAntialias = true
             };
+            using var textFont = new SKFont(SKTypeface.Default, 11);
             canvas.DrawText(
                 $"{datos[i].Grupo} ({porcentaje:F1}%)",
-                400, leyY + 12, textPaint);
+                400,
+                leyY + 12,
+                SKTextAlign.Left,
+                textFont,
+                textPaint);
 
             leyY += 24;
         }
@@ -486,11 +620,11 @@ public class ReporteServicio : IReporteServicio
         using var tituloPaint = new SKPaint
         {
             Color = SKColor.Parse("#1a237e"),
-            IsAntialias = true,
-            TextSize = 14,
-            FakeBoldText = true
+            IsAntialias = true
         };
-        canvas.DrawText("Ventas por Categoría", 160, 380, tituloPaint);
+        using var tituloTypeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold);
+        using var tituloFont = new SKFont(tituloTypeface, 14);
+        canvas.DrawText(titulo, 150, 380, SKTextAlign.Left, tituloFont, tituloPaint);
 
         using var snapshot = surface.Snapshot();
         return snapshot.Encode(SKEncodedImageFormat.Png, 100).ToArray();
@@ -517,6 +651,38 @@ public class ReporteServicio : IReporteServicio
                 IdUsuario = filtros.IdUsuario ?? 0,
                 Accion = "GENERAR",
                 Tabla = "ReporteVentasPorProducto",
+                Fecha = DateTime.Now,
+                Descripcion = descripcion
+            },
+            cancellationToken);
+    }
+
+    private async Task RegistrarBitacoraResumenRecaudacionAsync(
+        ReporteRequestDto filtros,
+        int cantidadGrupos,
+        int cantidadVentas,
+        int cantidadProductosVendidos,
+        decimal totalRecaudado,
+        CancellationToken cancellationToken)
+    {
+        var descripcion =
+            "Reporte sumariado de recaudación generado. " +
+            $"Desde: {FormatearFechaFiltro(filtros.FechaDesde)}, " +
+            $"Hasta: {FormatearFechaFiltro(filtros.FechaHasta)}, " +
+            $"Agrupación: {filtros.AgruparPor}, " +
+            $"Producto: {filtros.IdProducto?.ToString() ?? "Todos"}, " +
+            $"Cliente: {filtros.IdCliente?.ToString() ?? "Todos"}, " +
+            $"Grupos: {cantidadGrupos}, " +
+            $"Ventas: {cantidadVentas}, " +
+            $"Productos vendidos: {cantidadProductosVendidos}, " +
+            $"Total recaudado Bs: {totalRecaudado:N2}.";
+
+        await _bitacoraRepositorio.RegistrarAsync(
+            new BitacoraReporteDto
+            {
+                IdUsuario = filtros.IdUsuario ?? 0,
+                Accion = "GENERAR",
+                Tabla = "ReporteResumenRecaudacion",
                 Fecha = DateTime.Now,
                 Descripcion = descripcion
             },
