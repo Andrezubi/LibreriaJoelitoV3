@@ -1,6 +1,6 @@
 ﻿using FrontendLibreria.DTOs;
 using Microsoft.AspNetCore.Http;
-namespace FrontendLibreria.Adaptadores
+namespace FrontendLibreria.Adaptadores.Cliente
 {
     public interface IAdaptadorCliente
     {

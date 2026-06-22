@@ -1,4 +1,4 @@
-using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
