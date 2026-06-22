@@ -19,7 +19,7 @@ namespace MicroServicioVentas.Aplicacion.DTOs.Sagas
         [JsonPropertyName("clienteNombre")]
         public string ClienteNombre { get; set; } = string.Empty;
 
-        [JsonPropertyName("clienteCi")]
+        [JsonPropertyName("ClienteCiNit")]
         public string ClienteCiNit { get; set; } = string.Empty;
 
         [JsonPropertyName("usuarioId")]
