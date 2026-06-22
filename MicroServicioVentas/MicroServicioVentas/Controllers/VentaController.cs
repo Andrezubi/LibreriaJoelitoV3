@@ -50,20 +50,20 @@ namespace MicroServicioVentas.Controllers
             return Ok(resultado);
         }
 
-        [HttpGet("{idVenta}/comprobante")]
-        public IActionResult GenerarComprobantePdf(int idVenta)
-        {
-            var resultado = _consultaVentaServicio.GenerarComprobantePdf(idVenta);
+        //[HttpGet("{idVenta}/comprobante")]
+        //public IActionResult GenerarComprobantePdf(int idVenta)
+        //{
+        //    var resultado = _consultaVentaServicio.GenerarComprobantePdf(idVenta);
 
-            if (!resultado.IsSuccess)
-                return NotFound(resultado);
+        //    if (!resultado.IsSuccess)
+        //        return NotFound(resultado);
 
-            return File(
-                resultado.Value,
-                "application/pdf",
-                $"comprobante-venta-{idVenta}.pdf"
-            );
-        }
+        //    return File(
+        //        resultado.Value,
+        //        "application/pdf",
+        //        $"comprobante-venta-{idVenta}.pdf"
+        //    );
+        //}
 
         [HttpGet("{idVenta}/completa")]
         public IActionResult ObtenerVentaCompleta(int idVenta)

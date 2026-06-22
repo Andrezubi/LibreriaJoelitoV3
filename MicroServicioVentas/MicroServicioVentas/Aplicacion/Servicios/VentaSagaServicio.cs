@@ -225,7 +225,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                 VentaId = venta.Id,
                 ClienteId = venta.IdCliente,
                 ClienteNombre = clienteSnapshot.RazonSocialCliente,
-                ClienteCi = ConstruirCiCompleto(
+                ClienteCiNit = ConstruirCiCompleto(
                     clienteSnapshot.CiCliente,
                     clienteSnapshot.ComplementoCliente
                 ),
