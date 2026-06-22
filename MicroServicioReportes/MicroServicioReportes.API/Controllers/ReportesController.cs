@@ -1,5 +1,7 @@
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
+using MicroServicioReportes.Infraestructura.Generadores;
+using MicroServicioReportes.Infraestructura.Repositorios;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -10,10 +12,14 @@ namespace MicroServicioReportes.API.Controllers;
 public class ReportesController : ControllerBase
 {
     private readonly IReporteServicio _reporteServicio;
+    private readonly IComprobanteVentaRepositorio _comprobanteVentaRepositorio;
+    private readonly IComprobanteVentaPdfServicio _comprobanteVentaPdfServicio;
 
-    public ReportesController(IReporteServicio reporteServicio)
+    public ReportesController(IReporteServicio reporteServicio, IComprobanteVentaRepositorio comprobanteVentaRepositorio, IComprobanteVentaPdfServicio comprobanteVentaPdfServicio)
     {
         _reporteServicio = reporteServicio;
+        _comprobanteVentaRepositorio = comprobanteVentaRepositorio;
+        _comprobanteVentaPdfServicio = comprobanteVentaPdfServicio;
     }
 
     [HttpGet("comprobante-venta/{idVenta:int}")]
@@ -92,5 +98,34 @@ public class ReportesController : ControllerBase
             User.FindFirst("NombreCompleto")?.Value ??
             User.FindFirst(ClaimTypes.Name)?.Value ??
             "Sistema";
+    }
+
+    [HttpGet("comprobante-venta/{idVenta:int}/ver")]
+    public IActionResult VerComprobanteVenta(int idVenta)
+    {
+        var comprobante = _comprobanteVentaRepositorio.ObtenerPorVentaId(idVenta);
+
+        if (comprobante == null)
+        {
+            return NotFound(new
+            {
+                error = $"No existe comprobante generado para la venta {idVenta}."
+            });
+        }
+
+        var pdf = _comprobanteVentaPdfServicio.GenerarComprobanteVenta(comprobante);
+
+        if (pdf.Length == 0)
+        {
+            return BadRequest(new
+            {
+                error = "No se pudo generar el PDF del comprobante."
+            });
+        }
+
+        Response.Headers["Content-Disposition"] =
+            $"inline; filename=comprobante-{comprobante.NumeroComprobante}.pdf";
+
+        return File(pdf, "application/pdf");
     }
 }

@@ -3,8 +3,10 @@ using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Aplicacion.Prototipos;
 using MicroServicioReportes.Aplicacion.Servicios;
 using MicroServicioReportes.Dominio.Interfaces;
+using MicroServicioReportes.Infraestructura;
 using MicroServicioReportes.Infraestructura.Generadores;
 using MicroServicioReportes.Infraestructura.Repositorios;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,9 @@ builder.Services.AddSingleton<IGeneradorReporte, PdfGeneradorReporte>();
 builder.Services.AddSingleton<IReporteRepositorio, ReporteRepositorioEnMemoria>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddInfraestructura(builder.Configuration);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var app = builder.Build();
 
