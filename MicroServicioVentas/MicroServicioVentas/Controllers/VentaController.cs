@@ -50,20 +50,20 @@ namespace MicroServicioVentas.Controllers
             return Ok(resultado);
         }
 
-        [HttpGet("{idVenta}/comprobante")]
-        public IActionResult GenerarComprobantePdf(int idVenta)
-        {
-            var resultado = _consultaVentaServicio.GenerarComprobantePdf(idVenta);
+        //[HttpGet("{idVenta}/comprobante")]
+        //public IActionResult GenerarComprobantePdf(int idVenta)
+        //{
+        //    var resultado = _consultaVentaServicio.GenerarComprobantePdf(idVenta);
 
-            if (!resultado.IsSuccess)
-                return NotFound(resultado);
+        //    if (!resultado.IsSuccess)
+        //        return NotFound(resultado);
 
-            return File(
-                resultado.Value,
-                "application/pdf",
-                $"comprobante-venta-{idVenta}.pdf"
-            );
-        }
+        //    return File(
+        //        resultado.Value,
+        //        "application/pdf",
+        //        $"comprobante-venta-{idVenta}.pdf"
+        //    );
+        //}
 
         [HttpGet("{idVenta}/completa")]
         public IActionResult ObtenerVentaCompleta(int idVenta)
@@ -76,15 +76,15 @@ namespace MicroServicioVentas.Controllers
             return Ok(resultado.Value);
         }
 
-        [HttpGet("reporte-servicios")]
-        public IActionResult ObtenerReporteServicios()
-        {
-            var resultado = _consultaVentaServicio.ObtenerReporteServicios();
+        //[HttpGet("reporte-servicios")]
+        //public IActionResult ObtenerReporteServicios()
+        //{
+        //    var resultado = _consultaVentaServicio.ObtenerReporteServicios();
 
-            if (resultado == null || resultado.Count == 0)
-                return NoContent();
+        //    if (resultado == null || resultado.Count == 0)
+        //        return NoContent();
 
-            return Ok(resultado);
-        }
+        //    return Ok(resultado);
+        //}
     }
 }

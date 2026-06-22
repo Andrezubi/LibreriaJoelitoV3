@@ -6,7 +6,6 @@ using MicroServicioVentas.Infraestructura.Mensajeria.Outbox;
 using MicroServicioVentas.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioVentas.Infraestructura.Persistencia;
 using MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos;
-using MicroServicioVentas.Infraestructura.ServiciosExternos;
 using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -49,7 +48,7 @@ builder.Services.AddSingleton<ProcessedMessageRepositorio>(_ =>
 
 // Infraestructura
 builder.Services.AddSingleton<RabbitPublisher>();
-builder.Services.AddScoped<IPdfServicio, PdfServicio>();
+//builder.Services.AddScoped<IPdfServicio, PdfServicio>();
 
 // Servicios de aplicación
 builder.Services.AddScoped<FachadaRealizarVenta>();
