@@ -1,28 +1,54 @@
 using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.FactoriaCreadores;
+using MicroServicioProductos.Infraestructura.Mensajeria.Consumers;
+using MicroServicioProductos.Infraestructura.Mensajeria.Outbox;
+using MicroServicioProductos.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioProductos.Infraestructura.Persistencia;
 using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<ProductoRepositorio>(provider => {
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection("RabbitMq")
+);
+
+builder.Services.AddSingleton(
+    sp => sp.GetRequiredService<IOptions<RabbitMqOptions>>().Value
+);
+
+builder.Services.AddSingleton<RabbitMqPublisher>();
+
+builder.Services.AddHostedService<OutboxPublisherService>();
+builder.Services.AddHostedService<ProductoSagaConsumerServicio>();
+
+builder.Services.AddScoped<ProcessedMessageRepositorio>();
+builder.Services.AddScoped<OutboxMessageRepositorio>();
+
+builder.Services.AddScoped<ProductoRepositorio>(provider =>
+{
     return new ProductoCreadorRepositorio().CrearRepositorio();
 });
-builder.Services.AddScoped<PresentacionRepositorio>(provider => {
+
+builder.Services.AddScoped<PresentacionRepositorio>(provider =>
+{
     return new PresentacionCreadorRepositorio().CrearRepositorio();
 });
-builder.Services.AddScoped<ProductoRepositorio>(provider => {
-    return new ProductoCreadorRepositorio().CrearRepositorio();
-});
-builder.Services.AddScoped<PresentacionProductoRepositorio>(provider => {
+
+builder.Services.AddScoped<PresentacionProductoRepositorio>(provider =>
+{
     return new PresentacionProductoCreadorRepositorio().CrearRepositorio();
 });
-builder.Services.AddScoped<MarcaRepositorio>(provider => {
+
+builder.Services.AddScoped<MarcaRepositorio>(provider =>
+{
     return new MarcaCreadorRepositorio().CrearRepositorio();
 });
 
@@ -32,13 +58,17 @@ builder.Services.AddScoped<PresentacionServicio>();
 builder.Services.AddScoped<ProductoServicio>();
 builder.Services.AddScoped<MarcaServicio>();
 
-
-
 builder.Services.AddScoped<ProductoValidador>();
 builder.Services.AddScoped<MarcaValidador>();
 
-
 var app = builder.Build();
+
+// Swagger
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Config BD
 var bd = RepositorioBD.Instancia;
@@ -47,7 +77,6 @@ var connectionString = builder.Configuration.GetConnectionString("ConnectionSqlS
 bd.Initiate(connectionString);
 
 // Configure the HTTP request pipeline.
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

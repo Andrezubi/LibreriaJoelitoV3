@@ -216,40 +216,40 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             return ActualizarEstadoPorVenta(idVenta, EstadosDetalleVenta.Liberado);
         }
 
-        public List<Reporte1DTO> ObtenerReporteServicios()
-        {
-            string consulta = @"
-                SELECT 
-                    ROW_NUMBER() OVER (ORDER BY SUM(Subtotal) DESC) AS Nro,
-                    NombreProducto,
-                    NombrePresentacion,
-                    SUM(Cantidad) AS CantidadVendida,
-                    SUM(Subtotal) AS TotalVendidoBs,
-                    Estado
-                FROM detalleventa
-                GROUP BY NombreProducto, NombrePresentacion, Estado
-                ORDER BY TotalVendidoBs DESC;";
+        //public List<Reporte1DTO> ObtenerReporteServicios()
+        //{
+        //    string consulta = @"
+        //        SELECT 
+        //            ROW_NUMBER() OVER (ORDER BY SUM(Subtotal) DESC) AS Nro,
+        //            NombreProducto,
+        //            NombrePresentacion,
+        //            SUM(Cantidad) AS CantidadVendida,
+        //            SUM(Subtotal) AS TotalVendidoBs,
+        //            Estado
+        //        FROM detalleventa
+        //        GROUP BY NombreProducto, NombrePresentacion, Estado
+        //        ORDER BY TotalVendidoBs DESC;";
 
-            MySqlCommand comando = new MySqlCommand(consulta);
-            var reporte = new List<Reporte1DTO>();
+        //    MySqlCommand comando = new MySqlCommand(consulta);
+        //    var reporte = new List<Reporte1DTO>();
 
-            using var reader = ExecuteReader(comando);
+        //    using var reader = ExecuteReader(comando);
 
-            while (reader.Read())
-            {
-                reporte.Add(new Reporte1DTO
-                {
-                    Nro = Convert.ToInt32(reader["Nro"]),
-                    NombreProducto = ObtenerString(reader, "NombreProducto"),
-                    Presentacion = ObtenerString(reader, "NombrePresentacion"),
-                    CantidadVendida = Convert.ToInt32(reader["CantidadVendida"]),
-                    TotalVendidoBs = Convert.ToDecimal(reader["TotalVendidoBs"]),
-                    EstadoDetalle = ObtenerString(reader, "Estado")
-                });
-            }
+        //    while (reader.Read())
+        //    {
+        //        reporte.Add(new Reporte1DTO
+        //        {
+        //            Nro = Convert.ToInt32(reader["Nro"]),
+        //            NombreProducto = ObtenerString(reader, "NombreProducto"),
+        //            Presentacion = ObtenerString(reader, "NombrePresentacion"),
+        //            CantidadVendida = Convert.ToInt32(reader["CantidadVendida"]),
+        //            TotalVendidoBs = Convert.ToDecimal(reader["TotalVendidoBs"]),
+        //            EstadoDetalle = ObtenerString(reader, "Estado")
+        //        });
+        //    }
 
-            return reporte;
-        }
+        //    return reporte;
+        //}
 
         private DetalleVenta MapearDetalleVenta(MySqlDataReader reader)
         {

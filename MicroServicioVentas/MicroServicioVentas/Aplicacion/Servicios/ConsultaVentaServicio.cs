@@ -11,14 +11,13 @@ namespace MicroServicioVentas.Aplicacion.Servicios
         private readonly VentaRepositorio _ventaRepositorio;
         private readonly DetalleVentaRepositorio _detalleVentaRepositorio;
         private readonly VentaClienteSnapshotRepositorio _clienteSnapshotRepositorio;
-        private readonly IPdfServicio _pdfServicio;
+        //private readonly IPdfServicio _pdfServicio;
 
-        public ConsultaVentaServicio(IPdfServicio pdfServicio, VentaRepositorio ventaRepositorio, DetalleVentaRepositorio detalleVentaRepositorio, VentaClienteSnapshotRepositorio clienteSnapshotRepositorio)
+        public ConsultaVentaServicio( VentaRepositorio ventaRepositorio, DetalleVentaRepositorio detalleVentaRepositorio, VentaClienteSnapshotRepositorio clienteSnapshotRepositorio)
         {
             _ventaRepositorio = ventaRepositorio;
             _detalleVentaRepositorio = detalleVentaRepositorio;
             _clienteSnapshotRepositorio = clienteSnapshotRepositorio;
-            _pdfServicio = pdfServicio;
         }
 
         public List<VentaDTO> CargarVentas()
@@ -70,31 +69,31 @@ namespace MicroServicioVentas.Aplicacion.Servicios
             }
         }
 
-        public Result<byte[]> GenerarComprobantePdf(int idVenta)
-        {
-            try
-            {
-                var resultadoVenta = ObtenerVentaCompleta(idVenta);
+        //public Result<byte[]> GenerarComprobantePdf(int idVenta)
+        //{
+        //    try
+        //    {
+        //        var resultadoVenta = ObtenerVentaCompleta(idVenta);
 
-                if (!resultadoVenta.IsSuccess)
-                    return Result<byte[]>.Failure(resultadoVenta.Errors);
+        //        if (!resultadoVenta.IsSuccess)
+        //            return Result<byte[]>.Failure(resultadoVenta.Errors);
 
-                byte[] pdf = _pdfServicio.GenerarComprobanteVenta(resultadoVenta.Value);
+        //        byte[] pdf = _pdfServicio.GenerarComprobanteVenta(resultadoVenta.Value);
 
-                if (pdf.Length == 0)
-                    return Result<byte[]>.Failure("No se pudo generar el comprobante de venta.");
+        //        if (pdf.Length == 0)
+        //            return Result<byte[]>.Failure("No se pudo generar el comprobante de venta.");
 
-                return Result<byte[]>.Success(pdf);
-            }
-            catch (Exception ex)
-            {
-                return Result<byte[]>.Failure($"Error al generar comprobante PDF: {ex.Message}");
-            }
-        }
+        //        return Result<byte[]>.Success(pdf);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Result<byte[]>.Failure($"Error al generar comprobante PDF: {ex.Message}");
+        //    }
+        //}
 
-        public List<Reporte1DTO> ObtenerReporteServicios()
-        {
-            return _detalleVentaRepositorio.ObtenerReporteServicios();
-        }
+        //public List<Reporte1DTO> ObtenerReporteServicios()
+        //{
+        //    return _detalleVentaRepositorio.ObtenerReporteServicios();
+        //}
     }
 }

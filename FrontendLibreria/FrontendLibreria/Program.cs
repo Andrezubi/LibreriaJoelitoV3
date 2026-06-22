@@ -1,4 +1,5 @@
 using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adaptadores.Marca;
 using FrontendLibreria.Adaptadores.Producto;
 using FrontendLibreria.Adaptadores.ProveedoresAdapter;

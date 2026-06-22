@@ -66,6 +66,53 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
             return null;
         }
 
+        public PresentacionProducto? ObtenerEntidadPorIds(int idProducto, int idPresentacion)
+        {
+            string query = @"SELECT
+                        IdProducto,
+                        IdPresentacion,
+                        FactorConversion,
+                        Precio,
+                        Estado,
+                        FechaRegistro,
+                        FechaUltimaActualizacion,
+                        IdUsuario
+                    FROM PresentacionProducto
+                    WHERE IdProducto=@idProducto
+                    AND IdPresentacion=@idPresentacion
+                    AND Estado=1";
+
+            SqlCommand cmd = new SqlCommand(query);
+
+            cmd.Parameters.AddWithValue("@idProducto", idProducto);
+            cmd.Parameters.AddWithValue("@idPresentacion", idPresentacion);
+
+            using var reader = ExecuteReader(cmd);
+
+            if (!reader.Read())
+                return null;
+
+            return new PresentacionProducto
+            {
+                IdProducto = reader.GetInt32("IdProducto"),
+                IdPresentacion = reader.GetInt32("IdPresentacion"),
+                FactorConversion = reader.GetInt32("FactorConversion"),
+                Precio = reader.GetDecimal("Precio"),
+                Estado = reader.GetBoolean("Estado"),
+                FechaRegistro = reader.GetDateTime("FechaRegistro"),
+                FechaUltimaActualizacion =
+                    reader.IsDBNull(reader.GetOrdinal("FechaUltimaActualizacion"))
+                        ? null
+                        : reader.GetDateTime("FechaUltimaActualizacion"),
+
+                IdUsuario =
+                    reader.IsDBNull(reader.GetOrdinal("IdUsuario"))
+                        ? null
+                        : reader.GetInt32("IdUsuario")
+            };
+        }
+
+
         public List<PresentacionProductoDto> obtenerPresentacionProductoDetallado(string frase)
         {
             string query = @"SELECT 
