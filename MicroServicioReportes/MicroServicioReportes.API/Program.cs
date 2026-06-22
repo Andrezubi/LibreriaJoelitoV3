@@ -3,8 +3,10 @@ using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Aplicacion.Prototipos;
 using MicroServicioReportes.Aplicacion.Servicios;
 using MicroServicioReportes.Dominio.Interfaces;
+using MicroServicioReportes.Infraestructura;
 using MicroServicioReportes.Infraestructura.Generadores;
 using MicroServicioReportes.Infraestructura.Repositorios;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,12 @@ else
 builder.Services.AddSingleton<IBitacoraReporteRepositorio, BitacoraReporteRepositorioEnMemoria>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddInfraestructura(builder.Configuration);
+
+QuestPDF.Settings.License = LicenseType.Community;
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -41,6 +49,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "MicroServicio Reportes API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();

@@ -17,13 +17,15 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
 
         public byte[] GenerarComprobanteVenta(VentaCompletaDTO ventaCompleta)
         {
-            if (ventaCompleta == null || ventaCompleta.Detalles == null || ventaCompleta.Detalles.Count == 0)
+            if (comprobante == null || comprobante.Detalles == null || comprobante.Detalles.Count == 0)
                 return Array.Empty<byte>();
 
-            var venta = ventaCompleta.Venta;
-            var detalles = ventaCompleta.Detalles;
-
-            string rutaLogo = Path.Combine(_env.ContentRootPath, "Recursos", "Imagenes", "logo-lib.png");
+            string rutaLogo = Path.Combine(
+                _env.ContentRootPath,
+                "Recursos",
+                "Imagenes",
+                "logo-lib.png"
+            );
 
             return Document.Create(documento =>
             {
@@ -40,17 +42,27 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                             row.ConstantItem(80).Height(70).Element(e =>
                             {
                                 if (File.Exists(rutaLogo))
+                                {
                                     e.Image(rutaLogo).FitArea();
+                                }
                                 else
-                                    e.Border(1).AlignCenter().AlignMiddle().Text("LOGO").FontSize(10);
+                                {
+                                    e.Border(1)
+                                        .AlignCenter()
+                                        .AlignMiddle()
+                                        .Text("LOGO")
+                                        .FontSize(10);
+                                }
                             });
 
                             row.RelativeItem().PaddingLeft(15).Column(info =>
                             {
                                 info.Item().Text("LIBRERÍA JOELITO").FontSize(20).Bold();
                                 info.Item().Text("Comprobante de venta").FontSize(14);
-                                info.Item().Text($"Venta Nro. {venta.Id}").FontSize(10);
-                                info.Item().Text($"Fecha: {venta.Fecha:dd/MM/yyyy HH:mm}").FontSize(10);
+                                info.Item().Text($"Nro. Comprobante: {comprobante.NumeroComprobante}").FontSize(10);
+                                info.Item().Text($"Venta Nro. {comprobante.VentaId}").FontSize(10);
+                                info.Item().Text($"Fecha venta: {comprobante.FechaVenta:dd/MM/yyyy HH:mm}").FontSize(10);
+                                info.Item().Text($"Fecha generación: {comprobante.FechaGeneracion:dd/MM/yyyy HH:mm}").FontSize(10);
                             });
                         });
 
@@ -69,12 +81,10 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                                 columns.RelativeColumn();
                             });
 
-                            AgregarFila(tabla, "Razón social:", venta.RazonSocialCliente);
-                            AgregarFila(tabla, "CI:", venta.CiCompleto);
-                            AgregarFila(tabla, "Email:", venta.EmailCliente ?? "-");
-                            AgregarFila(tabla, "Cliente frecuente:", venta.ClienteFrecuente ? "Sí" : "No");
-                            AgregarFila(tabla, "Usuario:", $"Usuario {venta.IdUsuario}");
-                            AgregarFila(tabla, "Estado:", venta.EstadoVenta);
+                            AgregarFila(tabla, "Razón social:", comprobante.ClienteNombre);
+                            AgregarFila(tabla, "CI/NIT:", comprobante.ClienteCiNit ?? "-");
+                            AgregarFila(tabla, "Usuario:", comprobante.UsuarioNombre);
+                            AgregarFila(tabla, "Estado:", comprobante.Estado);
                         });
 
                         col.Item().PaddingTop(20).Text("Detalle de productos").FontSize(13).Bold();
@@ -83,37 +93,42 @@ namespace MicroServicioVentas.Infraestructura.ServiciosExternos
                         {
                             tabla.ColumnsDefinition(columns =>
                             {
+                                columns.ConstantColumn(60);
                                 columns.RelativeColumn(3);
-                                columns.RelativeColumn(2);
-                                columns.ConstantColumn(55);
-                                columns.ConstantColumn(80);
-                                columns.ConstantColumn(80);
+                                columns.ConstantColumn(90);
+                                columns.ConstantColumn(90);
                             });
 
                             tabla.Header(header =>
                             {
-                                AgregarCabecera(header, "Producto");
-                                AgregarCabecera(header, "Presentación");
                                 AgregarCabecera(header, "Cant.");
-                                AgregarCabecera(header, "P. Unit.");
-                                AgregarCabecera(header, "Subtotal");
+                                AgregarCabecera(header, "Descripción");
+                                AgregarCabecera(header, "P. Unit. Bs.");
+                                AgregarCabecera(header, "Importe Bs.");
                             });
 
-                            foreach (var detalle in detalles)
+                            foreach (var detalle in comprobante.Detalles)
                             {
-                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(detalle.Producto);
-                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(detalle.Presentacion);
-                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text(detalle.Cantidad.ToString());
-                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text($"{detalle.PrecioUnitario:0.00}");
-                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text($"{detalle.Subtotal:0.00}");
+                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                                    .AlignRight().Text(detalle.Cantidad.ToString());
+
+                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                                    .Text(detalle.ProductoNombre);
+
+                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                                    .AlignRight().Text($"{detalle.PrecioUnitario:0.00}");
+
+                                tabla.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                                    .AlignRight().Text($"{detalle.Subtotal:0.00}");
                             }
                         });
 
-                        col.Item().PaddingTop(15).AlignRight().Text($"TOTAL: Bs {venta.Total:0.00}")
+                        col.Item().PaddingTop(15).AlignRight()
+                            .Text($"TOTAL: Bs {comprobante.Total:0.00}")
                             .FontSize(14)
                             .Bold();
 
-                        col.Item().PaddingTop(20).Text($"CorrelationId: {venta.CorrelationId}")
+                        col.Item().PaddingTop(20).Text($"CorrelationId: {comprobante.CorrelationId}")
                             .FontSize(8)
                             .FontColor(Colors.Grey.Darken1);
                     });

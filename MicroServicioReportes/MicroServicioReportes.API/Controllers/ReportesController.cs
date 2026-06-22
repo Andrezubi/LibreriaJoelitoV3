@@ -1,5 +1,7 @@
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
+using MicroServicioReportes.Infraestructura.Generadores;
+using MicroServicioReportes.Infraestructura.Repositorios;
 using MicroServicioReportes.Dominio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,13 +13,15 @@ namespace MicroServicioReportes.API.Controllers;
 public class ReportesController : ControllerBase
 {
     private readonly IReporteServicio _reporteServicio;
+    private readonly IComprobanteVentaRepositorio _comprobanteVentaRepositorio;
+    private readonly IComprobanteVentaPdfServicio _comprobanteVentaPdfServicio;
     private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
 
-    public ReportesController(
-        IReporteServicio reporteServicio,
-        IBitacoraReporteRepositorio bitacoraRepositorio)
+    public ReportesController(IReporteServicio reporteServicio, IComprobanteVentaRepositorio comprobanteVentaRepositorio, IComprobanteVentaPdfServicio comprobanteVentaPdfServicio, IBitacoraReporteRepositorio bitacoraRepositorio)
     {
         _reporteServicio = reporteServicio;
+        _comprobanteVentaRepositorio = comprobanteVentaRepositorio;
+        _comprobanteVentaPdfServicio = comprobanteVentaPdfServicio;
         _bitacoraRepositorio = bitacoraRepositorio;
     }
 
@@ -152,5 +156,34 @@ public class ReportesController : ControllerBase
         {
             request.IdUsuario = idHeader;
         }
+    }
+
+    [HttpGet("comprobante-venta/{idVenta:int}/ver")]
+    public IActionResult VerComprobanteVenta(int idVenta)
+    {
+        var comprobante = _comprobanteVentaRepositorio.ObtenerPorVentaId(idVenta);
+
+        if (comprobante == null)
+        {
+            return NotFound(new
+            {
+                error = $"No existe comprobante generado para la venta {idVenta}."
+            });
+        }
+
+        var pdf = _comprobanteVentaPdfServicio.GenerarComprobanteVenta(comprobante);
+
+        if (pdf.Length == 0)
+        {
+            return BadRequest(new
+            {
+                error = "No se pudo generar el PDF del comprobante."
+            });
+        }
+
+        Response.Headers["Content-Disposition"] =
+            $"inline; filename=comprobante-{comprobante.NumeroComprobante}.pdf";
+
+        return File(pdf, "application/pdf");
     }
 }
