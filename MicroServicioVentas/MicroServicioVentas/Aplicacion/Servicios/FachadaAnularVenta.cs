@@ -54,7 +54,7 @@ namespace MicroServicioVentas.Aplicacion.Servicios
                         throw new Exception("La venta no tiene detalles para liberar stock.");
 
                     _ventaRepositorio.ActualizarEstadoPorId(
-                        idVenta,
+                        idVenta, idUsuario,
                         EstadosVenta.AnulacionPendiente,
                         "Anulación iniciada. Pendiente de liberación de stock."
                     );

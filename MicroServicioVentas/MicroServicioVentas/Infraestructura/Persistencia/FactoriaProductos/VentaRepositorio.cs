@@ -66,7 +66,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
 
         public int Eliminar(Venta venta)
         {
-            return ActualizarEstadoPorId(venta.Id, EstadosVenta.Anulada);
+            return ActualizarEstadoPorId(venta.Id, venta.IdUsuario, EstadosVenta.Anulada);
         }
 
         public List<Venta> ObtenerTodo()
@@ -224,13 +224,15 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
 
         public int ActualizarEstadoPorId(
             int idVenta,
+            int idUsuario,
             string estado,
             string? motivoFallo = null)
         {
             string consulta = @"
                 UPDATE venta
                 SET Estado = @estado,
-                    MotivoFallo = @motivoFallo
+                    MotivoFallo = @motivoFallo,
+                    IdUsuario = @idUsuario
                 WHERE Id = @idVenta;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
@@ -238,6 +240,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@estado", estado);
             comando.Parameters.AddWithValue("@motivoFallo", motivoFallo);
             comando.Parameters.AddWithValue("@idVenta", idVenta);
+            comando.Parameters.AddWithValue("@idUsuario", idUsuario);
 
             return ExecuteNonQuery(comando);
         }
