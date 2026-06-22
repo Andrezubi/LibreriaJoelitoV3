@@ -1,0 +1,373 @@
+﻿@page
+@model FrontendLibreria.Pages.Ventas.IndexVentasModel
+
+@{
+    ViewData["Title"] = "Ventas";
+}
+
+<div class="container-fluid mt-4 px-4">
+    <div class="d-flex justify-content-center">
+        <div class="tabla-wrapper w-100">
+
+            <div class="card shadow-sm tabla-card">
+
+                <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
+                    <h5 class="mb-0">Lista de Ventas</h5>
+
+                    <a asp-page="Registrar" class="btn btn-sistema btn-sm">
+                        + Registrar Venta
+                    </a>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.MensajeExito))
+                {
+                    <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                        @Model.MensajeExito
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+
+                        <table class="table table-hover align-middle mb-0">
+
+                            <thead class="tabla-head-custom">
+                                <tr>
+                                    <th>ID Venta</th>
+                                    <th>CI Cliente</th>
+                                    <th>Nombre Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @if (Model.Ventas == null || !Model.Ventas.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            No existen ventas registradas.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var venta in Model.Ventas)
+                                    {
+                                        <tr>
+                                            <td>@venta.Id</td>
+                                            <td>@venta.CiCliente</td>
+                                            <td>@venta.NombreCliente</td>
+                                            <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                @if (venta.Estado == 0)
+                                                {
+                                                    <span class="badge bg-secondary">Anulada</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">Activa</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (venta.Estado == 0)
+                                                {
+                                                    <span class="text-muted small">Sin acciones disponibles</span>
+                                                }
+                                                else
+                                                {
+                                                    <a asp-page-handler="ExportarPdf"
+                                                           asp-route-idVenta="@venta.Id"
+                                                           class="btn btn-sm btn-primary"
+                                                           target="_blank">
+                                                        PDF
+                                                    </a>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-info btn-ver-detalle"
+                                                            data-idventa="@venta.Id">
+                                                        Ver
+                                                    </button>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-danger btn-preparar-anulacion"
+                                                            data-idventa="@venta.Id">
+                                                        Anular
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalVerDetalleVenta" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header modal-header-morado">
+                <h5 class="modal-title" id="detalleModalLabel">Detalle de Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
+
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Información general de la venta</h5>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h6 class="text-muted">CI/NIT Cliente</h6>
+                                <p class="fw-bold" id="modalCiCliente"></p>
+                            </div>
+
+                            <div class="col-md-3">
+                                <h6 class="text-muted">Cliente</h6>
+                                <p class="fw-bold" id="modalNombreCliente"></p>
+                            </div>
+
+                            <div class="col-md-3">
+                                <h6 class="text-muted">Fecha</h6>
+                                <p class="fw-bold" id="modalFechaVenta"></p>
+                            </div>
+
+                            <div class="col-md-3">
+                                <h6 class="text-muted">Empleado</h6>
+                                <p class="fw-bold" id="modalNombreEmpleado"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Detalle de productos</h5>
+                    </div>
+
+                    <div class="card-body">
+                        <table class="table table-bordered table-hover text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Presentación</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="modalDetalleBody">
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold">Total General:</td>
+                                    <td class="fw-bold text-success" id="modalTotalGeneral"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button" class="btn btn-info" id="btnImprimirComprobante" data-idventa="">
+                    <i class="bi bi-receipt"></i> Imprimir Comprobante
+                </button>
+
+                <button type="button" class="btn btn-danger" id="btnAnularVenta" data-idventa="">
+                    <i class="bi bi-x-circle"></i> Anular Venta
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAnularVenta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Advertencia de Anulación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <h5 class="text-center mb-3">
+                    ¿Está completamente seguro de anular la venta <strong id="lblVentaAnular"></strong>?
+                </h5>
+
+                <div class="alert alert-warning border-warning text-dark shadow-sm">
+                    <strong>⚠️ IMPORTANTE:</strong> <br />
+                    Esta acción revertirá la transacción. <strong>Solo debe proceder</strong> si se está realizando un reembolso al cliente y/o existe una razón física para que los productos retornen al inventario de la librería.
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light justify-content-center">
+                <form method="post" asp-page-handler="Anular">
+                    <input type="hidden" id="inputIdVentaAnular" name="idVenta" value="" />
+
+                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-danger">
+                        Sí, Anular Venta y Restaurar Stock
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("click", async function (e) {
+            const botonDetalle = e.target.closest(".btn-ver-detalle");
+
+            if (botonDetalle) {
+                const idVenta = botonDetalle.dataset.idventa;
+                await cargarDetalleVenta(idVenta);
+                return;
+            }
+
+            const botonAnular = e.target.closest(".btn-preparar-anulacion");
+
+            if (botonAnular) {
+                const idVenta = botonAnular.dataset.idventa;
+                prepararAnulacion(idVenta);
+            }
+        });
+
+        async function cargarDetalleVenta(idVenta) {
+            if (!idVenta) {
+                alert("No se encontró el ID de la venta.");
+                return;
+            }
+
+            document.getElementById("btnImprimirComprobante").dataset.idventa = idVenta;
+            document.getElementById("btnAnularVenta").dataset.idventa = idVenta;
+
+            const alertaError = document.getElementById("alertaErrorModal");
+            const bodyDetalle = document.getElementById("modalDetalleBody");
+
+            document.getElementById("modalCiCliente").textContent = "";
+            document.getElementById("modalNombreCliente").textContent = "";
+            document.getElementById("modalFechaVenta").textContent = "";
+            document.getElementById("modalNombreEmpleado").textContent = "";
+            document.getElementById("modalTotalGeneral").textContent = "";
+
+            bodyDetalle.innerHTML = "";
+            alertaError.style.display = "none";
+            alertaError.textContent = "";
+
+            const modalDetalle = new bootstrap.Modal(document.getElementById("modalVerDetalleVenta"));
+
+            try {
+                const response = await fetch(`?handler=ObtenerDetalleVenta&idVenta=${encodeURIComponent(idVenta)}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || "No se pudo obtener el detalle de la venta.");
+                }
+
+                document.getElementById("modalCiCliente").textContent = data.venta.ciCliente ?? "";
+                document.getElementById("modalNombreCliente").textContent = data.venta.nombreCliente ?? "";
+                document.getElementById("modalFechaVenta").textContent = data.venta.fecha ?? "";
+                document.getElementById("modalNombreEmpleado").textContent = data.venta.empleado ?? "";
+                document.getElementById("modalTotalGeneral").textContent = `${Number(data.venta.total).toFixed(2)} Bs.`;
+
+                data.detalles.forEach(item => {
+                    const fila = `
+                        <tr>
+                            <td>${item.producto ?? ""}</td>
+                            <td>${item.presentacion ?? ""}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${Number(item.precioUnitario).toFixed(2)} Bs.</td>
+                            <td>${Number(item.subtotal).toFixed(2)} Bs.</td>
+                        </tr>
+                    `;
+
+                    bodyDetalle.innerHTML += fila;
+                });
+
+                modalDetalle.show();
+            } catch (error) {
+                alertaError.textContent = error.message;
+                alertaError.style.display = "block";
+                modalDetalle.show();
+            }
+        }
+
+        document.getElementById("btnAnularVenta").addEventListener("click", function () {
+            const idVenta = this.dataset.idventa;
+
+            if (!idVenta) {
+                alert("No se encontró el ID de la venta.");
+                return;
+            }
+
+            prepararAnulacion(idVenta);
+        });
+
+        function prepararAnulacion(idVenta) {
+            if (!idVenta) {
+                alert("No se encontró el ID de la venta.");
+                return;
+            }
+
+            document.getElementById("lblVentaAnular").textContent = "#" + idVenta;
+            document.getElementById("inputIdVentaAnular").value = idVenta;
+
+            const modalDetalleElement = document.getElementById("modalVerDetalleVenta");
+            const modalDetalle = bootstrap.Modal.getInstance(modalDetalleElement);
+
+            if (modalDetalle) {
+                modalDetalle.hide();
+            }
+
+            setTimeout(() => {
+                const modalAnular = new bootstrap.Modal(document.getElementById("modalAnularVenta"));
+                modalAnular.show();
+            }, 300);
+        }
+
+        document.getElementById("btnImprimirComprobante").addEventListener("click", function () {
+            const idVenta = this.dataset.idventa;
+
+            if (!idVenta) {
+                alert("No se encontró el ID de la venta.");
+                return;
+            }
+
+            const url = `?handler=ExportarPdf&idVenta=${encodeURIComponent(idVenta)}`;
+            window.open(url, "_blank");
+        });
+    </script>
+}

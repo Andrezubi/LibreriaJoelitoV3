@@ -11,10 +11,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 1,
             FechaVenta = new DateTime(2026, 6, 5),
+            IdProducto = 1,
+            IdPresentacion = 1,
             Producto = "Clean Code",
             Categoria = "Programacion",
+            Presentacion = "Unidad",
             CantidadVendida = 2,
             PrecioUnitario = 95,
+            IdCliente = 1,
             Cliente = "Cliente Demo",
             EstadoVenta = "Confirmada"
         },
@@ -22,10 +26,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 1,
             FechaVenta = new DateTime(2026, 6, 5),
+            IdProducto = 2,
+            IdPresentacion = 1,
             Producto = "Arquitectura Limpia",
             Categoria = "Programacion",
+            Presentacion = "Unidad",
             CantidadVendida = 1,
             PrecioUnitario = 120,
+            IdCliente = 1,
             Cliente = "Cliente Demo",
             EstadoVenta = "Confirmada"
         },
@@ -33,10 +41,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 2,
             FechaVenta = new DateTime(2026, 6, 10),
+            IdProducto = 3,
+            IdPresentacion = 1,
             Producto = "El Principito",
             Categoria = "Literatura",
+            Presentacion = "Unidad",
             CantidadVendida = 3,
             PrecioUnitario = 45,
+            IdCliente = 2,
             Cliente = "Maria Gomez",
             EstadoVenta = "Confirmada"
         },
@@ -44,10 +56,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 3,
             FechaVenta = new DateTime(2026, 6, 15),
+            IdProducto = 4,
+            IdPresentacion = 1,
             Producto = "La Casa de los Espiritus",
             Categoria = "Literatura",
+            Presentacion = "Unidad",
             CantidadVendida = 2,
             PrecioUnitario = 55,
+            IdCliente = 3,
             Cliente = "Juan Perez",
             EstadoVenta = "Confirmada"
         },
@@ -55,10 +71,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 4,
             FechaVenta = new DateTime(2026, 6, 20),
+            IdProducto = 5,
+            IdPresentacion = 1,
             Producto = "Design Patterns",
             Categoria = "Programacion",
+            Presentacion = "Unidad",
             CantidadVendida = 1,
             PrecioUnitario = 85,
+            IdCliente = 4,
             Cliente = "Carlos Lopez",
             EstadoVenta = "Confirmada"
         },
@@ -66,10 +86,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 5,
             FechaVenta = new DateTime(2026, 6, 22),
+            IdProducto = 6,
+            IdPresentacion = 1,
             Producto = "Programacion en C#",
             Categoria = "Programacion",
+            Presentacion = "Unidad",
             CantidadVendida = 2,
             PrecioUnitario = 75,
+            IdCliente = 5,
             Cliente = "Ana Rodriguez",
             EstadoVenta = "Confirmada"
         },
@@ -77,10 +101,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 6,
             FechaVenta = new DateTime(2026, 6, 25),
-            Producto = "Cien Años de Soledad",
+            IdProducto = 7,
+            IdPresentacion = 1,
+            Producto = "Cien Anos de Soledad",
             Categoria = "Literatura",
+            Presentacion = "Unidad",
             CantidadVendida = 1,
             PrecioUnitario = 50,
+            IdCliente = 6,
             Cliente = "Sofia Martinez",
             EstadoVenta = "Confirmada"
         },
@@ -88,10 +116,14 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 7,
             FechaVenta = new DateTime(2026, 6, 28),
+            IdProducto = 8,
+            IdPresentacion = 1,
             Producto = "RESTful Web Services",
             Categoria = "Programacion",
+            Presentacion = "Unidad",
             CantidadVendida = 3,
             PrecioUnitario = 90,
+            IdCliente = 7,
             Cliente = "Roberto Garcia",
             EstadoVenta = "Confirmada"
         },
@@ -99,12 +131,31 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         {
             NumeroVenta = 8,
             FechaVenta = new DateTime(2026, 6, 30),
+            IdProducto = 9,
+            IdPresentacion = 1,
             Producto = "El Quijote",
             Categoria = "Literatura",
+            Presentacion = "Unidad",
             CantidadVendida = 2,
             PrecioUnitario = 65,
+            IdCliente = 8,
             Cliente = "Patricia Sanchez",
             EstadoVenta = "Confirmada"
+        },
+        new VentaProductoReporteDto
+        {
+            NumeroVenta = 9,
+            FechaVenta = new DateTime(2026, 6, 30),
+            IdProducto = 1,
+            IdPresentacion = 1,
+            Producto = "Clean Code",
+            Categoria = "Programacion",
+            Presentacion = "Unidad",
+            CantidadVendida = 1,
+            PrecioUnitario = 95,
+            IdCliente = 2,
+            Cliente = "Maria Gomez",
+            EstadoVenta = "Pendiente"
         }
     };
 
@@ -136,7 +187,7 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
             Estado = venta.EstadoVenta,
             Cliente = new ClienteReporteDto
             {
-                Id = 1,
+                Id = venta.IdCliente,
                 RazonSocial = venta.Cliente,
                 CiNit = "1234567"
             },
@@ -153,7 +204,7 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         CancellationToken cancellationToken = default)
     {
         var resultado = AplicarFiltros(_ventas, request)
-            .Where(v => !v.EstadoVenta.Equals("Anulada", StringComparison.OrdinalIgnoreCase))
+            .Where(v => v.EstadoVenta.Equals("Confirmada", StringComparison.OrdinalIgnoreCase))
             .ToList()
             .AsReadOnly();
 
@@ -165,7 +216,7 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         CancellationToken cancellationToken = default)
     {
         var ventas = AplicarFiltros(_ventas, request)
-            .Where(v => !v.EstadoVenta.Equals("Anulada", StringComparison.OrdinalIgnoreCase))
+            .Where(v => v.EstadoVenta.Equals("Confirmada", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var totalGeneral = ventas.Sum(v => v.Importe);
@@ -202,6 +253,16 @@ public class ReporteRepositorioEnMemoria : IReporteRepositorio
         if (request.FechaHasta.HasValue)
         {
             consulta = consulta.Where(v => v.FechaVenta.Date <= request.FechaHasta.Value.Date);
+        }
+
+        if (request.IdProducto.HasValue)
+        {
+            consulta = consulta.Where(v => v.IdProducto == request.IdProducto.Value);
+        }
+
+        if (request.IdCliente.HasValue)
+        {
+            consulta = consulta.Where(v => v.IdCliente == request.IdCliente.Value);
         }
 
         return consulta;
