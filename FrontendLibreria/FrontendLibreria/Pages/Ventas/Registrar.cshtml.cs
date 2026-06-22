@@ -1,5 +1,6 @@
-using FrontendLibreria.Adapters.Cliente;
-using FrontendLibreria.Adapters.Venta;
+using FrontendLibreria;
+using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs;
 using FrontendLibreria.DTOs.VentaDTOs;
 using Microsoft.AspNetCore.Authorization;

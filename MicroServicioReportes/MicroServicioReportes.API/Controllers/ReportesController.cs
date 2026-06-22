@@ -1,7 +1,11 @@
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
+<<<<<<< HEAD
 using MicroServicioReportes.Infraestructura.Generadores;
 using MicroServicioReportes.Infraestructura.Repositorios;
+=======
+using MicroServicioReportes.Dominio.Interfaces;
+>>>>>>> 11d1d7923b9809be2802c894f952feb1018e4427
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -12,6 +16,7 @@ namespace MicroServicioReportes.API.Controllers;
 public class ReportesController : ControllerBase
 {
     private readonly IReporteServicio _reporteServicio;
+<<<<<<< HEAD
     private readonly IComprobanteVentaRepositorio _comprobanteVentaRepositorio;
     private readonly IComprobanteVentaPdfServicio _comprobanteVentaPdfServicio;
 
@@ -20,6 +25,16 @@ public class ReportesController : ControllerBase
         _reporteServicio = reporteServicio;
         _comprobanteVentaRepositorio = comprobanteVentaRepositorio;
         _comprobanteVentaPdfServicio = comprobanteVentaPdfServicio;
+=======
+    private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
+
+    public ReportesController(
+        IReporteServicio reporteServicio,
+        IBitacoraReporteRepositorio bitacoraRepositorio)
+    {
+        _reporteServicio = reporteServicio;
+        _bitacoraRepositorio = bitacoraRepositorio;
+>>>>>>> 11d1d7923b9809be2802c894f952feb1018e4427
     }
 
     [HttpGet("comprobante-venta/{idVenta:int}")]
@@ -66,6 +81,27 @@ public class ReportesController : ControllerBase
         }
     }
 
+    [HttpGet("ventas-producto/datos")]
+    public async Task<IActionResult> ObtenerDatosVentasPorProducto(
+        [FromQuery] ReporteRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        PrepararUsuario(request);
+
+        try
+        {
+            var reporte = await _reporteServicio.ObtenerDatosVentasPorProductoAsync(
+                request,
+                cancellationToken);
+
+            return Ok(reporte);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpGet("resumen-recaudacion")]
     public async Task<IActionResult> GenerarResumenRecaudacion(
         [FromQuery] ReporteRequestDto request,
@@ -87,10 +123,18 @@ public class ReportesController : ControllerBase
         }
     }
 
+    [HttpGet("bitacora")]
+    public async Task<IActionResult> ObtenerBitacora(CancellationToken cancellationToken)
+    {
+        var entradas = await _bitacoraRepositorio.ObtenerTodoAsync(cancellationToken);
+        return Ok(entradas);
+    }
+
     private void PrepararUsuario(ReporteRequestDto request)
     {
         if (!string.IsNullOrWhiteSpace(request.Usuario))
         {
+            PrepararIdUsuario(request);
             return;
         }
 
@@ -98,6 +142,32 @@ public class ReportesController : ControllerBase
             User.FindFirst("NombreCompleto")?.Value ??
             User.FindFirst(ClaimTypes.Name)?.Value ??
             "Sistema";
+
+        PrepararIdUsuario(request);
+    }
+
+    private void PrepararIdUsuario(ReporteRequestDto request)
+    {
+        if (request.IdUsuario.HasValue)
+        {
+            return;
+        }
+
+        var idUsuario =
+            User.FindFirst("IdUsuario")?.Value ??
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (int.TryParse(idUsuario, out var idDesdeToken))
+        {
+            request.IdUsuario = idDesdeToken;
+            return;
+        }
+
+        if (Request.Headers.TryGetValue("X-IdUsuario", out var idDesdeHeader) &&
+            int.TryParse(idDesdeHeader, out var idHeader))
+        {
+            request.IdUsuario = idHeader;
+        }
     }
 
     [HttpGet("comprobante-venta/{idVenta:int}/ver")]

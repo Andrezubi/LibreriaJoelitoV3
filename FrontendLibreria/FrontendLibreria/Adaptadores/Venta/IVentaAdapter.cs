@@ -1,6 +1,6 @@
 ﻿using FrontendLibreria.DTOs.VentaDTOs;
 
-namespace FrontendLibreria.Adapters.Venta
+namespace FrontendLibreria.Adaptadores.Venta
 {
     public interface IVentaAdapter
     {

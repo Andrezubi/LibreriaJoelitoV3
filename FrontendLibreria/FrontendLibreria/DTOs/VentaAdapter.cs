@@ -2,7 +2,7 @@ using FrontendLibreria.DTOs.VentaDTOs;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
-namespace FrontendLibreria.Adapters.Venta
+namespace FrontendLibreria.Adaptadores.Venta
 {
     public class VentaAdapter : IVentaAdapter
     {

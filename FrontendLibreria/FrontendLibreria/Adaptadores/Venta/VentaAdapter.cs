@@ -1,3 +1,4 @@
+using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs.VentaDTOs;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;

@@ -1,4 +1,4 @@
-﻿using FrontendLibreria.Adapters.Venta;
+﻿using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs.VentaDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
