@@ -1,4 +1,4 @@
-using FrontendLibreria.Adapters.Cliente;
+using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adapters.Venta;
 using FrontendLibreria.DTOs;
 using FrontendLibreria.DTOs.VentaDTOs;

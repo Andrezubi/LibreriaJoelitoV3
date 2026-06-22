@@ -1,0 +1,21 @@
+@MicroServicioReportes.API_HostAddress = http://localhost:5291
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto/datos?fechaDesde=2026-01-01&fechaHasta=2026-12-31&ordenPor=producto&usuario=Admin%20Prueba&idUsuario=1
+Accept: application/json
+
+###
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto?fechaDesde=2026-01-01&fechaHasta=2026-12-31&ordenPor=importe&descendente=true&usuario=Admin%20Prueba&idUsuario=1
+Accept: application/pdf
+
+###
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/ventas-producto/datos?idProducto=1&ordenPor=fecha&usuario=Admin%20Prueba&idUsuario=1
+Accept: application/json
+
+###
+
+GET {{MicroServicioReportes.API_HostAddress}}/api/reportes/bitacora
+Accept: application/json
+
+###

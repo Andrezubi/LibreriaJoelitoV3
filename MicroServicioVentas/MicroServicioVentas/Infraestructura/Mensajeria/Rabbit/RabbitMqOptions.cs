@@ -28,6 +28,10 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Rabbit
         public string StockLiberar { get; set; } = "stock.liberar";
 
         public string StockLiberado { get; set; } = "stock.liberado";
+
+        public string VentaConfirmada { get; set; } = "venta.confirmada";
+
+        public string VentaAnulada { get; set; } = "venta.anulada";
     }
 
     public class RabbitMqQueueNames

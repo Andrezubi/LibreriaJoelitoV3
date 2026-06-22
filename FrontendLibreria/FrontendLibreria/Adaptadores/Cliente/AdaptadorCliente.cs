@@ -1,6 +1,6 @@
 using FrontendLibreria.DTOs;
 
-namespace FrontendLibreria.Adaptadores
+namespace FrontendLibreria.Adaptadores.Cliente
 {
     public class AdaptadorCliente : IAdaptadorCliente
     {
