@@ -1,11 +1,8 @@
 using MicroServicioReportes.Aplicacion.Interfaces;
 using MicroServicioReportes.Dominio.Entidades.DTOs;
-<<<<<<< HEAD
 using MicroServicioReportes.Infraestructura.Generadores;
 using MicroServicioReportes.Infraestructura.Repositorios;
-=======
 using MicroServicioReportes.Dominio.Interfaces;
->>>>>>> 11d1d7923b9809be2802c894f952feb1018e4427
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -16,25 +13,16 @@ namespace MicroServicioReportes.API.Controllers;
 public class ReportesController : ControllerBase
 {
     private readonly IReporteServicio _reporteServicio;
-<<<<<<< HEAD
     private readonly IComprobanteVentaRepositorio _comprobanteVentaRepositorio;
     private readonly IComprobanteVentaPdfServicio _comprobanteVentaPdfServicio;
+    private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
 
-    public ReportesController(IReporteServicio reporteServicio, IComprobanteVentaRepositorio comprobanteVentaRepositorio, IComprobanteVentaPdfServicio comprobanteVentaPdfServicio)
+    public ReportesController(IReporteServicio reporteServicio, IComprobanteVentaRepositorio comprobanteVentaRepositorio, IComprobanteVentaPdfServicio comprobanteVentaPdfServicio, IBitacoraReporteRepositorio bitacoraRepositorio)
     {
         _reporteServicio = reporteServicio;
         _comprobanteVentaRepositorio = comprobanteVentaRepositorio;
         _comprobanteVentaPdfServicio = comprobanteVentaPdfServicio;
-=======
-    private readonly IBitacoraReporteRepositorio _bitacoraRepositorio;
-
-    public ReportesController(
-        IReporteServicio reporteServicio,
-        IBitacoraReporteRepositorio bitacoraRepositorio)
-    {
-        _reporteServicio = reporteServicio;
         _bitacoraRepositorio = bitacoraRepositorio;
->>>>>>> 11d1d7923b9809be2802c894f952feb1018e4427
     }
 
     [HttpGet("comprobante-venta/{idVenta:int}")]
