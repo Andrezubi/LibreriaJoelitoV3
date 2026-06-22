@@ -36,14 +36,12 @@ else
 builder.Services.AddSingleton<IBitacoraReporteRepositorio, BitacoraReporteRepositorioEnMemoria>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-<<<<<<< HEAD
 builder.Services.AddInfraestructura(builder.Configuration);
 
 QuestPDF.Settings.License = LicenseType.Community;
-=======
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
->>>>>>> 11d1d7923b9809be2802c894f952feb1018e4427
 
 var app = builder.Build();
 
