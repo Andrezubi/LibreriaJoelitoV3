@@ -1,14 +1,50 @@
 using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.FactoriaCreadores;
+using MicroServicioProductos.Infraestructura.Mensajeria.Consumers;
+using MicroServicioProductos.Infraestructura.Mensajeria.Outbox;
+using MicroServicioProductos.Infraestructura.Mensajeria.Rabbit;
 using MicroServicioProductos.Infraestructura.Persistencia;
 using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+
+
+
+builder.Services.Configure<RabbitMqOptions>(
+builder.Configuration.GetSection("RabbitMq")
+);
+
+
+builder.Services.AddSingleton(
+sp => sp.GetRequiredService<
+IOptions<RabbitMqOptions>>().Value
+);
+
+
+builder.Services.AddSingleton<RabbitMqPublisher>();
+
+
+builder.Services.AddHostedService<OutboxPublisherService>();
+
+
+builder.Services.AddHostedService<ProductoSagaConsumerServicio>();
+
+builder.Services.AddScoped<ProcessedMessageRepositorio>();
+
+builder.Services.AddScoped<OutboxMessageRepositorio>();
+
+
+
+
+
+
 
 builder.Services.AddScoped<ProductoRepositorio>(provider => {
     return new ProductoCreadorRepositorio().CrearRepositorio();
