@@ -1,5 +1,6 @@
 using FrontendLibreria;
 using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs;
 using FrontendLibreria.DTOs.VentaDTOs;

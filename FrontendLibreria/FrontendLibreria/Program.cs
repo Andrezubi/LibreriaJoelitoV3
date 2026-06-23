@@ -3,6 +3,7 @@ using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adaptadores.Marca;
 using FrontendLibreria.Adaptadores.Producto;
 using FrontendLibreria.Adaptadores.ProveedoresAdapter;
+using FrontendLibreria.Adaptadores.Reporte;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,6 +57,11 @@ builder.Services.AddHttpClient<IProveedorAdapter, ProveedorAdapter>(client =>
 builder.Services.AddHttpClient<IAdaptadorCliente, AdaptadorCliente>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioClientesUrl"]!);
+});
+
+builder.Services.AddHttpClient<IReporteAdapter, ReporteAdapter>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:MicroServicioReportesUrl"]!);
 });
 
 // Configurar Autenticación por Cookies para Razor Pages

@@ -1,0 +1,94 @@
+@page
+@model FrontendLibreria.Pages.Reportes.IndexModel
+@{
+    ViewData["Title"] = "Gestión de Reportes";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0"><i class="fas fa-file-alt me-2"></i> @ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <form method="post" asp-page-handler="GenerarVentasProducto">
+                        <button type="submit" class="btn btn-outline-primary btn-lg w-100 py-4">
+                            <i class="fas fa-box-open mb-3 d-block fa-2x"></i>
+                            Ventas por Producto
+                        </button>
+                    </form>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <form method="post" asp-page-handler="GenerarResumenRecaudacion">
+                        <button type="submit" class="btn btn-outline-success btn-lg w-100 py-4">
+                            <i class="fas fa-chart-line mb-3 d-block fa-2x"></i>
+                            Resumen Recaudación (Sumariado)
+                        </button>
+                    </form>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="input-group">
+                        <input type="number" id="idVentaInput" class="form-control form-control-lg" placeholder="ID Venta">
+                        <button type="button" onclick="verComprobante()" class="btn btn-outline-info btn-lg">
+                            Ver Comprobante
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Historial / Bitácora de Reportes</h4>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                            <th>Usuario</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Bitacora != null && Model.Bitacora.Any())
+                        {
+                            foreach (var item in Model.Bitacora)
+                            {
+                                <tr>
+                                    <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td><span class="badge bg-secondary">@item.Accion</span></td>
+                                    <td>@item.IdUsuario</td>
+                                    <td>@item.Descripcion @item.Tabla</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No hay registros en la bitácora</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verComprobante() {
+            const idVenta = document.getElementById('idVentaInput').value;
+            if (!idVenta) {
+                alert('Por favor ingrese un ID de venta');
+                return;
+            }
+            window.open(`/Reportes?handler=VerComprobante&idVenta=${idVenta}`, '_blank');
+        }
+    </script>
+}
