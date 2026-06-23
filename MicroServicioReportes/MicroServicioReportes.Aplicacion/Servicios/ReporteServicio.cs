@@ -18,6 +18,17 @@ public class ReporteServicio : IReporteServicio
     private readonly IPlantillaReporteProveedor _plantillas;
     private readonly IGeneradorReporte _generador;
 
+    private const string MoradoPrincipal = "#7B35BE";
+    private const string MoradoOscuro = "#4B1F73";
+    private const string MoradoMedio = "#9D5FE0";
+    private const string MoradoClaro = "#EFE3FA";
+    private const string MoradoMuyClaro = "#F8F3FC";
+    private const string Blanco = "#FFFFFF";
+    private const string GrisTexto = "#374151";
+    private const string GrisSuave = "#F3F4F6";
+    private const string GrisBorde = "#E5E7EB";
+    private const string Verde = "#16A34A";
+
     public ReporteServicio(
         IReporteRepositorio repositorio,
         IBitacoraReporteRepositorio bitacoraRepositorio,
@@ -92,46 +103,13 @@ public class ReporteServicio : IReporteServicio
         CancellationToken cancellationToken = default)
     {
         var datosReporte = await ObtenerDatosVentasPorProductoAsync(request, cancellationToken);
+        var reporte = new ReporteResponseDto
+        {
+            Archivo = GenerarPdfVentasPorProducto(datosReporte),
+            ContentType = "application/pdf",
+            NombreArchivo = $"VentasPorProducto_{datosReporte.FechaGeneracion:yyyyMMddHHmm}.pdf"
+        };
 
-        var filas = datosReporte.Ventas
-            .Select(v => new Dictionary<string, string>
-            {
-                ["Nro."] = v.NumeroVenta.ToString(),
-                ["Fecha"] = v.FechaVenta.ToString("dd/MM/yyyy"),
-                ["Producto"] = v.Producto,
-                ["Categoria"] = v.Categoria,
-                ["Presentacion"] = v.Presentacion,
-                ["Cantidad"] = v.CantidadVendida.ToString(),
-                ["Precio Unitario Bs"] = FormatoMoneda(v.PrecioUnitario),
-                ["Importe Bs"] = FormatoMoneda(v.Importe),
-                ["Cliente"] = v.Cliente,
-                ["Estado"] = v.EstadoVenta
-            });
-
-        var plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ListaVentasPorProducto);
-
-        var documento = _builder
-            .UsarPlantilla(plantilla)
-            .AgregarEncabezado(
-                "Reporte de Ventas por Producto",
-                "Lista ordenada combinando informacion de Ventas y Productos",
-                datosReporte.Usuario)
-            .AgregarDatosGenerales(CamposFiltro(datosReporte.Filtros))
-            .AgregarDatosGenerales(datosReporte.MicroserviciosConsultados
-                .Select((servicio, indice) => Campo($"Fuente {indice + 1}", servicio)))
-            .AgregarTabla(
-                "Ventas detalladas por producto",
-                new[] { "Nro.", "Fecha", "Producto", "Categoria", "Presentacion", "Cantidad", "Precio Unitario Bs", "Importe Bs", "Cliente", "Estado" },
-                filas)
-            .AgregarResumen(new[]
-            {
-                Campo("Total unidades vendidas", datosReporte.TotalUnidadesVendidas.ToString()),
-                Campo("Total recaudado Bs", FormatoMoneda(datosReporte.TotalRecaudado))
-            })
-            .AgregarPie(datosReporte.Usuario)
-            .Construir();
-
-        var reporte = Renderizar(documento, $"VentasPorProducto_{datosReporte.FechaGeneracion:yyyyMMddHHmm}");
         await RegistrarBitacoraVentasPorProductoAsync(datosReporte, cancellationToken);
 
         return reporte;
@@ -166,6 +144,299 @@ public class ReporteServicio : IReporteServicio
             TotalUnidadesVendidas = ventasOrdenadas.Sum(v => v.CantidadVendida),
             TotalRecaudado = ventasOrdenadas.Sum(v => v.Importe)
         };
+    }
+
+    private byte[] GenerarPdfVentasPorProducto(ReporteVentasPorProductoDto datosReporte)
+    {
+        var filtros = datosReporte.Filtros;
+        var ventasIncluidas = datosReporte.Ventas.Select(v => v.NumeroVenta).Distinct().Count();
+        var direccionOrden = filtros.Descendente ? "Descendente" : "Ascendente";
+        var rutaLogo = ObtenerRutaLogoReporte();
+
+        return Document.Create(documento =>
+        {
+            documento.Page(pagina =>
+            {
+                pagina.Size(PageSizes.A4.Landscape());
+                pagina.Margin(1.2f, Unit.Centimetre);
+
+                pagina.DefaultTextStyle(x => x
+                    .FontSize(9)
+                    .FontFamily(Fonts.Arial)
+                    .FontColor(GrisTexto));
+
+                pagina.Content()
+                    .Border(1.5f)
+                    .BorderColor(MoradoPrincipal)
+                    .Padding(0)
+                    .Column(col =>
+                    {
+                        col.Item()
+                            .Background(MoradoPrincipal)
+                            .PaddingVertical(12)
+                            .PaddingHorizontal(20)
+                            .Row(row =>
+                            {
+                                row.ConstantItem(78).Height(58).Element(contenedor =>
+                                {
+                                    if (File.Exists(rutaLogo))
+                                    {
+                                        contenedor
+                                            .Background(Blanco)
+                                            .Padding(5)
+                                            .Image(rutaLogo)
+                                            .FitArea();
+                                    }
+                                    else
+                                    {
+                                        contenedor
+                                            .Background(Blanco)
+                                            .AlignCenter()
+                                            .AlignMiddle()
+                                            .Text("LJ")
+                                            .FontSize(18)
+                                            .FontColor(MoradoPrincipal)
+                                            .Bold();
+                                    }
+                                });
+
+                                row.RelativeItem().PaddingLeft(16).Column(info =>
+                                {
+                                    info.Item().Text("REPORTE DE VENTAS POR PRODUCTO")
+                                        .FontSize(22)
+                                        .Bold()
+                                        .FontColor(Blanco);
+
+                                    info.Item().PaddingTop(3).Text("Librería Joelito")
+                                        .FontSize(13)
+                                        .SemiBold()
+                                        .FontColor(MoradoClaro);
+
+                                    info.Item().PaddingTop(3)
+                                        .Text("Lista ordenada que combina datos de Ventas y Productos")
+                                        .FontSize(9)
+                                        .FontColor(Blanco);
+                                });
+
+                                row.ConstantItem(190).Column(meta =>
+                                {
+                                    meta.Item().AlignRight().Text($"Generado: {datosReporte.FechaGeneracion:dd/MM/yyyy HH:mm}")
+                                        .FontSize(9)
+                                        .FontColor(Blanco);
+
+                                    meta.Item().PaddingTop(3).AlignRight().Text($"Usuario: {datosReporte.Usuario}")
+                                        .FontSize(9)
+                                        .FontColor(Blanco);
+
+                                    meta.Item().PaddingTop(3).AlignRight().Text($"Filas: {datosReporte.Ventas.Count}")
+                                        .FontSize(9)
+                                        .FontColor(MoradoClaro);
+                                });
+                            });
+
+                        col.Item().Padding(18).Column(contenido =>
+                        {
+                            contenido.Item().Row(row =>
+                            {
+                                row.RelativeItem()
+                                    .Background(MoradoMuyClaro)
+                                    .BorderLeft(5)
+                                    .BorderColor(MoradoPrincipal)
+                                    .Padding(10)
+                                    .Column(parametros =>
+                                    {
+                                        parametros.Item().Text("Parámetros del reporte")
+                                            .FontSize(12)
+                                            .Bold()
+                                            .FontColor(MoradoOscuro);
+
+                                        parametros.Item().PaddingTop(6).Text($"Fecha desde: {FormatearFechaFiltro(filtros.FechaDesde)}");
+                                        parametros.Item().Text($"Fecha hasta: {FormatearFechaFiltro(filtros.FechaHasta)}");
+                                        parametros.Item().Text($"Producto: {filtros.IdProducto?.ToString() ?? "Todos"}");
+                                        parametros.Item().Text($"Cliente: {filtros.IdCliente?.ToString() ?? "Todos"}");
+                                        parametros.Item().Text($"Orden: {filtros.OrdenPor} ({direccionOrden})");
+                                    });
+
+                                row.ConstantItem(16);
+
+                                row.RelativeItem()
+                                    .Background(MoradoClaro)
+                                    .BorderLeft(5)
+                                    .BorderColor(MoradoMedio)
+                                    .Padding(10)
+                                    .Column(fuentes =>
+                                    {
+                                        fuentes.Item().Text("Fuentes consultadas")
+                                            .FontSize(12)
+                                            .Bold()
+                                            .FontColor(MoradoOscuro);
+
+                                        foreach (var servicio in datosReporte.MicroserviciosConsultados)
+                                        {
+                                            fuentes.Item().PaddingTop(4).Text(servicio);
+                                        }
+
+                                        fuentes.Item().PaddingTop(6)
+                                            .Text("Se excluyen ventas anuladas o no confirmadas.")
+                                            .FontSize(8)
+                                            .FontColor(GrisTexto);
+                                    });
+
+                                row.ConstantItem(16);
+
+                                row.ConstantItem(210)
+                                    .Background(MoradoPrincipal)
+                                    .Padding(12)
+                                    .Column(total =>
+                                    {
+                                        total.Item().AlignCenter().Text("TOTAL RECAUDADO")
+                                            .FontSize(11)
+                                            .Bold()
+                                            .FontColor(Blanco);
+
+                                        total.Item().PaddingTop(5).AlignCenter().Text($"{datosReporte.TotalRecaudado:N2} Bs.")
+                                            .FontSize(18)
+                                            .Bold()
+                                            .FontColor(Blanco);
+
+                                        total.Item().PaddingTop(5).AlignCenter()
+                                            .Text($"{ventasIncluidas} ventas | {datosReporte.TotalUnidadesVendidas} unidades")
+                                            .FontSize(9)
+                                            .FontColor(MoradoClaro);
+                                    });
+                            });
+
+                            contenido.Item().PaddingTop(18)
+                                .Background(MoradoPrincipal)
+                                .PaddingVertical(7)
+                                .PaddingHorizontal(10)
+                                .Text("Detalle de ventas por producto")
+                                .FontSize(12)
+                                .Bold()
+                                .FontColor(Blanco);
+
+                            if (!datosReporte.Ventas.Any())
+                            {
+                                contenido.Item().PaddingTop(10)
+                                    .Background(MoradoMuyClaro)
+                                    .Border(1)
+                                    .BorderColor(GrisBorde)
+                                    .Padding(12)
+                                    .AlignCenter()
+                                    .Text("No se encontraron ventas confirmadas para los parámetros seleccionados.")
+                                    .FontColor(MoradoOscuro)
+                                    .Bold();
+                            }
+                            else
+                            {
+                                contenido.Item().Table(tabla =>
+                                {
+                                    tabla.ColumnsDefinition(columns =>
+                                    {
+                                        columns.ConstantColumn(34);
+                                        columns.ConstantColumn(58);
+                                        columns.RelativeColumn(2.4f);
+                                        columns.RelativeColumn(1.6f);
+                                        columns.ConstantColumn(65);
+                                        columns.ConstantColumn(42);
+                                        columns.ConstantColumn(68);
+                                        columns.ConstantColumn(72);
+                                        columns.RelativeColumn(1.8f);
+                                        columns.ConstantColumn(62);
+                                    });
+
+                                    tabla.Header(header =>
+                                    {
+                                        CeldaCabeceraReporte(header, "Nro.");
+                                        CeldaCabeceraReporte(header, "Fecha");
+                                        CeldaCabeceraReporte(header, "Producto");
+                                        CeldaCabeceraReporte(header, "Categoría");
+                                        CeldaCabeceraReporte(header, "Present.");
+                                        CeldaCabeceraReporte(header, "Cant.");
+                                        CeldaCabeceraReporte(header, "P. Unit Bs.");
+                                        CeldaCabeceraReporte(header, "Importe Bs.");
+                                        CeldaCabeceraReporte(header, "Cliente");
+                                        CeldaCabeceraReporte(header, "Estado");
+                                    });
+
+                                    var alternar = false;
+                                    foreach (var venta in datosReporte.Ventas)
+                                    {
+                                        var fondo = alternar ? GrisSuave : Blanco;
+
+                                        CeldaDetalleReporte(tabla, venta.NumeroVenta.ToString(), true, fondo);
+                                        CeldaDetalleReporte(tabla, venta.FechaVenta.ToString("dd/MM/yyyy"), true, fondo);
+                                        CeldaDetalleReporte(tabla, venta.Producto, false, fondo);
+                                        CeldaDetalleReporte(tabla, venta.Categoria, false, fondo);
+                                        CeldaDetalleReporte(tabla, venta.Presentacion, false, fondo);
+                                        CeldaDetalleReporte(tabla, venta.CantidadVendida.ToString(), true, fondo);
+                                        CeldaDetalleReporte(tabla, $"{venta.PrecioUnitario:N2}", true, fondo);
+                                        CeldaDetalleReporte(tabla, $"{venta.Importe:N2}", true, fondo);
+                                        CeldaDetalleReporte(tabla, venta.Cliente, false, fondo);
+                                        CeldaEstadoReporte(tabla, venta.EstadoVenta, fondo);
+
+                                        alternar = !alternar;
+                                    }
+                                });
+                            }
+
+                            contenido.Item().PaddingTop(16).Row(row =>
+                            {
+                                row.RelativeItem()
+                                    .Background(MoradoMuyClaro)
+                                    .BorderLeft(5)
+                                    .BorderColor(MoradoPrincipal)
+                                    .Padding(10)
+                                    .Text("Este reporte se genera a partir de ventas confirmadas y datos vigentes del microservicio de productos.")
+                                    .FontSize(8)
+                                    .FontColor(GrisTexto);
+
+                                row.ConstantItem(18);
+
+                                row.ConstantItem(190)
+                                    .Background(MoradoOscuro)
+                                    .Padding(10)
+                                    .Column(totales =>
+                                    {
+                                        totales.Item().AlignCenter().Text("UNIDADES VENDIDAS")
+                                            .FontSize(9)
+                                            .Bold()
+                                            .FontColor(Blanco);
+
+                                        totales.Item().PaddingTop(4).AlignCenter().Text(datosReporte.TotalUnidadesVendidas.ToString())
+                                            .FontSize(17)
+                                            .Bold()
+                                            .FontColor(Blanco);
+                                    });
+                            });
+                        });
+                    });
+
+                pagina.Footer().PaddingHorizontal(35).PaddingBottom(12).Row(row =>
+                {
+                    row.RelativeItem().Text("Librería Joelito")
+                        .FontSize(9)
+                        .SemiBold()
+                        .FontColor(MoradoPrincipal);
+
+                    row.RelativeItem().AlignCenter()
+                        .Text("Reporte de ventas por producto")
+                        .FontSize(9)
+                        .FontColor(MoradoPrincipal)
+                        .Bold();
+
+                    row.RelativeItem().AlignRight().Text(texto =>
+                    {
+                        texto.Span($"{datosReporte.FechaGeneracion:dd/MM/yyyy HH:mm} - {datosReporte.Usuario} - Página ")
+                            .FontSize(9)
+                            .FontColor(GrisTexto);
+                        texto.CurrentPageNumber().FontSize(9).FontColor(GrisTexto);
+                        texto.Span(" de ").FontSize(9).FontColor(GrisTexto);
+                        texto.TotalPages().FontSize(9).FontColor(GrisTexto);
+                    });
+                });
+            });
+        }).GeneratePdf();
     }
 
     public async Task<ReporteResponseDto> GenerarResumenRecaudacionAsync(
@@ -367,6 +638,80 @@ public class ReporteServicio : IReporteServicio
         };
     }
 
+    private static void CeldaCabeceraReporte(TableCellDescriptor tabla, string texto)
+    {
+        tabla.Cell()
+            .Background(MoradoOscuro)
+            .Border(1)
+            .BorderColor(MoradoOscuro)
+            .PaddingVertical(6)
+            .PaddingHorizontal(4)
+            .AlignCenter()
+            .Text(texto)
+            .FontSize(7)
+            .FontColor(Blanco)
+            .Bold();
+    }
+
+    private static void CeldaDetalleReporte(
+        TableDescriptor tabla,
+        string? texto,
+        bool alinearDerecha,
+        string fondo)
+    {
+        var celda = tabla.Cell()
+            .Background(fondo)
+            .BorderLeft(1)
+            .BorderRight(1)
+            .BorderBottom(1)
+            .BorderColor(GrisBorde)
+            .PaddingVertical(5)
+            .PaddingHorizontal(4);
+
+        var valor = string.IsNullOrWhiteSpace(texto) ? "-" : texto.Trim();
+
+        if (alinearDerecha)
+        {
+            celda.AlignRight().Text(valor).FontSize(7);
+            return;
+        }
+
+        celda.Text(valor).FontSize(7);
+    }
+
+    private static void CeldaEstadoReporte(TableDescriptor tabla, string? estado, string fondo)
+    {
+        var valor = string.IsNullOrWhiteSpace(estado) ? "-" : estado.Trim();
+        var colorEstado = EsEstadoConfirmadoTexto(valor) ? Verde : MoradoMedio;
+
+        tabla.Cell()
+            .Background(fondo)
+            .BorderLeft(1)
+            .BorderRight(1)
+            .BorderBottom(1)
+            .BorderColor(GrisBorde)
+            .PaddingVertical(5)
+            .PaddingHorizontal(4)
+            .AlignCenter()
+            .Text(valor)
+            .FontSize(7)
+            .FontColor(colorEstado)
+            .Bold();
+    }
+
+    private static string ObtenerRutaLogoReporte()
+    {
+        var rutas = new[]
+        {
+            Path.Combine(Directory.GetCurrentDirectory(), "Recursos", "Imagenes", "logo-lib.png"),
+            Path.Combine(AppContext.BaseDirectory, "Recursos", "Imagenes", "logo-lib.png"),
+            Path.Combine(Directory.GetCurrentDirectory(), "MicroServicioReportes.API", "Recursos", "Imagenes", "logo-lib.png"),
+            Path.Combine(Directory.GetCurrentDirectory(), "MicroServicioReportes.Aplicacion", "Recursos", "Imagenes", "logo-lib.png")
+        };
+
+        return rutas.FirstOrDefault(File.Exists) ?? string.Empty;
+    }
+
     private static string ObtenerUsuario(ReporteRequestDto request, string? fallback = null)
     {
         if (!string.IsNullOrWhiteSpace(request.Usuario))
@@ -526,8 +871,13 @@ public class ReporteServicio : IReporteServicio
 
     private static bool EsVentaConfirmada(VentaProductoReporteDto venta)
     {
-        return venta.EstadoVenta.Equals("Confirmada", StringComparison.OrdinalIgnoreCase) ||
-               venta.EstadoVenta.Equals("Confirmado", StringComparison.OrdinalIgnoreCase);
+        return EsEstadoConfirmadoTexto(venta.EstadoVenta);
+    }
+
+    private static bool EsEstadoConfirmadoTexto(string? estado)
+    {
+        return estado?.Equals("Confirmada", StringComparison.OrdinalIgnoreCase) == true ||
+               estado?.Equals("Confirmado", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private byte[] GenerarGraficoTorta(List<ResumenRecaudacionReporteDto> datos, string titulo)
