@@ -10,4 +10,5 @@ public class ReporteRequestDto
     public string Usuario { get; set; } = string.Empty;
     public string OrdenPor { get; set; } = "producto";
     public bool Descendente { get; set; }
+    public string AgruparPor { get; set; } = "categoria";
 }

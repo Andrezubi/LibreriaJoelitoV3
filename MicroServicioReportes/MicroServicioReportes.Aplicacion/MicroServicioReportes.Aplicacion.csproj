@@ -10,4 +10,10 @@
     <ProjectReference Include="..\MicroServicioReportes.Dominio\MicroServicioReportes.Dominio.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="QuestPDF" Version="2026.6.0" />
+    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="ClosedXML" Version="0.104.1" />
+  </ItemGroup>
+
 </Project>

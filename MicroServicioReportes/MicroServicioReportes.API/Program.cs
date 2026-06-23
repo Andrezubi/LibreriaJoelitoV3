@@ -10,6 +10,9 @@ using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar QuestPDF con licencia Community
+QuestPDF.Settings.License = LicenseType.Community;
+
 // Add services to the container.
 
 builder.Services.AddControllers();

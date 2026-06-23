@@ -27,6 +27,7 @@
     <PackageReference Include="QuestPDF" Version="2026.6.0" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="ClosedXML" Version="0.104.1" />
   </ItemGroup>
 
 </Project>
