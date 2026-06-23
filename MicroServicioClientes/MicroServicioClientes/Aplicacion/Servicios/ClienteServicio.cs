@@ -1,7 +1,9 @@
-using MicroServicioClientes.Dominio.Validadores;
 using MicroServicioClientes.Aplicacion.Results;
 using MicroServicioClientes.Dominio.Modelos;
+using MicroServicioClientes.Dominio.Validadores;
 using MicroServicioClientes.Infrestructura.Persistencia.FactoriaProductos;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace MicroServicioClientes.Aplicacion.Servicios
 {
@@ -40,6 +42,7 @@ namespace MicroServicioClientes.Aplicacion.Servicios
 
         public Result<int> Insertar(Cliente cliente)
         {
+            cliente.RazonSocial=NormalizarTexto(cliente.RazonSocial);
             var validationResults = clienteValidador.Validar(cliente);
             if (validationResults.Any())
             {
@@ -77,6 +80,12 @@ namespace MicroServicioClientes.Aplicacion.Servicios
         public int Eliminar(Cliente cliente)
         {
             return clienteRepositorio.Eliminar(cliente);
+        }
+        public string NormalizarTexto(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+            texto = Regex.Replace(texto.Trim(), @"\s+", " ");
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLower());
         }
     }
 }
