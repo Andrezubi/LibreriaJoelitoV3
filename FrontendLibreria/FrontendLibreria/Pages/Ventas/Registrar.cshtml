@@ -507,15 +507,38 @@
                 const tbody = document.querySelector('#tablaProductos tbody');
 
                 const precioUnitario = Number(producto.precioUnitario);
-                const subtotal = cantidad * precioUnitario;
-
                 const nombreProducto = producto.nombreProducto ?? producto.nombre ?? '';
                 const nombrePresentacion = producto.nombrePresentacion ?? 'Unidad';
 
+                const idProducto = String(producto.idProducto ?? '');
+                const idPresentacion = String(producto.idPresentacion ?? '');
+
+                const filaExistente = Array.from(tbody.querySelectorAll('tr')).find(fila =>
+                    fila.dataset.idProducto === idProducto &&
+                    fila.dataset.idPresentacion === idPresentacion
+                );
+
+                if (filaExistente) {
+                    const inputCantidad = filaExistente.querySelector('.cantidad-detalle');
+                    const cantidadActual = parseInt(inputCantidad.value.trim());
+                    const cantidadBase = isNaN(cantidadActual) || cantidadActual <= 0 ? 0 : cantidadActual;
+                    const nuevaCantidad = cantidadBase + cantidad;
+
+                    inputCantidad.value = nuevaCantidad;
+
+                    const subtotalActualizado = nuevaCantidad * precioUnitario;
+                    filaExistente.querySelector('.subtotal').textContent = subtotalActualizado.toFixed(2);
+
+                    actualizarTotal();
+                    return;
+                }
+
+                const subtotal = cantidad * precioUnitario;
+
                 const fila = document.createElement('tr');
 
-                fila.dataset.idProducto = producto.idProducto;
-                fila.dataset.idPresentacion = producto.idPresentacion;
+                fila.dataset.idProducto = idProducto;
+                fila.dataset.idPresentacion = idPresentacion;
                 fila.dataset.nombreProducto = nombreProducto;
                 fila.dataset.nombrePresentacion = nombrePresentacion;
                 fila.dataset.precio = precioUnitario;
