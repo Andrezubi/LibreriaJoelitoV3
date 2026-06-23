@@ -108,7 +108,7 @@
     padding-top: 25px;
     box-shadow: 2px 0 10px rgba(0,0,0,0.08);
     border-right: 1px solid rgba(0,0,0,0.08);
-    height: 100vh;
+    height: auto;
 }
 /* menu items */
 
@@ -842,3 +842,48 @@ select.form-control {
         font-size: 13px;
         color: #555;
     }
+.reporte-header {
+    background: #7b35be;
+    color: white;
+}
+
+.btn-outline-purple {
+    color: #7b35be;
+    border: 2px solid #7b35be;
+    background: white;
+    transition: all .25s ease;
+}
+
+    .btn-outline-purple:hover {
+        background: #7b35be;
+        color: white;
+        border-color: #7b35be;
+    }
+
+.btn-outline-purple-dark {
+    color: #7b35be;
+    border: 2px solid #7b35be;
+    background: white;
+    transition: all .25s ease;
+}
+
+    .btn-outline-purple-dark:hover {
+        background: #642aa0;
+        color: white;
+        border-color: #642aa0;
+    }
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #7b35be;
+    box-shadow: 0 0 0 .25rem rgba(123,53,190,.25);
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
