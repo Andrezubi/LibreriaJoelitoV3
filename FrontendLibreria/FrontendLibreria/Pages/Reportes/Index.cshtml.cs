@@ -29,6 +29,11 @@ namespace FrontendLibreria.Pages.Reportes
 
         public string? MensajeError { get; set; }
 
+        public void OnGet()
+        {
+            EstablecerFechasPorDefecto();
+        }
+
         public async Task<IActionResult> OnPostGenerarVentasProductoAsync()
         {
             if (!ValidarRangoFechas())
@@ -78,6 +83,12 @@ namespace FrontendLibreria.Pages.Reportes
                 OrdenPor = string.IsNullOrWhiteSpace(OrdenPor) ? "producto" : OrdenPor,
                 Descendente = Descendente
             };
+        }
+
+        private void EstablecerFechasPorDefecto()
+        {
+            FechaDesde ??= DateTime.Today.AddDays(-5);
+            FechaHasta ??= DateTime.Today;
         }
 
         private bool ValidarRangoFechas()
