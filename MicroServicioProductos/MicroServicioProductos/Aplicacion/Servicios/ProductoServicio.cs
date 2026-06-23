@@ -7,6 +7,8 @@ using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Transactions;
 
 namespace MicroServicioProductos.Aplicacion.Servicios
@@ -46,6 +48,7 @@ namespace MicroServicioProductos.Aplicacion.Servicios
 
         public Result<int> Insertar(Producto producto, int idPresentacion, int factorConversion, decimal precioVenta)
         {
+            producto.Nombre = NormalizarTexto(producto.Nombre);
             var validationResults = productoValidador.ValidarProducto(producto);
 
             if (validationResults.Any())
@@ -123,6 +126,7 @@ namespace MicroServicioProductos.Aplicacion.Servicios
 
         public Result Actualizar(Producto producto)
         {
+            producto.Nombre = NormalizarTexto(producto.Nombre);
             var validationResults = productoValidador.ValidarProducto(producto);
 
             if (validationResults.Any())
@@ -184,7 +188,12 @@ namespace MicroServicioProductos.Aplicacion.Servicios
             };
         }
 
-
+        public string NormalizarTexto(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+            texto = Regex.Replace(texto.Trim(), @"\s+", " ");
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLower());
+        }
 
 
     }

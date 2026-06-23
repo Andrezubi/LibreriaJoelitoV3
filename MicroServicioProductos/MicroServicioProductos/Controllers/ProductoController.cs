@@ -1,16 +1,17 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using MicroServicioProductos.Aplicacion.DTOs;
 using MicroServicioProductos.Aplicacion.Results;
 using MicroServicioProductos.Aplicacion.Servicios;
-
 using MicroServicioProductos.Dominio.Modelos;
 using MicroServicioProductos.Dominio.Validadores;
 using MicroServicioProductos.Infraestructura.Persistencia;
-using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Microsoft.Data.SqlClient;
 using MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using System.Globalization;
+using System.Security.Claims;
+using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MicroServicioProductos.Controllers
 {
@@ -92,7 +93,7 @@ namespace MicroServicioProductos.Controllers
 
         [HttpPost("categorias")]
         public IActionResult InsertCategorias([FromBody] CategoriaDto data) {
-            data.Nombre = data.Nombre?.Trim();
+            data.Nombre = NormalizarTexto(data.Nombre);
             if (string.IsNullOrWhiteSpace(data.Nombre)) return BadRequest(new { errores = "No se puede estar en blanco la categoria" });
 
             try
@@ -198,6 +199,12 @@ namespace MicroServicioProductos.Controllers
                 return NotFound();
 
             return Ok(resultado);
+        }
+        public string NormalizarTexto(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+            texto = Regex.Replace(texto.Trim(), @"\s+", " ");
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLower());
         }
 
 
