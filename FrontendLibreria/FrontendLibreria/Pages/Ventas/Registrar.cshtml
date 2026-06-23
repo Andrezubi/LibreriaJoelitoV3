@@ -63,7 +63,7 @@
 
                         <div class="col-md-2">
                             <label for="cantidadProducto" class="form-label fw-bold">Cantidad:</label>
-                            <input type="number" id="cantidadProducto" class="form-control" value="1" min="1">
+                            <input type="text" id="cantidadProducto" class="form-control" value="1" inputmode="numeric" autocomplete="off">
                         </div>
 
                         <div class="col-md-2">
@@ -192,17 +192,47 @@
                     </div>
                 </div>
 
+                <div class="modal fade" id="modalProcesandoVenta" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-primary">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">Procesando venta</h5>
+                            </div>
+
+                            <div class="modal-body text-center">
+                                <div id="spinnerProcesandoVenta" class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Procesando...</span>
+                                </div>
+
+                                <p id="textoProcesandoVenta" class="mb-0">
+                                    Estamos confirmando la venta. Espere un momento...
+                                </p>
+                            </div>
+
+                            <div class="modal-footer justify-content-center" id="footerProcesandoVenta" style="display:none;">
+                                <button type="button" class="btn btn-secondary" id="btnRegistrarOtraDesdeProceso">
+                                    Registrar otra venta
+                                </button>
+
+                                <a href="/Ventas/IndexVentas" class="btn btn-primary">
+                                    Ver lista de ventas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal fade" id="modalVentaExitosa" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-success">
                             <div class="modal-header bg-success text-white">
-                                <h5 class="modal-title">Venta registrada</h5>
+                                <h5 class="modal-title">Venta confirmada</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
 
                             <div class="modal-body text-center">
                                 <p id="textoVentaExitosa" class="mb-0">
-                                    La venta fue registrada correctamente.
+                                    La venta fue confirmada correctamente.
                                 </p>
                             </div>
 
@@ -223,7 +253,7 @@
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-danger">
                             <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title">Error</h5>
+                                <h5 class="modal-title">Venta no completada</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
 
@@ -234,6 +264,10 @@
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                     Cerrar
+                                </button>
+
+                                <button type="button" class="btn btn-primary" id="btnRegistrarOtraDesdeError">
+                                    Registrar otra venta
                                 </button>
                             </div>
                         </div>
@@ -441,7 +475,7 @@
                     return;
                 }
 
-                const cantidad = parseInt(cantidadInput.value);
+                const cantidad = parseInt(cantidadInput.value.trim());
 
                 if (isNaN(cantidad) || cantidad <= 0) {
                     productoFeedback.textContent = 'La cantidad debe ser mayor a cero.';
@@ -490,8 +524,11 @@
                     <td>${nombreProducto}</td>
                     <td>${nombrePresentacion}</td>
                     <td class="text-end">
-                        ${cantidad}
-                        <input type="hidden" value="${cantidad}">
+                        <input type="text"
+                               class="form-control form-control-sm text-end cantidad-detalle"
+                               value="${cantidad}"
+                               inputmode="numeric"
+                               autocomplete="off">
                     </td>
                     <td class="text-end">${precioUnitario.toFixed(2)}</td>
                     <td class="text-end subtotal">${subtotal.toFixed(2)}</td>
@@ -501,6 +538,29 @@
                         </button>
                     </td>
                 `;
+
+                fila.querySelector('.cantidad-detalle').addEventListener('input', function () {
+                    const valor = this.value.trim();
+
+                    if (valor === '') {
+                        fila.querySelector('.subtotal').textContent = '0.00';
+                        actualizarTotal();
+                        return;
+                    }
+
+                    const nuevaCantidad = parseInt(valor);
+
+                    if (isNaN(nuevaCantidad) || nuevaCantidad <= 0) {
+                        fila.querySelector('.subtotal').textContent = '0.00';
+                        actualizarTotal();
+                        return;
+                    }
+
+                    const nuevoSubtotal = nuevaCantidad * precioUnitario;
+                    fila.querySelector('.subtotal').textContent = nuevoSubtotal.toFixed(2);
+
+                    actualizarTotal();
+                });
 
                 fila.querySelector('.btnEliminarProducto').addEventListener('click', function () {
                     fila.remove();
@@ -516,7 +576,7 @@
 
                 document.querySelectorAll('#tablaProductos tbody tr').forEach(fila => {
                     const subtotal = parseFloat(fila.querySelector('.subtotal').textContent);
-                    total += subtotal;
+                    total += isNaN(subtotal) ? 0 : subtotal;
                 });
 
                 document.getElementById('totalVenta').textContent = total.toFixed(2);
@@ -556,8 +616,16 @@
                 const filas = document.querySelectorAll('#tablaProductos tbody tr');
                 const detalles = [];
 
+                let cantidadInvalida = false;
+
                 filas.forEach(fila => {
-                    const cantidad = parseInt(fila.querySelector('input[type="hidden"]').value);
+                    const cantidad = parseInt(fila.querySelector('.cantidad-detalle').value.trim());
+
+                    if (isNaN(cantidad) || cantidad <= 0) {
+                        cantidadInvalida = true;
+                        return;
+                    }
+
                     const precioUnitario = parseFloat(fila.dataset.precio);
 
                     detalles.push({
@@ -570,6 +638,12 @@
                         subtotal: cantidad * precioUnitario
                     });
                 });
+
+                if (cantidadInvalida) {
+                    cerrarModal('modalConfirmarVenta');
+                    mostrarError('Todas las cantidades deben ser mayores a cero.');
+                    return;
+                }
 
                 const payload = {
                     idCliente: parseInt(document.getElementById('idCliente').value),
@@ -591,39 +665,129 @@
                 })
                     .then(r => r.json())
                     .then(data => {
-                        const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarVenta'));
-                        modalConfirmar.hide();
+                        cerrarModal('modalConfirmarVenta');
 
                         if (!data.success) {
-                            document.getElementById('textoVentaError').textContent =
-                                data.message || 'No se pudo registrar la venta.';
-
-                            const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
-                            modalError.show();
+                            mostrarError(data.message || 'No se pudo registrar la venta.');
                             return;
                         }
 
-                        document.getElementById('textoVentaExitosa').textContent =
-                            'La venta fue registrada correctamente.';
-
-                        document.getElementById('btnImprimirComprobante').dataset.idVenta = data.idVenta;
-
-                        const modalExito = new bootstrap.Modal(document.getElementById('modalVentaExitosa'));
-                        modalExito.show();
+                        mostrarProcesandoVenta();
+                        consultarEstadoVenta(data.idVenta, 0);
                     })
                     .catch(() => {
-                        const modalConfirmar = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarVenta'));
-                        modalConfirmar.hide();
-
-                        document.getElementById('textoVentaError').textContent =
-                            'Error al registrar la venta.';
-
-                        const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
-                        modalError.show();
+                        cerrarModal('modalConfirmarVenta');
+                        mostrarError('Error al registrar la venta.');
                     });
             });
 
+            function consultarEstadoVenta(idVenta, intento) {
+                const maxIntentos = 18;
+
+                setTimeout(() => {
+                    fetch(`?handler=EstadoVenta&idVenta=${idVenta}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data.success) {
+                                if (intento >= maxIntentos) {
+                                    mostrarPendiente();
+                                    return;
+                                }
+
+                                consultarEstadoVenta(idVenta, intento + 1);
+                                return;
+                            }
+
+                            if (data.confirmada) {
+                                cerrarModal('modalProcesandoVenta');
+                                mostrarVentaConfirmada(idVenta);
+                                return;
+                            }
+
+                            if (data.noCompletada) {
+                                cerrarModal('modalProcesandoVenta');
+                                mostrarError('La venta no pudo completarse por disponibilidad insuficiente de productos.');
+                                return;
+                            }
+
+                            if (data.anulada) {
+                                cerrarModal('modalProcesandoVenta');
+                                mostrarError('La venta fue anulada.');
+                                return;
+                            }
+
+                            if (intento >= maxIntentos) {
+                                mostrarPendiente();
+                                return;
+                            }
+
+                            consultarEstadoVenta(idVenta, intento + 1);
+                        })
+                        .catch(() => {
+                            if (intento >= maxIntentos) {
+                                mostrarPendiente();
+                                return;
+                            }
+
+                            consultarEstadoVenta(idVenta, intento + 1);
+                        });
+                }, 500);
+            }
+
+            function mostrarProcesandoVenta() {
+                document.getElementById('spinnerProcesandoVenta').style.display = 'inline-block';
+                document.getElementById('textoProcesandoVenta').textContent =
+                    'Estamos confirmando la venta. Espere un momento...';
+
+                document.getElementById('footerProcesandoVenta').style.display = 'none';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalProcesandoVenta'));
+                modal.show();
+            }
+
+            function mostrarPendiente() {
+                document.getElementById('spinnerProcesandoVenta').style.display = 'none';
+                document.getElementById('textoProcesandoVenta').textContent =
+                    'La venta fue registrada y está pendiente de confirmación. Puede revisar su estado en la lista de ventas.';
+
+                document.getElementById('footerProcesandoVenta').style.display = 'flex';
+            }
+
+            function mostrarVentaConfirmada(idVenta) {
+                document.getElementById('textoVentaExitosa').textContent =
+                    'La venta fue confirmada correctamente.';
+
+                document.getElementById('btnImprimirComprobante').dataset.idVenta = idVenta;
+
+                const modalExito = new bootstrap.Modal(document.getElementById('modalVentaExitosa'));
+                modalExito.show();
+            }
+
+            function mostrarError(mensaje) {
+                document.getElementById('textoVentaError').textContent = mensaje;
+
+                const modalError = new bootstrap.Modal(document.getElementById('modalVentaError'));
+                modalError.show();
+            }
+
+            function cerrarModal(idModal) {
+                const elemento = document.getElementById(idModal);
+                const instancia = bootstrap.Modal.getInstance(elemento);
+
+                if (instancia) {
+                    instancia.hide();
+                }
+            }
+
             document.getElementById('btnRegistrarOtraVenta').addEventListener('click', function () {
+                window.location.reload();
+            });
+
+            document.getElementById('btnRegistrarOtraDesdeProceso').addEventListener('click', function () {
+                window.location.reload();
+            });
+
+            document.getElementById('btnRegistrarOtraDesdeError').addEventListener('click', function () {
                 window.location.reload();
             });
 

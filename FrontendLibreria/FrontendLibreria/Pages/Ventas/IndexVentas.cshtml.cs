@@ -30,46 +30,69 @@ namespace FrontendLibreria.Pages.Ventas
             Ventas = await _ventaAdapter.CargarVentasAsync();
         }
 
-        public async Task<IActionResult> OnPostAnularAsync(int idVenta)
+        public async Task<JsonResult> OnPostAnularAsync(int idVenta)
         {
             if (idVenta <= 0)
             {
-                MensajeError = "ID de venta inválido.";
-                return RedirectToPage();
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Venta inválida."
+                });
             }
 
-            var ventaCompleta = await _ventaAdapter.ObtenerVentaCompletaAsync(idVenta);
+            VentaCompletaDTO? ventaCompleta = await _ventaAdapter.ObtenerVentaCompletaAsync(idVenta);
 
             if (ventaCompleta == null)
             {
-                MensajeError = "No se encontró la venta.";
-                return RedirectToPage();
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la venta."
+                });
             }
 
             if (ventaCompleta.Venta.EstadoVenta != "CONFIRMADA")
             {
-                MensajeError = "Solo se puede anular una venta confirmada.";
-                return RedirectToPage();
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Solo se puede anular una venta confirmada."
+                });
             }
 
             int idUsuario = ObtenerIdUsuario();
 
-            var resultado = await _ventaAdapter.AnularVentaAsync(idVenta, idUsuario);
+            if (idUsuario <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se pudo identificar al usuario actual."
+                });
+            }
+
+            ApiResultDTO<int>? resultado = await _ventaAdapter.AnularVentaAsync(idVenta, idUsuario);
 
             if (resultado != null && resultado.IsSuccess)
             {
-                MensajeExito = $"La venta #{idVenta} inició el proceso de anulación correctamente.";
+                return new JsonResult(new
+                {
+                    success = true,
+                    idVenta = idVenta,
+                    message = "La anulación fue solicitada correctamente."
+                });
             }
-            else
+
+            string mensajeError = resultado?.Error
+                ?? resultado?.Errors.FirstOrDefault()
+                ?? "Error al anular la venta.";
+
+            return new JsonResult(new
             {
-                string mensajeError = resultado?.Error
-                    ?? resultado?.Errors.FirstOrDefault()
-                    ?? "Error al anular la venta.";
-
-                MensajeError = mensajeError;
-            }
-
-            return RedirectToPage();
+                success = false,
+                message = mensajeError
+            });
         }
 
         public async Task<JsonResult> OnGetObtenerDetalleVentaAsync(int idVenta)
@@ -93,15 +116,17 @@ namespace FrontendLibreria.Pages.Ventas
                     venta = new
                     {
                         idVenta = resultado.Venta.Id,
-                        correlationId = resultado.Venta.CorrelationId,
                         estado = resultado.Venta.EstadoVenta,
+                        textoEstado = ObtenerTextoEstado(resultado.Venta.EstadoVenta),
+                        claseEstado = ObtenerClaseEstado(resultado.Venta.EstadoVenta),
+                        puedeVerDetalle = PuedeVerDetalle(resultado.Venta.EstadoVenta),
+                        puedeAnular = PuedeAnular(resultado.Venta.EstadoVenta),
                         idCliente = resultado.Venta.IdCliente,
                         ciCliente = resultado.Venta.CiCompleto,
                         nombreCliente = resultado.Venta.RazonSocialCliente,
                         emailCliente = resultado.Venta.EmailCliente,
                         clienteFrecuente = resultado.Venta.ClienteFrecuente,
                         fecha = resultado.Venta.Fecha.ToString("dd/MM/yyyy HH:mm"),
-                        usuario = $"Usuario {resultado.Venta.IdUsuario}",
                         total = resultado.Venta.Total
                     },
                     detalles = resultado.Detalles.Select(detalle => new
@@ -110,17 +135,16 @@ namespace FrontendLibreria.Pages.Ventas
                         presentacion = detalle.Presentacion,
                         cantidad = detalle.Cantidad,
                         precioUnitario = detalle.PrecioUnitario,
-                        subtotal = detalle.Subtotal,
-                        estado = detalle.Estado
+                        subtotal = detalle.Subtotal
                     }).ToList()
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = ex.Message
+                    message = "Error al obtener el detalle de la venta."
                 });
             }
         }
@@ -130,13 +154,13 @@ namespace FrontendLibreria.Pages.Ventas
             return estado switch
             {
                 "PENDIENTE" => "Pendiente",
-                "STOCK_RESERVADO" => "Stock reservado",
-                "STOCK_RECHAZADO" => "Stock rechazado",
+                "STOCK_RESERVADO" => "En proceso",
+                "STOCK_RECHAZADO" => "No completada",
                 "CONFIRMADA" => "Confirmada",
-                "FALLIDA" => "Fallida",
-                "ANULACION_PENDIENTE" => "Anulación pendiente",
+                "FALLIDA" => "No completada",
+                "ANULACION_PENDIENTE" => "Anulación en proceso",
                 "ANULADA" => "Anulada",
-                _ => estado
+                _ => "En proceso"
             };
         }
 
@@ -145,6 +169,7 @@ namespace FrontendLibreria.Pages.Ventas
             return estado switch
             {
                 "PENDIENTE" => "bg-warning text-dark",
+                "STOCK_RESERVADO" => "bg-info text-dark",
                 "ANULACION_PENDIENTE" => "bg-warning text-dark",
                 "CONFIRMADA" => "bg-success",
                 "ANULADA" => "bg-secondary",
@@ -152,6 +177,16 @@ namespace FrontendLibreria.Pages.Ventas
                 "FALLIDA" => "bg-danger",
                 _ => "bg-dark"
             };
+        }
+
+        public bool PuedeVerDetalle(string estado)
+        {
+            return estado == "CONFIRMADA" || estado == "ANULADA";
+        }
+
+        public bool PuedeAnular(string estado)
+        {
+            return estado == "CONFIRMADA";
         }
 
         private int ObtenerIdUsuario()

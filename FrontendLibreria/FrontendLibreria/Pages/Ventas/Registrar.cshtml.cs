@@ -272,6 +272,46 @@ namespace FrontendLibreria.Pages.Ventas
             }
         }
 
+        public async Task<JsonResult> OnGetEstadoVentaAsync(int idVenta)
+        {
+            if (idVenta <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Venta inválida."
+                });
+            }
+
+            VentaCompletaDTO? ventaCompleta = await _ventaAdapter.ObtenerVentaCompletaAsync(idVenta);
+
+            if (ventaCompleta == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se pudo obtener el estado de la venta."
+                });
+            }
+
+            string estado = ventaCompleta.Venta.EstadoVenta;
+
+            return new JsonResult(new
+            {
+                success = true,
+                idVenta = ventaCompleta.Venta.Id,
+                estado = estado,
+                textoEstado = ObtenerTextoEstadoUsuario(estado),
+                finalizada = EsEstadoFinal(estado),
+                confirmada = estado == "CONFIRMADA",
+                noCompletada = estado == "STOCK_RECHAZADO" || estado == "FALLIDA",
+                anulada = estado == "ANULADA",
+                pendiente = estado == "PENDIENTE" ||
+                            estado == "STOCK_RESERVADO" ||
+                            estado == "ANULACION_PENDIENTE"
+            });
+        }
+
         public class RegistrarVentaDto
         {
             public int IdCliente { get; set; }
@@ -365,7 +405,7 @@ namespace FrontendLibreria.Pages.Ventas
                     return new JsonResult(new
                     {
                         success = false,
-                        message = "No se pudo obtener el nombre del producto para el snapshot."
+                        message = "No se pudo obtener el nombre del producto para registrar la venta."
                     });
                 }
 
@@ -374,7 +414,7 @@ namespace FrontendLibreria.Pages.Ventas
                     return new JsonResult(new
                     {
                         success = false,
-                        message = "No se pudo obtener la presentación del producto para el snapshot."
+                        message = "No se pudo obtener la presentación del producto para registrar la venta."
                     });
                 }
 
@@ -427,11 +467,8 @@ namespace FrontendLibreria.Pages.Ventas
                 {
                     success = true,
                     idVenta = result.Value.IdVenta,
-                    correlationId = result.Value.CorrelationId,
                     estado = result.Value.Estado,
-                    message = !string.IsNullOrWhiteSpace(result.Value.Mensaje)
-                        ? result.Value.Mensaje
-                        : "Venta registrada correctamente."
+                    message = "Venta recibida correctamente."
                 });
             }
 
@@ -444,6 +481,29 @@ namespace FrontendLibreria.Pages.Ventas
                 success = false,
                 message = mensajeError
             });
+        }
+
+        private string ObtenerTextoEstadoUsuario(string estado)
+        {
+            return estado switch
+            {
+                "PENDIENTE" => "Procesando",
+                "STOCK_RESERVADO" => "Procesando",
+                "ANULACION_PENDIENTE" => "Procesando anulación",
+                "CONFIRMADA" => "Confirmada",
+                "ANULADA" => "Anulada",
+                "STOCK_RECHAZADO" => "No completada",
+                "FALLIDA" => "No completada",
+                _ => "Procesando"
+            };
+        }
+
+        private bool EsEstadoFinal(string estado)
+        {
+            return estado == "CONFIRMADA" ||
+                   estado == "ANULADA" ||
+                   estado == "STOCK_RECHAZADO" ||
+                   estado == "FALLIDA";
         }
 
         private int ObtenerIdUsuario()

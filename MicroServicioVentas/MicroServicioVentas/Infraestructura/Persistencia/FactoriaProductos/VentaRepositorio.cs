@@ -120,9 +120,12 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     v.Estado
                 FROM venta v
                 LEFT JOIN venta_cliente_snapshot s ON s.IdVenta = v.Id
+                WHERE v.Estado <> @estadoStockRechazado
                 ORDER BY v.Fecha DESC;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
+
+            comando.Parameters.AddWithValue("@estadoStockRechazado", EstadosVenta.StockRechazado);
 
             var ventas = new List<VentaDTO>();
 
