@@ -119,6 +119,7 @@ namespace MicroServicioProductos.Infraestructura.Persistencia.FactoriaProductos
                                 pp.IdProducto,
                                 pp.IdPresentacion,
                                 pp.Estado AS EstadoPresentacionProducto,
+                                pp.FactorConversion as FactorConversion,
                                 p.Nombre AS Producto,
                                 pr.Nombre AS Presentacion,
                                 m.Nombre AS Marca,

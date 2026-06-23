@@ -154,5 +154,38 @@ namespace MicroServicioProductos.Aplicacion.Servicios
         {
             return productoRepositorio.BuscarProducto(nombre);
         }
+
+
+        public List<PresentacionProductoDto> ObtenerPresentacionesPorFrase(string frase)
+        {
+            return presentacionProductoRepositorio.obtenerPresentacionProductoDetallado(frase);
+        }
+
+
+        public PresentacionProductoDto? ObtenerPresentacionProducto(int idProducto, int idPresentacion)
+        {
+            var row = presentacionProductoRepositorio.ObtenerPorIds(
+                idProducto,
+                idPresentacion);
+
+            if (row == null)
+                return null;
+
+            return new PresentacionProductoDto
+            {
+                IdProducto = Convert.ToInt32(row["IdProducto"]),
+                IdPresentacion = Convert.ToInt32(row["IdPresentacion"]),
+                Precio = Convert.ToDecimal(row["Precio"]),
+                FactorConversion = Convert.ToInt32(row["FactorConversion"]),
+                Producto = row["Producto"].ToString(),
+                Presentacion = row["Presentacion"].ToString(),
+                Marca = row["Marca"].ToString(),
+                Descripcion = row["Descripcion"].ToString()
+            };
+        }
+
+
+
+
     }
 }

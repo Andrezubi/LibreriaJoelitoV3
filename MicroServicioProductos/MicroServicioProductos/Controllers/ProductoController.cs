@@ -178,5 +178,28 @@ namespace MicroServicioProductos.Controllers
             _bitacoraRepo.Registrar(GetIdUsuarioFromHeader(), "INSERT", "PresentacionProducto", $"Nueva presentación agregada al producto ID: {id}");
             return Ok();
         }
+
+
+        [HttpGet("presentaciones/busqueda")]
+        public IActionResult ObtenerPresentacionesPorFrase([FromQuery] string frase = "")
+        {
+            var resultado =
+                _productoServicio.ObtenerPresentacionesPorFrase(frase);
+
+            return Ok(resultado);
+        }
+
+        [HttpGet("productos/{idProducto}/presentaciones/{idPresentacion}")]
+        public IActionResult ObtenerPresentacionProducto(int idProducto,int idPresentacion)
+        {
+            var resultado = _productoServicio.ObtenerPresentacionProducto(idProducto,idPresentacion);
+
+            if (resultado == null)
+                return NotFound();
+
+            return Ok(resultado);
+        }
+
+
     }
 }
