@@ -6,11 +6,9 @@ namespace FrontendLibreria.Adaptadores.Venta
     {
         Task<List<VentaDTO>> CargarVentasAsync();
 
-        Task<ApiResultDTO<int>?> RegistrarVentaAsync(RegistrarVentaRequestDTO request);
+        Task<ApiResultDTO<ResultadoInicioVentaSagaDTO>?> RegistrarVentaAsync(RegistrarVentaRequestDTO request);
 
-        Task<ApiResultDTO<int>?> AnularVentaAsync(int idVenta, int idEmpleado);
-
-        
+        Task<ApiResultDTO<int>?> AnularVentaAsync(int idVenta, int idUsuario);
 
         Task<byte[]> GenerarComprobantePdfAsync(int idVenta);
 

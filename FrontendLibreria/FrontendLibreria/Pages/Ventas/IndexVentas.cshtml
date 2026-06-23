@@ -8,7 +8,6 @@
 <div class="container-fluid mt-4 px-4">
     <div class="d-flex justify-content-center">
         <div class="tabla-wrapper w-100">
-
             <div class="card shadow-sm tabla-card">
 
                 <div class="card-header d-flex justify-content-between align-items-center tabla-header-custom">
@@ -27,17 +26,23 @@
                     </div>
                 }
 
+                @if (!string.IsNullOrEmpty(Model.MensajeError))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                        @Model.MensajeError
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
-
                         <table class="table table-hover align-middle mb-0">
-
                             <thead class="tabla-head-custom">
                                 <tr>
-                                    <th>ID Venta</th>
                                     <th>CI Cliente</th>
-                                    <th>Nombre Cliente</th>
+                                    <th>Cliente</th>
                                     <th>Fecha</th>
+                                    <th class="text-end">Total</th>
                                     <th>Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -56,55 +61,69 @@
                                 {
                                     @foreach (var venta in Model.Ventas)
                                     {
+                                        string textoEstado = venta.Estado switch
+                                        {
+                                            "PENDIENTE" => "Pendiente",
+                                            "CONFIRMADA" => "Confirmada",
+                                            "ANULADA" => "Anulada",
+                                            "ANULACION_PENDIENTE" => "Anulación en proceso",
+                                            "STOCK_RECHAZADO" => "No completada",
+                                            "FALLIDA" => "No completada",
+                                            "STOCK_RESERVADO" => "En proceso",
+                                            _ => "En proceso"
+                                        };
+
+                                        string claseEstado = venta.Estado switch
+                                        {
+                                            "PENDIENTE" => "bg-warning text-dark",
+                                            "ANULACION_PENDIENTE" => "bg-warning text-dark",
+                                            "CONFIRMADA" => "bg-success",
+                                            "ANULADA" => "bg-secondary",
+                                            "STOCK_RECHAZADO" => "bg-danger",
+                                            "FALLIDA" => "bg-danger",
+                                            "STOCK_RESERVADO" => "bg-info text-dark",
+                                            _ => "bg-dark"
+                                        };
+
                                         <tr>
-                                            <td>@venta.Id</td>
                                             <td>@venta.CiCliente</td>
-                                            <td>@venta.NombreCliente</td>
+                                            <td>@venta.RazonSocialCliente</td>
                                             <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="text-end">Bs @venta.Total.ToString("0.00")</td>
                                             <td>
-                                                @if (venta.Estado == 0)
-                                                {
-                                                    <span class="badge bg-secondary">Anulada</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-success">Activa</span>
-                                                }
+                                                <span class="badge @claseEstado">
+                                                    @textoEstado
+                                                </span>
                                             </td>
                                             <td class="text-center">
-                                                @if (venta.Estado == 0)
+                                                @if (venta.PuedeVerDetalle)
                                                 {
-                                                    <span class="text-muted small">Sin acciones disponibles</span>
-                                                }
-                                                else
-                                                {
-                                                    <a asp-page-handler="ExportarPdf"
-                                                           asp-route-idVenta="@venta.Id"
-                                                           class="btn btn-sm btn-primary"
-                                                           target="_blank">
-                                                        PDF
-                                                    </a>
-
                                                     <button type="button"
                                                             class="btn btn-sm btn-info btn-ver-detalle"
                                                             data-idventa="@venta.Id">
                                                         Ver
                                                     </button>
+                                                }
 
+                                                @if (venta.PuedeAnular)
+                                                {
                                                     <button type="button"
                                                             class="btn btn-sm btn-danger btn-preparar-anulacion"
                                                             data-idventa="@venta.Id">
                                                         Anular
                                                     </button>
                                                 }
+
+                                                @if (!venta.PuedeVerDetalle && !venta.PuedeAnular)
+                                                {
+                                                    <span class="text-muted small">Sin acciones</span>
+                                                }
                                             </td>
                                         </tr>
                                     }
                                 }
                             </tbody>
-
                         </table>
-
                     </div>
                 </div>
 
@@ -119,86 +138,20 @@
 
             <div class="modal-header modal-header-morado">
                 <h5 class="modal-title" id="detalleModalLabel">Detalle de Venta</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
-
-                <div id="alertaErrorModal" class="alert alert-danger" style="display:none;"></div>
-
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Información general de la venta</h5>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <h6 class="text-muted">CI/NIT Cliente</h6>
-                                <p class="fw-bold" id="modalCiCliente"></p>
-                            </div>
-
-                            <div class="col-md-3">
-                                <h6 class="text-muted">Cliente</h6>
-                                <p class="fw-bold" id="modalNombreCliente"></p>
-                            </div>
-
-                            <div class="col-md-3">
-                                <h6 class="text-muted">Fecha</h6>
-                                <p class="fw-bold" id="modalFechaVenta"></p>
-                            </div>
-
-                            <div class="col-md-3">
-                                <h6 class="text-muted">Empleado</h6>
-                                <p class="fw-bold" id="modalNombreEmpleado"></p>
-                            </div>
-                        </div>
+                <div id="detalleVentaContenido">
+                    <div class="text-center text-muted py-4">
+                        Cargando detalle...
                     </div>
                 </div>
-
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">Detalle de productos</h5>
-                    </div>
-
-                    <div class="card-body">
-                        <table class="table table-bordered table-hover text-center">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Presentación</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Unitario</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="modalDetalleBody">
-                            </tbody>
-
-                            <tfoot>
-                                <tr>
-                                    <td colspan="4" class="text-end fw-bold">Total General:</td>
-                                    <td class="fw-bold text-success" id="modalTotalGeneral"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     Cerrar
-                </button>
-
-                <button type="button" class="btn btn-info" id="btnImprimirComprobante" data-idventa="">
-                    <i class="bi bi-receipt"></i> Imprimir Comprobante
-                </button>
-
-                <button type="button" class="btn btn-danger" id="btnAnularVenta" data-idventa="">
-                    <i class="bi bi-x-circle"></i> Anular Venta
                 </button>
             </div>
 
@@ -206,38 +159,33 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalAnularVenta" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalConfirmarAnulacion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-danger">
 
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Advertencia de Anulación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Confirmar anulación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body p-4">
-                <h5 class="text-center mb-3">
-                    ¿Está completamente seguro de anular la venta <strong id="lblVentaAnular"></strong>?
-                </h5>
-
-                <div class="alert alert-warning border-warning text-dark shadow-sm">
-                    <strong>⚠️ IMPORTANTE:</strong> <br />
-                    Esta acción revertirá la transacción. <strong>Solo debe proceder</strong> si se está realizando un reembolso al cliente y/o existe una razón física para que los productos retornen al inventario de la librería.
-                </div>
+            <div class="modal-body text-center">
+                <p class="mb-2">¿Está seguro de anular esta venta?</p>
+                <p class="text-muted mb-0">
+                    Esta acción dejará la venta marcada como anulada.
+                </p>
             </div>
 
-            <div class="modal-footer bg-light justify-content-center">
-                <form method="post" asp-page-handler="Anular">
-                    <input type="hidden" id="inputIdVentaAnular" name="idVenta" value="" />
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
 
-                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
+                <form method="post" asp-page-handler="Anular" id="formAnularVenta">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="idVenta" id="idVentaAnular" value="" />
 
                     <button type="submit" class="btn btn-danger">
-                        Sí, Anular Venta y Restaurar Stock
+                        Sí, anular
                     </button>
                 </form>
             </div>
@@ -248,126 +196,128 @@
 
 @section Scripts {
     <script>
-        document.addEventListener("click", async function (e) {
-            const botonDetalle = e.target.closest(".btn-ver-detalle");
-
-            if (botonDetalle) {
-                const idVenta = botonDetalle.dataset.idventa;
-                await cargarDetalleVenta(idVenta);
-                return;
-            }
-
-            const botonAnular = e.target.closest(".btn-preparar-anulacion");
-
-            if (botonAnular) {
-                const idVenta = botonAnular.dataset.idventa;
-                prepararAnulacion(idVenta);
-            }
-        });
-
-        async function cargarDetalleVenta(idVenta) {
-            if (!idVenta) {
-                alert("No se encontró el ID de la venta.");
-                return;
-            }
-
-            document.getElementById("btnImprimirComprobante").dataset.idventa = idVenta;
-            document.getElementById("btnAnularVenta").dataset.idventa = idVenta;
-
-            const alertaError = document.getElementById("alertaErrorModal");
-            const bodyDetalle = document.getElementById("modalDetalleBody");
-
-            document.getElementById("modalCiCliente").textContent = "";
-            document.getElementById("modalNombreCliente").textContent = "";
-            document.getElementById("modalFechaVenta").textContent = "";
-            document.getElementById("modalNombreEmpleado").textContent = "";
-            document.getElementById("modalTotalGeneral").textContent = "";
-
-            bodyDetalle.innerHTML = "";
-            alertaError.style.display = "none";
-            alertaError.textContent = "";
-
-            const modalDetalle = new bootstrap.Modal(document.getElementById("modalVerDetalleVenta"));
-
-            try {
-                const response = await fetch(`?handler=ObtenerDetalleVenta&idVenta=${encodeURIComponent(idVenta)}`);
-                const data = await response.json();
-
-                if (!data.success) {
-                    throw new Error(data.message || "No se pudo obtener el detalle de la venta.");
+        document.addEventListener('DOMContentLoaded', function () {
+            function obtenerTextoEstado(estado) {
+                switch (estado) {
+                    case 'PENDIENTE':
+                        return 'Pendiente';
+                    case 'CONFIRMADA':
+                        return 'Confirmada';
+                    case 'ANULADA':
+                        return 'Anulada';
+                    case 'ANULACION_PENDIENTE':
+                        return 'Anulación en proceso';
+                    case 'STOCK_RECHAZADO':
+                    case 'FALLIDA':
+                        return 'No completada';
+                    case 'STOCK_RESERVADO':
+                        return 'En proceso';
+                    default:
+                        return 'En proceso';
                 }
+            }
 
-                document.getElementById("modalCiCliente").textContent = data.venta.ciCliente ?? "";
-                document.getElementById("modalNombreCliente").textContent = data.venta.nombreCliente ?? "";
-                document.getElementById("modalFechaVenta").textContent = data.venta.fecha ?? "";
-                document.getElementById("modalNombreEmpleado").textContent = data.venta.empleado ?? "";
-                document.getElementById("modalTotalGeneral").textContent = `${Number(data.venta.total).toFixed(2)} Bs.`;
+            document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const idVenta = this.dataset.idventa;
+                    const contenedor = document.getElementById('detalleVentaContenido');
 
-                data.detalles.forEach(item => {
-                    const fila = `
-                        <tr>
-                            <td>${item.producto ?? ""}</td>
-                            <td>${item.presentacion ?? ""}</td>
-                            <td>${item.cantidad}</td>
-                            <td>${Number(item.precioUnitario).toFixed(2)} Bs.</td>
-                            <td>${Number(item.subtotal).toFixed(2)} Bs.</td>
-                        </tr>
+                    contenedor.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            Cargando detalle...
+                        </div>
                     `;
 
-                    bodyDetalle.innerHTML += fila;
+                    const modal = new bootstrap.Modal(document.getElementById('modalVerDetalleVenta'));
+                    modal.show();
+
+                    fetch(`?handler=ObtenerDetalleVenta&idVenta=${idVenta}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data.success) {
+                                contenedor.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        ${data.message || 'No se pudo obtener el detalle de la venta.'}
+                                    </div>
+                                `;
+                                return;
+                            }
+
+                            const venta = data.venta;
+                            const detalles = data.detalles || [];
+
+                            let filas = '';
+
+                            detalles.forEach(detalle => {
+                                filas += `
+                                    <tr>
+                                        <td>${detalle.producto}</td>
+                                        <td>${detalle.presentacion}</td>
+                                        <td class="text-end">${detalle.cantidad}</td>
+                                        <td class="text-end">Bs ${Number(detalle.precioUnitario).toFixed(2)}</td>
+                                        <td class="text-end">Bs ${Number(detalle.subtotal).toFixed(2)}</td>
+                                    </tr>
+                                `;
+                            });
+
+                            contenedor.innerHTML = `
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Datos de la venta</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Estado:</strong> ${obtenerTextoEstado(venta.estado)}</p>
+                                            <p class="mb-1"><strong>Fecha:</strong> ${venta.fecha}</p>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Cliente:</strong> ${venta.nombreCliente}</p>
+                                            <p class="mb-1"><strong>CI:</strong> ${venta.ciCliente}</p>
+                                            <p class="mb-1"><strong>Email:</strong> ${venta.emailCliente || '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    <p class="mb-1"><strong>Total:</strong> Bs ${Number(venta.total).toFixed(2)}</p>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Presentación</th>
+                                                <th class="text-end">Cantidad</th>
+                                                <th class="text-end">Precio Unit.</th>
+                                                <th class="text-end">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${filas}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        })
+                        .catch(() => {
+                            contenedor.innerHTML = `
+                                <div class="alert alert-danger">
+                                    Error al cargar el detalle de la venta.
+                                </div>
+                            `;
+                        });
                 });
+            });
 
-                modalDetalle.show();
-            } catch (error) {
-                alertaError.textContent = error.message;
-                alertaError.style.display = "block";
-                modalDetalle.show();
-            }
-        }
+            document.querySelectorAll('.btn-preparar-anulacion').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const idVenta = this.dataset.idventa;
 
-        document.getElementById("btnAnularVenta").addEventListener("click", function () {
-            const idVenta = this.dataset.idventa;
+                    document.getElementById('idVentaAnular').value = idVenta;
 
-            if (!idVenta) {
-                alert("No se encontró el ID de la venta.");
-                return;
-            }
-
-            prepararAnulacion(idVenta);
-        });
-
-        function prepararAnulacion(idVenta) {
-            if (!idVenta) {
-                alert("No se encontró el ID de la venta.");
-                return;
-            }
-
-            document.getElementById("lblVentaAnular").textContent = "#" + idVenta;
-            document.getElementById("inputIdVentaAnular").value = idVenta;
-
-            const modalDetalleElement = document.getElementById("modalVerDetalleVenta");
-            const modalDetalle = bootstrap.Modal.getInstance(modalDetalleElement);
-
-            if (modalDetalle) {
-                modalDetalle.hide();
-            }
-
-            setTimeout(() => {
-                const modalAnular = new bootstrap.Modal(document.getElementById("modalAnularVenta"));
-                modalAnular.show();
-            }, 300);
-        }
-
-        document.getElementById("btnImprimirComprobante").addEventListener("click", function () {
-            const idVenta = this.dataset.idventa;
-
-            if (!idVenta) {
-                alert("No se encontró el ID de la venta.");
-                return;
-            }
-
-            const url = `?handler=ExportarPdf&idVenta=${encodeURIComponent(idVenta)}`;
-            window.open(url, "_blank");
+                    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarAnulacion'));
+                    modal.show();
+                });
+            });
         });
     </script>
 }

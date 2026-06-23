@@ -1,5 +1,3 @@
-using FrontendLibreria;
-using FrontendLibreria.Adaptadores;
 using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adaptadores.Producto;
 using FrontendLibreria.Adaptadores.Venta;
@@ -48,10 +46,13 @@ namespace FrontendLibreria.Pages.Ventas
                 success = true,
                 cliente = new
                 {
-                    cliente.Id,
-                    cliente.RazonSocial,
-                    cliente.Ci,
-                    cliente.Complemento
+                    id = cliente.Id,
+                    razonSocial = cliente.RazonSocial,
+                    ci = cliente.Ci,
+                    complemento = cliente.Complemento,
+                    email = cliente.Email,
+                    clienteFrecuente = cliente.ClienteFrecuente,
+                    ciCompleto = cliente.CiCompleto
                 }
             });
         }
@@ -75,6 +76,8 @@ namespace FrontendLibreria.Pages.Ventas
                 razonSocial = cliente.RazonSocial,
                 ci = cliente.Ci,
                 complemento = cliente.Complemento,
+                email = cliente.Email,
+                clienteFrecuente = cliente.ClienteFrecuente,
                 ciCompleto = cliente.CiCompleto
             }).ToList();
 
@@ -85,7 +88,6 @@ namespace FrontendLibreria.Pages.Ventas
             });
         }
 
-        //[ValidateAntiForgeryToken]
         public async Task<JsonResult> OnPostCrearClienteAsync([FromBody] ClienteDto cliente)
         {
             if (cliente == null)
@@ -93,12 +95,30 @@ namespace FrontendLibreria.Pages.Ventas
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "Datos inválidos"
+                    message = "Datos inválidos."
                 });
             }
 
+            if (string.IsNullOrWhiteSpace(cliente.RazonSocial))
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "La razón social es obligatoria."
+                });
+            }
 
-            var idUsuario = ObtenerIdUsuario(); // Reemplaza con el ID del usuario actual
+            if (string.IsNullOrWhiteSpace(cliente.Ci))
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El CI es obligatorio."
+                });
+            }
+
+            int idUsuario = ObtenerIdUsuario();
+
             cliente.Estado = true;
             cliente.FechaRegistro = DateTime.Now;
             cliente.IdUsuario = idUsuario;
@@ -134,10 +154,13 @@ namespace FrontendLibreria.Pages.Ventas
                 success = true,
                 cliente = new
                 {
-                    nuevo.Id,
-                    nuevo.RazonSocial,
-                    nuevo.Ci,
-                    nuevo.Complemento
+                    id = nuevo.Id,
+                    razonSocial = nuevo.RazonSocial,
+                    ci = nuevo.Ci,
+                    complemento = nuevo.Complemento,
+                    email = nuevo.Email,
+                    clienteFrecuente = nuevo.ClienteFrecuente,
+                    ciCompleto = nuevo.CiCompleto
                 }
             });
         }
@@ -152,9 +175,15 @@ namespace FrontendLibreria.Pages.Ventas
 
             var listaNombres = productos.Select(producto => new
             {
-                texto = producto.Descripcion,
+                texto = !string.IsNullOrWhiteSpace(producto.Descripcion)
+                    ? producto.Descripcion
+                    : $"{producto.Producto} - {producto.Presentacion}",
+
                 idProducto = producto.IdProducto,
-                idPresentacion = producto.IdPresentacion
+                idPresentacion = producto.IdPresentacion,
+                producto = producto.Producto,
+                presentacion = producto.Presentacion,
+                precio = producto.PrecioFinal
             }).ToList();
 
             return new JsonResult(listaNombres);
@@ -165,12 +194,12 @@ namespace FrontendLibreria.Pages.Ventas
             int idProducto,
             int idPresentacion)
         {
-            if (string.IsNullOrEmpty(frase))
+            if (idProducto <= 0 || idPresentacion <= 0)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "El nombre está vacío."
+                    message = "Producto o presentación inválidos."
                 });
             }
 
@@ -186,6 +215,18 @@ namespace FrontendLibreria.Pages.Ventas
                 });
             }
 
+            string nombreProducto = !string.IsNullOrWhiteSpace(producto.Producto)
+                ? producto.Producto
+                : !string.IsNullOrWhiteSpace(producto.Nombre)
+                    ? producto.Nombre
+                    : producto.Descripcion;
+
+            string nombrePresentacion = !string.IsNullOrWhiteSpace(producto.Presentacion)
+                ? producto.Presentacion
+                : "Unidad";
+
+            decimal precioUnitario = producto.PrecioFinal;
+
             return new JsonResult(new
             {
                 success = true,
@@ -193,12 +234,10 @@ namespace FrontendLibreria.Pages.Ventas
                 {
                     idProducto = producto.IdProducto,
                     idPresentacion = producto.IdPresentacion,
-                    nombre = !string.IsNullOrWhiteSpace(producto.Nombre)
-                        ? producto.Nombre
-                        : producto.Descripcion,
-                    precioUnitario = producto.PrecioUnitario > 0
-                        ? producto.PrecioUnitario
-                        : producto.Precio
+                    nombre = nombreProducto,
+                    nombreProducto = nombreProducto,
+                    nombrePresentacion = nombrePresentacion,
+                    precioUnitario = precioUnitario
                 }
             });
         }
@@ -236,50 +275,169 @@ namespace FrontendLibreria.Pages.Ventas
         public class RegistrarVentaDto
         {
             public int IdCliente { get; set; }
-            public List<DetalleVentaDTO> Detalles { get; set; } = new List<DetalleVentaDTO>();
+
+            public string RazonSocial { get; set; } = string.Empty;
+
+            public string Ci { get; set; } = string.Empty;
+
+            public string? Complemento { get; set; }
+
+            public string? Email { get; set; }
+
+            public bool ClienteFrecuente { get; set; }
+
+            public List<DetalleVentaDTO> Detalles { get; set; } = new();
         }
 
-        //[ValidateAntiForgeryToken]
         public async Task<JsonResult> OnPostRegistrarVentaAsync([FromBody] RegistrarVentaDto dto)
         {
-            if (dto == null || dto.Detalles == null || !dto.Detalles.Any())
-                return new JsonResult(new { success = false, message = "La venta no tiene productos." });
+            if (dto == null)
+                return new JsonResult(new { success = false, message = "Solicitud inválida." });
 
             if (dto.IdCliente <= 0)
                 return new JsonResult(new { success = false, message = "Cliente no válido." });
 
+            if (string.IsNullOrWhiteSpace(dto.RazonSocial))
+                return new JsonResult(new { success = false, message = "Debe seleccionar un cliente válido. No llegó la razón social." });
 
-            var idUsuario = ObtenerIdUsuario(); // Reemplaza con el ID del usuario actual
-            decimal total = dto.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+            if (string.IsNullOrWhiteSpace(dto.Ci))
+                return new JsonResult(new { success = false, message = "Debe seleccionar un cliente válido. No llegó el CI." });
+
+            if (dto.Detalles == null || !dto.Detalles.Any())
+                return new JsonResult(new { success = false, message = "La venta no tiene productos." });
+
+            int idUsuario = ObtenerIdUsuario();
+
+            if (idUsuario <= 0)
+                return new JsonResult(new { success = false, message = "No se pudo identificar al usuario actual." });
+
+            List<DetalleVentaDTO> detallesCorregidos = new();
+
+            foreach (DetalleVentaDTO detalle in dto.Detalles)
+            {
+                if (detalle.IdProducto <= 0 || detalle.IdPresentacion <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "Existe un producto inválido en la venta."
+                    });
+                }
+
+                if (detalle.Cantidad <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "La cantidad de un producto debe ser mayor a cero."
+                    });
+                }
+
+                PresentacionProductoVentaDTO? producto =
+                    await _productoAdapter.ObtenerPresentacionProductoByIdsAsync(
+                        detalle.IdProducto,
+                        detalle.IdPresentacion
+                    );
+
+                string nombreProducto = !string.IsNullOrWhiteSpace(detalle.NombreProducto)
+                    ? detalle.NombreProducto
+                    : producto != null && !string.IsNullOrWhiteSpace(producto.Producto)
+                        ? producto.Producto
+                        : producto != null && !string.IsNullOrWhiteSpace(producto.Nombre)
+                            ? producto.Nombre
+                            : producto != null && !string.IsNullOrWhiteSpace(producto.Descripcion)
+                                ? producto.Descripcion
+                                : string.Empty;
+
+                string nombrePresentacion = !string.IsNullOrWhiteSpace(detalle.NombrePresentacion)
+                    ? detalle.NombrePresentacion
+                    : producto != null && !string.IsNullOrWhiteSpace(producto.Presentacion)
+                        ? producto.Presentacion
+                        : string.Empty;
+
+                decimal precioUnitario = detalle.PrecioUnitario;
+
+                if (precioUnitario <= 0 && producto != null)
+                    precioUnitario = producto.PrecioFinal;
+
+                if (string.IsNullOrWhiteSpace(nombreProducto))
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "No se pudo obtener el nombre del producto para el snapshot."
+                    });
+                }
+
+                if (string.IsNullOrWhiteSpace(nombrePresentacion))
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "No se pudo obtener la presentación del producto para el snapshot."
+                    });
+                }
+
+                if (precioUnitario < 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = $"El precio del producto {nombreProducto} no puede ser negativo."
+                    });
+                }
+
+                detallesCorregidos.Add(new DetalleVentaDTO
+                {
+                    IdProducto = detalle.IdProducto,
+                    IdPresentacion = detalle.IdPresentacion,
+                    NombreProducto = nombreProducto,
+                    NombrePresentacion = nombrePresentacion,
+                    Cantidad = detalle.Cantidad,
+                    PrecioUnitario = precioUnitario,
+                    Subtotal = detalle.Cantidad * precioUnitario
+                });
+            }
 
             var request = new RegistrarVentaRequestDTO
             {
                 Venta = new VentaRegistroDTO
                 {
                     IdCliente = dto.IdCliente,
-                    IdUsuario = idUsuario,
-                    Fecha = DateTime.Now,
-                    Total = total,
-                    Estado = true
+                    IdUsuario = idUsuario
                 },
-                Detalles = dto.Detalles
+                Cliente = new ClienteVentaSnapshotRequestDTO
+                {
+                    IdCliente = dto.IdCliente,
+                    RazonSocial = dto.RazonSocial,
+                    Ci = dto.Ci,
+                    Complemento = string.IsNullOrWhiteSpace(dto.Complemento) ? null : dto.Complemento,
+                    Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email,
+                    ClienteFrecuente = dto.ClienteFrecuente
+                },
+                Detalles = detallesCorregidos
             };
 
-            ApiResultDTO<int>? result = await _ventaAdapter.RegistrarVentaAsync(request);
+            ApiResultDTO<ResultadoInicioVentaSagaDTO>? result =
+                await _ventaAdapter.RegistrarVentaAsync(request);
 
-            if (result != null && result.IsSuccess)
+            if (result != null && result.IsSuccess && result.Value != null)
             {
                 return new JsonResult(new
                 {
                     success = true,
-                    idVenta = result.Value,
-                    message = "Venta registrada correctamente."
+                    idVenta = result.Value.IdVenta,
+                    correlationId = result.Value.CorrelationId,
+                    estado = result.Value.Estado,
+                    message = !string.IsNullOrWhiteSpace(result.Value.Mensaje)
+                        ? result.Value.Mensaje
+                        : "Venta registrada correctamente."
                 });
             }
 
             string mensajeError = result?.Error
                 ?? result?.Errors.FirstOrDefault()
-                ?? "Error al registrar.";
+                ?? "Error al registrar la venta.";
 
             return new JsonResult(new
             {

@@ -168,7 +168,7 @@ namespace MicroServicioClientes.Infrestructura.Persistencia.FactoriaProductos
         public List<Cliente> ObtenerSimilarCi(string ci)
         {
             MySqlCommand cmd = new MySqlCommand(@"
-                SELECT Id, RazonSocial, Ci, Complemento
+                SELECT Id, RazonSocial, Ci, Complemento, Email
                 FROM Cliente
                 WHERE Estado = 1 
                 AND CONCAT(Ci, IFNULL(Complemento,'')) LIKE @ci
@@ -184,6 +184,7 @@ namespace MicroServicioClientes.Infrestructura.Persistencia.FactoriaProductos
                 {
                     Id = reader.GetInt32("Id"),
                     RazonSocial = reader["RazonSocial"].ToString()!,
+                    Email = reader["Email"] == DBNull.Value ? null : reader["Email"].ToString(),
                     Ci = reader["Ci"].ToString()!,
                     Complemento = reader["Complemento"] == DBNull.Value ? null : reader["Complemento"].ToString()
                 });

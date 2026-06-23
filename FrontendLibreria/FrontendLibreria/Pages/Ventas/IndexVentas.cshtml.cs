@@ -12,10 +12,13 @@ namespace FrontendLibreria.Pages.Ventas
     {
         private readonly IVentaAdapter _ventaAdapter;
 
-        public List<VentaDTO> Ventas { get; set; } = new List<VentaDTO>();
+        public List<VentaDTO> Ventas { get; set; } = new();
 
         [TempData]
         public string? MensajeExito { get; set; }
+
+        [TempData]
+        public string? MensajeError { get; set; }
 
         public IndexVentasModel(IVentaAdapter ventaAdapter)
         {
@@ -27,49 +30,35 @@ namespace FrontendLibreria.Pages.Ventas
             Ventas = await _ventaAdapter.CargarVentasAsync();
         }
 
-        public async Task<IActionResult> OnGetExportarPdfAsync(int idVenta)
-        {
-            if (idVenta <= 0)
-                return BadRequest("ID de venta inválido.");
-
-            try
-            {
-                byte[] pdf = await _ventaAdapter.GenerarComprobantePdfAsync(idVenta);
-
-                if (pdf == null || pdf.Length == 0)
-                    return Content("Error: no se pudo generar el comprobante.");
-
-                string nombreArchivo = $"Comprobante_Venta_{idVenta}.pdf";
-
-                var contentDisposition = new System.Net.Mime.ContentDisposition
-                {
-                    FileName = nombreArchivo,
-                    Inline = true
-                };
-
-                Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
-
-                return File(pdf, "application/pdf");
-            }
-            catch (Exception ex)
-            {
-                return Content($"Error: {ex.Message}");
-            }
-        }
-
         public async Task<IActionResult> OnPostAnularAsync(int idVenta)
         {
             if (idVenta <= 0)
+            {
+                MensajeError = "ID de venta inválido.";
                 return RedirectToPage();
+            }
 
-            // ✅ Extraer el IdEmpleado del token de autenticación
-            int idEmpleado = ObtenerIdUsuario();
+            var ventaCompleta = await _ventaAdapter.ObtenerVentaCompletaAsync(idVenta);
 
-            var resultado = await _ventaAdapter.AnularVentaAsync(idVenta, idEmpleado);
+            if (ventaCompleta == null)
+            {
+                MensajeError = "No se encontró la venta.";
+                return RedirectToPage();
+            }
+
+            if (ventaCompleta.Venta.EstadoVenta != "CONFIRMADA")
+            {
+                MensajeError = "Solo se puede anular una venta confirmada.";
+                return RedirectToPage();
+            }
+
+            int idUsuario = ObtenerIdUsuario();
+
+            var resultado = await _ventaAdapter.AnularVentaAsync(idVenta, idUsuario);
 
             if (resultado != null && resultado.IsSuccess)
             {
-                MensajeExito = $"La venta #{idVenta} ha sido anulada y el stock fue restaurado correctamente.";
+                MensajeExito = $"La venta #{idVenta} inició el proceso de anulación correctamente.";
             }
             else
             {
@@ -77,7 +66,7 @@ namespace FrontendLibreria.Pages.Ventas
                     ?? resultado?.Errors.FirstOrDefault()
                     ?? "Error al anular la venta.";
 
-                MensajeExito = $"Hubo un problema al anular: {mensajeError}";
+                MensajeError = mensajeError;
             }
 
             return RedirectToPage();
@@ -104,10 +93,15 @@ namespace FrontendLibreria.Pages.Ventas
                     venta = new
                     {
                         idVenta = resultado.Venta.Id,
-                        ciCliente = resultado.Venta.CiCliente,
-                        nombreCliente = resultado.Venta.NombreCliente,
-                        fecha = resultado.Venta.Fecha.ToString("dd/MM/yyyy"),
-                        empleado = resultado.Venta.NombreEmpleado,
+                        correlationId = resultado.Venta.CorrelationId,
+                        estado = resultado.Venta.EstadoVenta,
+                        idCliente = resultado.Venta.IdCliente,
+                        ciCliente = resultado.Venta.CiCompleto,
+                        nombreCliente = resultado.Venta.RazonSocialCliente,
+                        emailCliente = resultado.Venta.EmailCliente,
+                        clienteFrecuente = resultado.Venta.ClienteFrecuente,
+                        fecha = resultado.Venta.Fecha.ToString("dd/MM/yyyy HH:mm"),
+                        usuario = $"Usuario {resultado.Venta.IdUsuario}",
                         total = resultado.Venta.Total
                     },
                     detalles = resultado.Detalles.Select(detalle => new
@@ -116,7 +110,8 @@ namespace FrontendLibreria.Pages.Ventas
                         presentacion = detalle.Presentacion,
                         cantidad = detalle.Cantidad,
                         precioUnitario = detalle.PrecioUnitario,
-                        subtotal = detalle.Subtotal
+                        subtotal = detalle.Subtotal,
+                        estado = detalle.Estado
                     }).ToList()
                 });
             }
@@ -130,15 +125,41 @@ namespace FrontendLibreria.Pages.Ventas
             }
         }
 
-        /// <summary>
-        /// Obtiene el ID del usuario autenticado desde los claims de la sesión.
-        /// </summary>
+        public string ObtenerTextoEstado(string estado)
+        {
+            return estado switch
+            {
+                "PENDIENTE" => "Pendiente",
+                "STOCK_RESERVADO" => "Stock reservado",
+                "STOCK_RECHAZADO" => "Stock rechazado",
+                "CONFIRMADA" => "Confirmada",
+                "FALLIDA" => "Fallida",
+                "ANULACION_PENDIENTE" => "Anulación pendiente",
+                "ANULADA" => "Anulada",
+                _ => estado
+            };
+        }
+
+        public string ObtenerClaseEstado(string estado)
+        {
+            return estado switch
+            {
+                "PENDIENTE" => "bg-warning text-dark",
+                "ANULACION_PENDIENTE" => "bg-warning text-dark",
+                "CONFIRMADA" => "bg-success",
+                "ANULADA" => "bg-secondary",
+                "STOCK_RECHAZADO" => "bg-danger",
+                "FALLIDA" => "bg-danger",
+                _ => "bg-dark"
+            };
+        }
+
         private int ObtenerIdUsuario()
         {
-            var idClaim = User.FindFirst("IdUsuario")?.Value 
-                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            var idClaim = User.FindFirst("IdUsuario")?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                 ?? "0";
-            
+
             return int.TryParse(idClaim, out var id) ? id : 0;
         }
     }

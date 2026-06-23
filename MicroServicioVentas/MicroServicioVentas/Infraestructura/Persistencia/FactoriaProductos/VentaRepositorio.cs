@@ -26,8 +26,7 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     @total,
                     @estado,
                     @motivoFallo
-                );
-                SELECT LAST_INSERT_ID();";
+                );";
 
             MySqlCommand comando = new MySqlCommand(consulta);
 
@@ -38,7 +37,12 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
             comando.Parameters.AddWithValue("@estado", venta.Estado);
             comando.Parameters.AddWithValue("@motivoFallo", venta.MotivoFallo);
 
-            return Convert.ToInt32(ExecuteScalar(comando));
+            int filas = ExecuteNonQuery(comando);
+
+            if (filas <= 0)
+                return 0;
+
+            return Convert.ToInt32(comando.LastInsertedId);
         }
 
         public int Actualizar(Venta venta)
@@ -116,11 +120,9 @@ namespace MicroServicioVentas.Infraestructura.Persistencia.FactoriaProductos
                     v.Estado
                 FROM venta v
                 LEFT JOIN venta_cliente_snapshot s ON s.IdVenta = v.Id
-                WHERE v.Estado <> @estadoAnulada
                 ORDER BY v.Fecha DESC;";
 
             MySqlCommand comando = new MySqlCommand(consulta);
-            comando.Parameters.AddWithValue("@estadoAnulada", EstadosVenta.Anulada);
 
             var ventas = new List<VentaDTO>();
 
