@@ -10,9 +10,7 @@ namespace FrontendLibreria.Adaptadores.Venta
 
         Task<ApiResultDTO<int>?> AnularVentaAsync(int idVenta, int idEmpleado);
 
-        Task<List<PresentacionProductoVentaDTO>> ObtenerPresentacionesPorFraseAsync(string frase);
-
-        Task<PresentacionProductoVentaDTO?> ObtenerPresentacionProductoByIdsAsync(int idProducto, int idPresentacion);
+        
 
         Task<byte[]> GenerarComprobantePdfAsync(int idVenta);
 

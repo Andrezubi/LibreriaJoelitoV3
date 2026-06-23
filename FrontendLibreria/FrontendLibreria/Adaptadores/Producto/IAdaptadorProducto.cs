@@ -1,4 +1,5 @@
 ﻿using FrontendLibreria.DTOs;
+using FrontendLibreria.DTOs.VentaDTOs;
 using Microsoft.AspNetCore.Http;
 
 namespace FrontendLibreria.Adaptadores.Producto
@@ -13,8 +14,8 @@ namespace FrontendLibreria.Adaptadores.Producto
         Task<ResultadoProductoApi> UpdateAsync(ProductoDto producto);
         Task<ResultadoApi> DeleteAsync(int id, int idUsuario);
         Task<ResultadoApi> AgregarPresentacionAsync(SolicitudAgregarPresentacion request);
-
-
         Task<ResultadoApi> CrearCategoriaAsync(string nombre, int idUsuario);
+        Task<List<PresentacionProductoVentaDTO>> ObtenerPresentacionesPorFraseAsync(string frase);
+        Task<PresentacionProductoVentaDTO?> ObtenerPresentacionProductoByIdsAsync(int idProducto, int idPresentacion);
     }
 }

@@ -56,23 +56,7 @@ namespace FrontendLibreria.Adapters.Venta
             return await response.Content.ReadFromJsonAsync<ApiResultDTO<int>>();
         }
 
-        public async Task<List<PresentacionProductoVentaDTO>> ObtenerPresentacionesPorFraseAsync(string frase)
-        {
-            var resultado = await _httpClient.GetFromJsonAsync<List<PresentacionProductoVentaDTO>>(
-                $"api/Venta/presentaciones?frase={Uri.EscapeDataString(frase)}"
-            );
-
-            return resultado ?? new List<PresentacionProductoVentaDTO>();
-        }
-
-        public async Task<PresentacionProductoVentaDTO?> ObtenerPresentacionProductoByIdsAsync(
-            int idProducto,
-            int idPresentacion)
-        {
-            return await _httpClient.GetFromJsonAsync<PresentacionProductoVentaDTO>(
-                $"api/Venta/productos/{idProducto}/presentaciones/{idPresentacion}"
-            );
-        }
+        
 
         public async Task<byte[]> GenerarComprobantePdfAsync(int idVenta)
         {

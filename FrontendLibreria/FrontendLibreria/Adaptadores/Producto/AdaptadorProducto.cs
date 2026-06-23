@@ -1,5 +1,7 @@
 using FrontendLibreria.DTOs;
+using FrontendLibreria.DTOs.VentaDTOs;
 using Microsoft.AspNetCore.Http;
+using System.Net.Http;
 
 namespace FrontendLibreria.Adaptadores.Producto
 {
@@ -92,7 +94,27 @@ namespace FrontendLibreria.Adaptadores.Producto
                 }
             });
 
-        }                                                                                              
+        }
+
+
+        public async Task<List<PresentacionProductoVentaDTO>> ObtenerPresentacionesPorFraseAsync(string frase)
+        {
+            var resultado = await _http.GetFromJsonAsync<List<PresentacionProductoVentaDTO>>(
+                $"api/Producto/presentaciones/busqueda?frase={Uri.EscapeDataString(frase)}"
+            );
+
+            return resultado ?? new List<PresentacionProductoVentaDTO>();
+        }
+
+        public async Task<PresentacionProductoVentaDTO?> ObtenerPresentacionProductoByIdsAsync(
+            int idProducto,
+            int idPresentacion)
+        {
+            return await _http.GetFromJsonAsync<PresentacionProductoVentaDTO>(
+                $"api/Producto/productos/{idProducto}/presentaciones/{idPresentacion}"
+            );
+        }
+
 
 
     }

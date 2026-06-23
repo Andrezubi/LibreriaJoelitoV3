@@ -1,5 +1,7 @@
 using FrontendLibreria;
 using FrontendLibreria.Adaptadores;
+using FrontendLibreria.Adaptadores.Cliente;
+using FrontendLibreria.Adaptadores.Producto;
 using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs;
 using FrontendLibreria.DTOs.VentaDTOs;
@@ -15,13 +17,16 @@ namespace FrontendLibreria.Pages.Ventas
     {
         private readonly IVentaAdapter _ventaAdapter;
         private readonly IAdaptadorCliente _clienteAdapter;
+        private readonly IAdaptadorProducto _productoAdapter;
 
         public RegistrarModel(
             IVentaAdapter ventaAdapter,
-            IAdaptadorCliente clienteAdapter)
+            IAdaptadorCliente clienteAdapter,
+            IAdaptadorProducto productoAdapter)
         {
             _ventaAdapter = ventaAdapter;
             _clienteAdapter = clienteAdapter;
+            _productoAdapter = productoAdapter;
         }
 
         public void OnGet()
@@ -143,7 +148,7 @@ namespace FrontendLibreria.Pages.Ventas
                 return new JsonResult(new List<object>());
 
             List<PresentacionProductoVentaDTO> productos =
-                await _ventaAdapter.ObtenerPresentacionesPorFraseAsync(termino);
+                await _productoAdapter.ObtenerPresentacionesPorFraseAsync(termino);
 
             var listaNombres = productos.Select(producto => new
             {
@@ -170,7 +175,7 @@ namespace FrontendLibreria.Pages.Ventas
             }
 
             PresentacionProductoVentaDTO? producto =
-                await _ventaAdapter.ObtenerPresentacionProductoByIdsAsync(idProducto, idPresentacion);
+                await _productoAdapter.ObtenerPresentacionProductoByIdsAsync(idProducto, idPresentacion);
 
             if (producto == null)
             {
