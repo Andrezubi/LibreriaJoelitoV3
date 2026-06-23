@@ -28,12 +28,10 @@
                     </form>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <div class="input-group">
-                        <input type="number" id="idVentaInput" class="form-control form-control-lg" placeholder="ID Venta">
-                        <button type="button" onclick="verComprobante()" class="btn btn-outline-info btn-lg">
-                            Ver Comprobante
-                        </button>
-                    </div>
+                    <button type="button" class="btn btn-outline-info btn-lg w-100 py-4" data-bs-toggle="modal" data-bs-target="#modalVerComprobante">
+                        <i class="fas fa-receipt mb-3 d-block fa-2x"></i>
+                        Ver Comprobante
+                    </button>
                 </div>
             </div>
         </div>
@@ -80,15 +78,58 @@
     </div>
 </div>
 
+<!-- Modal Ver Comprobante -->
+<div class="modal fade" id="modalVerComprobante" tabindex="-1" aria-labelledby="modalVerComprobanteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="modalVerComprobanteLabel"><i class="fas fa-search me-2"></i>Buscar Comprobante de Venta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="comprobanteError" class="alert alert-danger d-none" role="alert">
+                    Por favor ingrese un ID de venta válido.
+                </div>
+                <div class="mb-3">
+                    <label for="idVentaInput" class="form-label fw-bold">ID de Venta:</label>
+                    <input type="number" id="idVentaInput" class="form-control form-control-lg" placeholder="Ej: 1001" min="1">
+                    <div class="form-text">Ingrese el identificador completo de la venta para visualizar su comprobante.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" onclick="verComprobante()" class="btn btn-info text-white">Buscar y Ver Comprobante</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        const modalEl = document.getElementById('modalVerComprobante');
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('idVentaInput').value = '';
+            document.getElementById('comprobanteError').classList.add('d-none');
+        });
+
         function verComprobante() {
             const idVenta = document.getElementById('idVentaInput').value;
-            if (!idVenta) {
-                alert('Por favor ingrese un ID de venta');
+            const errorDiv = document.getElementById('comprobanteError');
+
+            if (!idVenta || idVenta <= 0) {
+                errorDiv.classList.remove('d-none');
                 return;
             }
+            
+            errorDiv.classList.add('d-none');
+            // Abrir comprobante
             window.open(`/Reportes?handler=VerComprobante&idVenta=${idVenta}`, '_blank');
+            
+            // Cerrar el modal
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
         }
     </script>
 }
