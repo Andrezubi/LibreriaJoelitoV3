@@ -61,6 +61,7 @@ namespace MicroServicioClientes.Aplicacion.Servicios
 
         public Result Actualizar(Cliente cliente)
         {
+            cliente.RazonSocial=NormalizarTexto(cliente.RazonSocial);
             var validationResults = clienteValidador.Validar(cliente);
             if (validationResults.Any())
             {

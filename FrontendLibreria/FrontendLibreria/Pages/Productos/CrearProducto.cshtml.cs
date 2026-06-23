@@ -11,7 +11,7 @@ using System.Security.Claims;
 // Pages/Productos/CrearProducto.cshtml.cs
 namespace FrontendLibreria.Pages.Productos
 {
-    //[Authorize(Roles = "Administrador,Empleado")]
+    [Authorize(Roles = "Administrador,Empleado")]
     public class CrearProductoModel : PageModel
     {
         private readonly IAdaptadorProducto _productoAdapter;

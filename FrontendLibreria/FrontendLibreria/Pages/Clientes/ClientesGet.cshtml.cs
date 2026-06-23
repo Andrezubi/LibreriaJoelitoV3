@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace FrontendLibreria.Pages.Clientes
 {
-    //[Authorize(Roles = "Administrador,Empleado")]
+    [Authorize(Roles = "Administrador,Empleado")]
     public class ClientesGetModel : PageModel
     {
         private readonly IAdaptadorCliente _adaptadorCliente;
