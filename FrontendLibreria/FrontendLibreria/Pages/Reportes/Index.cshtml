@@ -11,25 +11,63 @@
         </div>
 
         <div class="card-body">
-            <div class="row text-center">
-                <div class="col-md-6 mb-3">
-                    <form method="post" asp-page-handler="GenerarVentasProducto">
-                        <button type="submit" class="btn btn-outline-primary btn-lg w-100 py-4">
+            @if (!string.IsNullOrWhiteSpace(Model.MensajeError))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @Model.MensajeError
+                </div>
+            }
+
+            <form method="post">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="FechaDesde" class="form-label fw-bold">Fecha desde</label>
+                        <input asp-for="FechaDesde" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="FechaHasta" class="form-label fw-bold">Fecha hasta</label>
+                        <input asp-for="FechaHasta" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="OrdenPor" class="form-label fw-bold">Ordenar por</label>
+                        <select asp-for="OrdenPor" class="form-select">
+                            <option value="producto">Producto</option>
+                            <option value="fecha">Fecha</option>
+                            <option value="cantidad">Cantidad vendida</option>
+                            <option value="importe">Importe</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-1 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input asp-for="Descendente" class="form-check-input" />
+                            <label asp-for="Descendente" class="form-check-label">Desc.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+                    <div class="col-md-6 mb-3">
+                        <button type="submit"
+                                asp-page-handler="GenerarVentasProducto"
+                                class="btn btn-outline-primary btn-lg w-100 py-4">
                             <i class="fas fa-box-open mb-3 d-block fa-2x"></i>
                             Ventas por Producto
                         </button>
-                    </form>
-                </div>
+                    </div>
 
-                <div class="col-md-6 mb-3">
-                    <form method="post" asp-page-handler="GenerarResumenRecaudacion">
-                        <button type="submit" class="btn btn-outline-success btn-lg w-100 py-4">
+                    <div class="col-md-6 mb-3">
+                        <button type="submit"
+                                asp-page-handler="GenerarResumenRecaudacion"
+                                class="btn btn-outline-success btn-lg w-100 py-4">
                             <i class="fas fa-chart-line mb-3 d-block fa-2x"></i>
                             Resumen Recaudación (Sumariado)
                         </button>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

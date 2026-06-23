@@ -15,22 +15,54 @@ namespace FrontendLibreria.Pages.Reportes
             _reporteAdapter = reporteAdapter;
         }
 
+        [BindProperty]
+        public DateTime? FechaDesde { get; set; }
+
+        [BindProperty]
+        public DateTime? FechaHasta { get; set; }
+
+        [BindProperty]
+        public string OrdenPor { get; set; } = "producto";
+
+        [BindProperty]
+        public bool Descendente { get; set; }
+
+        public string? MensajeError { get; set; }
+
         public async Task<IActionResult> OnPostGenerarVentasProductoAsync()
         {
+            if (!ValidarRangoFechas())
+            {
+                return Page();
+            }
+
             var request = CrearRequestReporte();
             var bytes = await _reporteAdapter.GenerarVentasPorProductoAsync(request);
             
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
+            if (bytes == null || bytes.Length == 0)
+            {
+                MensajeError = "No se pudo generar el reporte de ventas por producto.";
+                return Page();
+            }
 
             return File(bytes, "application/pdf", "VentasPorProducto.pdf");
         }
 
         public async Task<IActionResult> OnPostGenerarResumenRecaudacionAsync()
         {
+            if (!ValidarRangoFechas())
+            {
+                return Page();
+            }
+
             var request = CrearRequestReporte();
             var bytes = await _reporteAdapter.GenerarResumenRecaudacionAsync(request);
             
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
+            if (bytes == null || bytes.Length == 0)
+            {
+                MensajeError = "No se pudo generar el resumen de recaudación.";
+                return Page();
+            }
 
             return File(bytes, "application/pdf", "ResumenRecaudacion.pdf");
         }
@@ -39,9 +71,26 @@ namespace FrontendLibreria.Pages.Reportes
         {
             return new ReporteRequestDto
             {
+                FechaDesde = FechaDesde,
+                FechaHasta = FechaHasta,
                 IdUsuario = ObtenerIdUsuario(),
-                Usuario = ObtenerNombreUsuario()
+                Usuario = ObtenerNombreUsuario(),
+                OrdenPor = string.IsNullOrWhiteSpace(OrdenPor) ? "producto" : OrdenPor,
+                Descendente = Descendente
             };
+        }
+
+        private bool ValidarRangoFechas()
+        {
+            if (FechaDesde.HasValue &&
+                FechaHasta.HasValue &&
+                FechaDesde.Value.Date > FechaHasta.Value.Date)
+            {
+                MensajeError = "La fecha desde no puede ser mayor que la fecha hasta.";
+                return false;
+            }
+
+            return true;
         }
 
         private int? ObtenerIdUsuario()
