@@ -12,11 +12,12 @@ namespace MicroServicioVentas.Infraestructura.Mensajeria.Outbox
 
         public OutboxPublisherService(
             ILogger<OutboxPublisherService> logger,
-            RabbitPublisher rabbitPublisher)
+            RabbitPublisher rabbitPublisher,
+            OutboxMessageRepositorio outboxMessageRepositorio)
         {
             _logger = logger;
             _rabbitPublisher = rabbitPublisher;
-            _outboxMessageRepositorio = new OutboxMessageCreadorRepositorio().CrearRepositorio();
+            _outboxMessageRepositorio = outboxMessageRepositorio;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

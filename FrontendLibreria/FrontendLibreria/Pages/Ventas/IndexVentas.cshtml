@@ -61,42 +61,25 @@
                                 {
                                     @foreach (var venta in Model.Ventas)
                                     {
-                                        string textoEstado = venta.Estado switch
-                                        {
-                                            "PENDIENTE" => "Pendiente",
-                                            "CONFIRMADA" => "Confirmada",
-                                            "ANULADA" => "Anulada",
-                                            "ANULACION_PENDIENTE" => "Anulación en proceso",
-                                            "STOCK_RECHAZADO" => "No completada",
-                                            "FALLIDA" => "No completada",
-                                            "STOCK_RESERVADO" => "En proceso",
-                                            _ => "En proceso"
-                                        };
+                                        string textoEstado = Model.ObtenerTextoEstado(venta.Estado);
+                                        string claseEstado = Model.ObtenerClaseEstado(venta.Estado);
+                                        bool puedeVerDetalle = Model.PuedeVerDetalle(venta.Estado);
+                                        bool puedeAnular = Model.PuedeAnular(venta.Estado);
 
-                                        string claseEstado = venta.Estado switch
-                                        {
-                                            "PENDIENTE" => "bg-warning text-dark",
-                                            "ANULACION_PENDIENTE" => "bg-warning text-dark",
-                                            "CONFIRMADA" => "bg-success",
-                                            "ANULADA" => "bg-secondary",
-                                            "STOCK_RECHAZADO" => "bg-danger",
-                                            "FALLIDA" => "bg-danger",
-                                            "STOCK_RESERVADO" => "bg-info text-dark",
-                                            _ => "bg-dark"
-                                        };
-
-                                        <tr>
+                                        <tr id="filaVenta_@venta.Id"
+                                            data-idventa="@venta.Id"
+                                            data-estado="@venta.Estado">
                                             <td>@venta.CiCliente</td>
                                             <td>@venta.RazonSocialCliente</td>
                                             <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
                                             <td class="text-end">Bs @venta.Total.ToString("0.00")</td>
                                             <td>
-                                                <span class="badge @claseEstado">
+                                                <span id="badgeEstado_@venta.Id" class="badge @claseEstado">
                                                     @textoEstado
                                                 </span>
                                             </td>
-                                            <td class="text-center">
-                                                @if (venta.PuedeVerDetalle)
+                                            <td class="text-center" id="accionesVenta_@venta.Id">
+                                                @if (puedeVerDetalle)
                                                 {
                                                     <button type="button"
                                                             class="btn btn-sm btn-info btn-ver-detalle"
@@ -105,7 +88,7 @@
                                                     </button>
                                                 }
 
-                                                @if (venta.PuedeAnular)
+                                                @if (puedeAnular)
                                                 {
                                                     <button type="button"
                                                             class="btn btn-sm btn-danger btn-preparar-anulacion"
@@ -114,7 +97,7 @@
                                                     </button>
                                                 }
 
-                                                @if (!venta.PuedeVerDetalle && !venta.PuedeAnular)
+                                                @if (!puedeVerDetalle && !puedeAnular)
                                                 {
                                                     <span class="text-muted small">Sin acciones</span>
                                                 }
@@ -171,7 +154,7 @@
             <div class="modal-body text-center">
                 <p class="mb-2">¿Está seguro de anular esta venta?</p>
                 <p class="text-muted mb-0">
-                    Esta acción dejará la venta marcada como anulada.
+                    Esta acción no podrá revertirse.
                 </p>
             </div>
 
@@ -194,9 +177,68 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalProcesandoAnulacion" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Procesando anulación</h5>
+            </div>
+
+            <div class="modal-body text-center">
+                <div id="spinnerProcesandoAnulacion" class="spinner-border text-danger mb-3" role="status">
+                    <span class="visually-hidden">Procesando...</span>
+                </div>
+
+                <p id="textoProcesandoAnulacion" class="mb-0">
+                    Estamos anulando la venta. Espere un momento...
+                </p>
+            </div>
+
+            <div class="modal-footer justify-content-center" id="footerProcesandoAnulacion" style="display:none;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <a href="/Ventas/IndexVentas" class="btn btn-primary">
+                    Actualizar lista
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalResultadoAnulacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-success">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Venta anulada</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body text-center">
+                <p id="textoResultadoAnulacion" class="mb-0">
+                    La venta fue anulada correctamente.
+                </p>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            let ventaSeleccionadaParaAnular = null;
+
             function obtenerTextoEstado(estado) {
                 switch (estado) {
                     case 'PENDIENTE':
@@ -217,107 +259,327 @@
                 }
             }
 
-            document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const idVenta = this.dataset.idventa;
-                    const contenedor = document.getElementById('detalleVentaContenido');
+            function obtenerClaseEstado(estado) {
+                switch (estado) {
+                    case 'PENDIENTE':
+                    case 'ANULACION_PENDIENTE':
+                        return 'bg-warning text-dark';
+                    case 'CONFIRMADA':
+                        return 'bg-success';
+                    case 'ANULADA':
+                        return 'bg-secondary';
+                    case 'STOCK_RECHAZADO':
+                    case 'FALLIDA':
+                        return 'bg-danger';
+                    case 'STOCK_RESERVADO':
+                        return 'bg-info text-dark';
+                    default:
+                        return 'bg-dark';
+                }
+            }
 
-                    contenedor.innerHTML = `
-                        <div class="text-center text-muted py-4">
-                            Cargando detalle...
-                        </div>
+            function puedeVerDetalle(estado) {
+                return estado === 'CONFIRMADA' || estado === 'ANULADA';
+            }
+
+            function puedeAnular(estado) {
+                return estado === 'CONFIRMADA';
+            }
+
+            function actualizarFilaVenta(idVenta, estado) {
+                const fila = document.getElementById(`filaVenta_${idVenta}`);
+                const badge = document.getElementById(`badgeEstado_${idVenta}`);
+                const acciones = document.getElementById(`accionesVenta_${idVenta}`);
+
+                if (!fila || !badge || !acciones) {
+                    return;
+                }
+
+                fila.dataset.estado = estado;
+
+                badge.className = `badge ${obtenerClaseEstado(estado)}`;
+                badge.textContent = obtenerTextoEstado(estado);
+
+                let htmlAcciones = '';
+
+                if (puedeVerDetalle(estado)) {
+                    htmlAcciones += `
+                        <button type="button"
+                                class="btn btn-sm btn-info btn-ver-detalle"
+                                data-idventa="${idVenta}">
+                            Ver
+                        </button>
                     `;
+                }
 
-                    const modal = new bootstrap.Modal(document.getElementById('modalVerDetalleVenta'));
-                    modal.show();
+                if (puedeAnular(estado)) {
+                    htmlAcciones += `
+                        <button type="button"
+                                class="btn btn-sm btn-danger btn-preparar-anulacion"
+                                data-idventa="${idVenta}">
+                            Anular
+                        </button>
+                    `;
+                }
 
+                if (!puedeVerDetalle(estado) && !puedeAnular(estado)) {
+                    htmlAcciones = `<span class="text-muted small">Sin acciones</span>`;
+                }
+
+                acciones.innerHTML = htmlAcciones;
+
+                reconectarEventosBotones();
+            }
+
+            function reconectarEventosBotones() {
+                document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+                    btn.onclick = function () {
+                        abrirDetalleVenta(this.dataset.idventa);
+                    };
+                });
+
+                document.querySelectorAll('.btn-preparar-anulacion').forEach(btn => {
+                    btn.onclick = function () {
+                        ventaSeleccionadaParaAnular = this.dataset.idventa;
+                        document.getElementById('idVentaAnular').value = ventaSeleccionadaParaAnular;
+
+                        const modal = new bootstrap.Modal(document.getElementById('modalConfirmarAnulacion'));
+                        modal.show();
+                    };
+                });
+            }
+
+            function abrirDetalleVenta(idVenta) {
+                const contenedor = document.getElementById('detalleVentaContenido');
+
+                contenedor.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        Cargando detalle...
+                    </div>
+                `;
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVerDetalleVenta'));
+                modal.show();
+
+                fetch(`?handler=ObtenerDetalleVenta&idVenta=${idVenta}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) {
+                            contenedor.innerHTML = `
+                                <div class="alert alert-danger">
+                                    ${data.message || 'No se pudo obtener el detalle de la venta.'}
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        const venta = data.venta;
+                        const detalles = data.detalles || [];
+
+                        let filas = '';
+
+                        detalles.forEach(detalle => {
+                            filas += `
+                                <tr>
+                                    <td>${detalle.producto}</td>
+                                    <td>${detalle.presentacion}</td>
+                                    <td class="text-end">${detalle.cantidad}</td>
+                                    <td class="text-end">Bs ${Number(detalle.precioUnitario).toFixed(2)}</td>
+                                    <td class="text-end">Bs ${Number(detalle.subtotal).toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+
+                        contenedor.innerHTML = `
+                            <div class="mb-3">
+                                <h6 class="fw-bold">Datos de la venta</h6>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Estado:</strong> ${obtenerTextoEstado(venta.estado)}</p>
+                                        <p class="mb-1"><strong>Fecha:</strong> ${venta.fecha}</p>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Cliente:</strong> ${venta.nombreCliente}</p>
+                                        <p class="mb-1"><strong>CI:</strong> ${venta.ciCliente}</p>
+                                        <p class="mb-1"><strong>Email:</strong> ${venta.emailCliente || '-'}</p>
+                                    </div>
+                                </div>
+
+                                <p class="mb-1"><strong>Total:</strong> Bs ${Number(venta.total).toFixed(2)}</p>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Presentación</th>
+                                            <th class="text-end">Cantidad</th>
+                                            <th class="text-end">Precio Unit.</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${filas}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    })
+                    .catch(() => {
+                        contenedor.innerHTML = `
+                            <div class="alert alert-danger">
+                                Error al cargar el detalle de la venta.
+                            </div>
+                        `;
+                    });
+            }
+
+            document.getElementById('formAnularVenta').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const idVenta = document.getElementById('idVentaAnular').value;
+
+                cerrarModal('modalConfirmarAnulacion');
+
+                fetch('?handler=Anular', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('#formAnularVenta input[name="__RequestVerificationToken"]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        idVenta: idVenta
+                    })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) {
+                            mostrarResultadoError(data.message || 'No se pudo anular la venta.');
+                            return;
+                        }
+
+                        mostrarProcesandoAnulacion();
+                        actualizarFilaVenta(idVenta, 'ANULACION_PENDIENTE');
+                        consultarEstadoAnulacion(idVenta, 0);
+                    })
+                    .catch(() => {
+                        mostrarResultadoError('Error al anular la venta.');
+                    });
+            });
+
+            function consultarEstadoAnulacion(idVenta, intento) {
+                const maxIntentos = 18;
+
+                setTimeout(() => {
                     fetch(`?handler=ObtenerDetalleVenta&idVenta=${idVenta}`)
                         .then(r => r.json())
                         .then(data => {
                             if (!data.success) {
-                                contenedor.innerHTML = `
-                                    <div class="alert alert-danger">
-                                        ${data.message || 'No se pudo obtener el detalle de la venta.'}
-                                    </div>
-                                `;
+                                if (intento >= maxIntentos) {
+                                    mostrarAnulacionPendiente();
+                                    return;
+                                }
+
+                                consultarEstadoAnulacion(idVenta, intento + 1);
                                 return;
                             }
 
-                            const venta = data.venta;
-                            const detalles = data.detalles || [];
+                            const estado = data.venta.estado;
 
-                            let filas = '';
+                            actualizarFilaVenta(idVenta, estado);
 
-                            detalles.forEach(detalle => {
-                                filas += `
-                                    <tr>
-                                        <td>${detalle.producto}</td>
-                                        <td>${detalle.presentacion}</td>
-                                        <td class="text-end">${detalle.cantidad}</td>
-                                        <td class="text-end">Bs ${Number(detalle.precioUnitario).toFixed(2)}</td>
-                                        <td class="text-end">Bs ${Number(detalle.subtotal).toFixed(2)}</td>
-                                    </tr>
-                                `;
-                            });
+                            if (estado === 'ANULADA') {
+                                cerrarModal('modalProcesandoAnulacion');
+                                mostrarResultadoExito('La venta fue anulada correctamente.');
+                                return;
+                            }
 
-                            contenedor.innerHTML = `
-                                <div class="mb-3">
-                                    <h6 class="fw-bold">Datos de la venta</h6>
+                            if (estado === 'CONFIRMADA') {
+                                if (intento >= maxIntentos) {
+                                    mostrarAnulacionPendiente();
+                                    return;
+                                }
 
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <p class="mb-1"><strong>Estado:</strong> ${obtenerTextoEstado(venta.estado)}</p>
-                                            <p class="mb-1"><strong>Fecha:</strong> ${venta.fecha}</p>
-                                        </div>
+                                consultarEstadoAnulacion(idVenta, intento + 1);
+                                return;
+                            }
 
-                                        <div class="col-md-6">
-                                            <p class="mb-1"><strong>Cliente:</strong> ${venta.nombreCliente}</p>
-                                            <p class="mb-1"><strong>CI:</strong> ${venta.ciCliente}</p>
-                                            <p class="mb-1"><strong>Email:</strong> ${venta.emailCliente || '-'}</p>
-                                        </div>
-                                    </div>
+                            if (estado === 'ANULACION_PENDIENTE') {
+                                if (intento >= maxIntentos) {
+                                    mostrarAnulacionPendiente();
+                                    return;
+                                }
 
-                                    <p class="mb-1"><strong>Total:</strong> Bs ${Number(venta.total).toFixed(2)}</p>
-                                </div>
+                                consultarEstadoAnulacion(idVenta, intento + 1);
+                                return;
+                            }
 
-                                <div class="table-responsive">
-                                    <table class="table table-bordered align-middle">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Producto</th>
-                                                <th>Presentación</th>
-                                                <th class="text-end">Cantidad</th>
-                                                <th class="text-end">Precio Unit.</th>
-                                                <th class="text-end">Subtotal</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${filas}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            `;
+                            if (intento >= maxIntentos) {
+                                mostrarAnulacionPendiente();
+                                return;
+                            }
+
+                            consultarEstadoAnulacion(idVenta, intento + 1);
                         })
                         .catch(() => {
-                            contenedor.innerHTML = `
-                                <div class="alert alert-danger">
-                                    Error al cargar el detalle de la venta.
-                                </div>
-                            `;
+                            if (intento >= maxIntentos) {
+                                mostrarAnulacionPendiente();
+                                return;
+                            }
+
+                            consultarEstadoAnulacion(idVenta, intento + 1);
                         });
-                });
-            });
+                }, 500);
+            }
 
-            document.querySelectorAll('.btn-preparar-anulacion').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const idVenta = this.dataset.idventa;
+            function mostrarProcesandoAnulacion() {
+                document.getElementById('spinnerProcesandoAnulacion').style.display = 'inline-block';
+                document.getElementById('textoProcesandoAnulacion').textContent =
+                    'Estamos anulando la venta. Espere un momento...';
 
-                    document.getElementById('idVentaAnular').value = idVenta;
+                document.getElementById('footerProcesandoAnulacion').style.display = 'none';
 
-                    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarAnulacion'));
-                    modal.show();
-                });
-            });
+                const modal = new bootstrap.Modal(document.getElementById('modalProcesandoAnulacion'));
+                modal.show();
+            }
+
+            function mostrarAnulacionPendiente() {
+                document.getElementById('spinnerProcesandoAnulacion').style.display = 'none';
+                document.getElementById('textoProcesandoAnulacion').textContent =
+                    'La anulación está pendiente. Puede actualizar la lista en unos momentos.';
+
+                document.getElementById('footerProcesandoAnulacion').style.display = 'flex';
+            }
+
+            function mostrarResultadoExito(mensaje) {
+                document.getElementById('textoResultadoAnulacion').textContent = mensaje;
+
+                const modal = new bootstrap.Modal(document.getElementById('modalResultadoAnulacion'));
+                modal.show();
+            }
+
+            function mostrarResultadoError(mensaje) {
+                document.getElementById('textoProcesandoAnulacion').textContent = mensaje;
+                document.getElementById('spinnerProcesandoAnulacion').style.display = 'none';
+                document.getElementById('footerProcesandoAnulacion').style.display = 'flex';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalProcesandoAnulacion'));
+                modal.show();
+            }
+
+            function cerrarModal(idModal) {
+                const elemento = document.getElementById(idModal);
+                const instancia = bootstrap.Modal.getInstance(elemento);
+
+                if (instancia) {
+                    instancia.hide();
+                }
+            }
+
+            reconectarEventosBotones();
         });
     </script>
 }
