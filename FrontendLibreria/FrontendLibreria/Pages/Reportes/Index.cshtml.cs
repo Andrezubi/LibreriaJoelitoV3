@@ -15,13 +15,6 @@ namespace FrontendLibreria.Pages.Reportes
             _reporteAdapter = reporteAdapter;
         }
 
-        public List<BitacoraReporteDto> Bitacora { get; set; } = new();
-
-        public async Task OnGetAsync()
-        {
-            Bitacora = await _reporteAdapter.ObtenerBitacoraAsync();
-        }
-
         public async Task<IActionResult> OnPostGenerarVentasProductoAsync()
         {
             var request = CrearRequestReporte();
@@ -40,15 +33,6 @@ namespace FrontendLibreria.Pages.Reportes
             if (bytes == null || bytes.Length == 0) return RedirectToPage();
 
             return File(bytes, "application/pdf", "ResumenRecaudacion.pdf");
-        }
-
-        public async Task<IActionResult> OnPostVerComprobanteAsync(int idVenta)
-        {
-            var bytes = await _reporteAdapter.VerComprobanteVentaAsync(idVenta);
-            
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
-
-            return File(bytes, "application/pdf");
         }
 
         private ReporteRequestDto CrearRequestReporte()

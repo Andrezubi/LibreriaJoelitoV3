@@ -1,4 +1,5 @@
-﻿using FrontendLibreria.Adaptadores.Venta;
+using FrontendLibreria.Adaptadores.Reporte;
+using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs.VentaDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ namespace FrontendLibreria.Pages.Ventas
     public class IndexVentasModel : PageModel
     {
         private readonly IVentaAdapter _ventaAdapter;
+        private readonly IReporteAdapter _reporteAdapter;
 
         public List<VentaDTO> Ventas { get; set; } = new();
 
@@ -20,9 +22,12 @@ namespace FrontendLibreria.Pages.Ventas
         [TempData]
         public string? MensajeError { get; set; }
 
-        public IndexVentasModel(IVentaAdapter ventaAdapter)
+        public IndexVentasModel(
+            IVentaAdapter ventaAdapter,
+            IReporteAdapter reporteAdapter)
         {
             _ventaAdapter = ventaAdapter;
+            _reporteAdapter = reporteAdapter;
         }
 
         public async Task OnGetAsync()
@@ -146,6 +151,36 @@ namespace FrontendLibreria.Pages.Ventas
                     success = false,
                     message = "Error al obtener el detalle de la venta."
                 });
+            }
+        }
+
+        public async Task<IActionResult> OnGetVerComprobanteAsync(int idVenta)
+        {
+            if (idVenta <= 0)
+                return BadRequest("ID de venta inválido.");
+
+            try
+            {
+                byte[] pdf = await _reporteAdapter.VerComprobanteVentaAsync(idVenta);
+
+                if (pdf == null || pdf.Length == 0)
+                    return Content("Error: no se pudo generar el comprobante.");
+
+                string nombreArchivo = $"Comprobante_Venta_{idVenta}.pdf";
+
+                var contentDisposition = new System.Net.Mime.ContentDisposition
+                {
+                    FileName = nombreArchivo,
+                    Inline = true
+                };
+
+                Response.Headers.Append("Content-Disposition", contentDisposition.ToString());
+
+                return File(pdf, "application/pdf");
+            }
+            catch (Exception ex)
+            {
+                return Content($"Error: {ex.Message}");
             }
         }
 

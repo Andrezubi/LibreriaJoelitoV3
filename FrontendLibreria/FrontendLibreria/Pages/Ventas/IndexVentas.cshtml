@@ -133,6 +133,10 @@
             </div>
 
             <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnVerComprobanteDetalle" data-id-venta="" disabled>
+                    Ver comprobante
+                </button>
+
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     Cerrar
                 </button>
@@ -351,6 +355,10 @@
 
             function abrirDetalleVenta(idVenta) {
                 const contenedor = document.getElementById('detalleVentaContenido');
+                const btnVerComprobante = document.getElementById('btnVerComprobanteDetalle');
+
+                btnVerComprobante.dataset.idVenta = '';
+                btnVerComprobante.disabled = true;
 
                 contenedor.innerHTML = `
                     <div class="text-center text-muted py-4">
@@ -375,6 +383,8 @@
 
                         const venta = data.venta;
                         const detalles = data.detalles || [];
+                        btnVerComprobante.dataset.idVenta = venta.idVenta;
+                        btnVerComprobante.disabled = false;
 
                         let filas = '';
 
@@ -578,6 +588,16 @@
                     instancia.hide();
                 }
             }
+
+            document.getElementById('btnVerComprobanteDetalle').addEventListener('click', function () {
+                const idVenta = this.dataset.idVenta;
+
+                if (!idVenta) {
+                    return;
+                }
+
+                window.open(`?handler=VerComprobante&idVenta=${idVenta}`, '_blank');
+            });
 
             reconectarEventosBotones();
         });

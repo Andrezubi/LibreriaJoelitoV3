@@ -1,5 +1,6 @@
 using FrontendLibreria.Adaptadores.Cliente;
 using FrontendLibreria.Adaptadores.Producto;
+using FrontendLibreria.Adaptadores.Reporte;
 using FrontendLibreria.Adaptadores.Venta;
 using FrontendLibreria.DTOs;
 using FrontendLibreria.DTOs.VentaDTOs;
@@ -16,15 +17,18 @@ namespace FrontendLibreria.Pages.Ventas
         private readonly IVentaAdapter _ventaAdapter;
         private readonly IAdaptadorCliente _clienteAdapter;
         private readonly IAdaptadorProducto _productoAdapter;
+        private readonly IReporteAdapter _reporteAdapter;
 
         public RegistrarModel(
             IVentaAdapter ventaAdapter,
             IAdaptadorCliente clienteAdapter,
-            IAdaptadorProducto productoAdapter)
+            IAdaptadorProducto productoAdapter,
+            IReporteAdapter reporteAdapter)
         {
             _ventaAdapter = ventaAdapter;
             _clienteAdapter = clienteAdapter;
             _productoAdapter = productoAdapter;
+            _reporteAdapter = reporteAdapter;
         }
 
         public void OnGet()
@@ -249,7 +253,7 @@ namespace FrontendLibreria.Pages.Ventas
 
             try
             {
-                byte[] pdf = await _ventaAdapter.GenerarComprobantePdfAsync(idVenta);
+                byte[] pdf = await _reporteAdapter.VerComprobanteVentaAsync(idVenta);
 
                 if (pdf == null || pdf.Length == 0)
                     return Content("Error: no se pudo generar el comprobante.");
