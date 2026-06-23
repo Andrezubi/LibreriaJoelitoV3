@@ -1,7 +1,10 @@
 using FrontendLibreria.DTOs.Reportes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Web;
+using System.Security.Claims;
 
 namespace FrontendLibreria.Adaptadores.Reporte
 {
@@ -9,51 +12,57 @@ namespace FrontendLibreria.Adaptadores.Reporte
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<ReporteAdapter> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReporteAdapter(HttpClient httpClient, ILogger<ReporteAdapter> logger)
+        public ReporteAdapter(
+            HttpClient httpClient,
+            ILogger<ReporteAdapter> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<byte[]> GenerarVentasPorProductoAsync(ReporteRequestDto request)
         {
-            try
-            {
-                var query = QueryStringHelper.ToQueryString(request);
-                var response = await _httpClient.GetAsync($"api/Reportes/ventas-producto?{query}");
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsByteArrayAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al generar reporte de ventas por producto.");
-                return Array.Empty<byte>();
-            }
+            return await ObtenerPdfAsync(
+                "api/Reportes/ventas-producto",
+                request,
+                "ventas por producto");
         }
 
         public async Task<byte[]> GenerarResumenRecaudacionAsync(ReporteRequestDto request)
         {
-            try
-            {
-                var query = QueryStringHelper.ToQueryString(request);
-                var response = await _httpClient.GetAsync($"api/Reportes/resumen-recaudacion?{query}");
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsByteArrayAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al generar resumen de recaudación.");
-                return Array.Empty<byte>();
-            }
+            return await ObtenerPdfAsync(
+                "api/Reportes/resumen-recaudacion",
+                request,
+                "resumen de recaudacion");
         }
 
         public async Task<byte[]> VerComprobanteVentaAsync(int idVenta)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"api/Reportes/comprobante-venta/{idVenta}/ver");
-                response.EnsureSuccessStatusCode();
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"api/Reportes/comprobante-venta/{idVenta}/ver");
+
+                AgregarCabecerasUsuario(request);
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(
+                        "Error al ver comprobante de venta {IdVenta}. Codigo: {StatusCode}. Respuesta: {Respuesta}",
+                        idVenta,
+                        (int)response.StatusCode,
+                        error);
+
+                    return Array.Empty<byte>();
+                }
+
                 return await response.Content.ReadAsByteArrayAsync();
             }
             catch (Exception ex)
@@ -67,28 +76,117 @@ namespace FrontendLibreria.Adaptadores.Reporte
         {
             try
             {
-                var response = await _httpClient.GetAsync("api/Reportes/bitacora");
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<List<BitacoraReporteDto>>() ?? new List<BitacoraReporteDto>();
+                using var request = new HttpRequestMessage(HttpMethod.Get, "api/Reportes/bitacora");
+                AgregarCabecerasUsuario(request);
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(
+                        "Error al obtener la bitacora de reportes. Codigo: {StatusCode}. Respuesta: {Respuesta}",
+                        (int)response.StatusCode,
+                        error);
+
+                    return new List<BitacoraReporteDto>();
+                }
+
+                return await response.Content.ReadFromJsonAsync<List<BitacoraReporteDto>>()
+                    ?? new List<BitacoraReporteDto>();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener la bitácora de reportes.");
+                _logger.LogError(ex, "Error al obtener la bitacora de reportes.");
                 return new List<BitacoraReporteDto>();
+            }
+        }
+
+        private async Task<byte[]> ObtenerPdfAsync(
+            string endpoint,
+            ReporteRequestDto request,
+            string nombreReporte)
+        {
+            try
+            {
+                var query = QueryStringHelper.ToQueryString(request);
+                var url = string.IsNullOrWhiteSpace(query)
+                    ? endpoint
+                    : $"{endpoint}?{query}";
+
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
+                httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/pdf"));
+                AgregarCabecerasUsuario(httpRequest);
+
+                var response = await _httpClient.SendAsync(httpRequest);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogError(
+                        "Error al generar reporte de {NombreReporte}. Codigo: {StatusCode}. Respuesta: {Respuesta}",
+                        nombreReporte,
+                        (int)response.StatusCode,
+                        error);
+
+                    return Array.Empty<byte>();
+                }
+
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al generar reporte de {NombreReporte}.", nombreReporte);
+                return Array.Empty<byte>();
+            }
+        }
+
+        private void AgregarCabecerasUsuario(HttpRequestMessage request)
+        {
+            var usuario = _httpContextAccessor.HttpContext?.User;
+            if (usuario is null)
+            {
+                return;
+            }
+
+            var idUsuario = usuario.FindFirst("IdUsuario")?.Value
+                ?? usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(idUsuario))
+            {
+                request.Headers.TryAddWithoutValidation("X-IdUsuario", idUsuario);
+            }
+
+            var token = usuario.FindFirst("Token")?.Value;
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
         }
     }
 
-    // Helper simple para convertir el DTO a QueryString
+    // Convierte el DTO a query string usando formatos estables para la API.
     public static class QueryStringHelper
     {
         public static string ToQueryString(object obj)
         {
             var properties = from p in obj.GetType().GetProperties()
-                             where p.GetValue(obj, null) != null
-                             select p.Name + "=" + HttpUtility.UrlEncode(p.GetValue(obj, null)!.ToString());
+                             let value = ConvertirValor(p.GetValue(obj, null))
+                             where !string.IsNullOrWhiteSpace(value)
+                             select Uri.EscapeDataString(p.Name) + "=" + Uri.EscapeDataString(value);
 
             return string.Join("&", properties);
+        }
+
+        private static string ConvertirValor(object? value)
+        {
+            return value switch
+            {
+                null => string.Empty,
+                string texto => texto.Trim(),
+                DateTime fecha => fecha.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                bool bandera => bandera.ToString().ToLowerInvariant(),
+                IFormattable formateable => formateable.ToString(null, CultureInfo.InvariantCulture),
+                _ => value.ToString()?.Trim() ?? string.Empty
+            };
         }
     }
 }

@@ -10,6 +10,8 @@ namespace MicroServicioReportes.Infraestructura.Generadores
     public class ComprobanteVentaPdfServicio : IComprobanteVentaPdfServicio
     {
         private readonly IHostEnvironment _env;
+        private readonly IReporteBuilder _builder;
+        private readonly IPlantillaReporteProveedor _plantillas;
 
         private const string MoradoPrincipal = "#7B35BE";
         private const string MoradoOscuro = "#4B1F73";
@@ -25,9 +27,14 @@ namespace MicroServicioReportes.Infraestructura.Generadores
         private const string Verde = "#16A34A";
         private const string Rojo = "#DC2626";
 
-        public ComprobanteVentaPdfServicio(IHostEnvironment env)
+        public ComprobanteVentaPdfServicio(
+            IHostEnvironment env,
+            IReporteBuilder builder,
+            IPlantillaReporteProveedor plantillas)
         {
             _env = env;
+            _builder = builder;
+            _plantillas = plantillas;
         }
 
         public byte[] GenerarComprobanteVenta(ComprobanteVenta comprobante)
@@ -35,6 +42,70 @@ namespace MicroServicioReportes.Infraestructura.Generadores
             if (comprobante == null || comprobante.Detalles == null || comprobante.Detalles.Count == 0)
                 return Array.Empty<byte>();
 
+            DocumentoReporte documento = ConstruirDocumentoReporte(comprobante);
+
+            return RenderizarComprobanteVenta(documento, comprobante);
+        }
+
+        private DocumentoReporte ConstruirDocumentoReporte(ComprobanteVenta comprobante)
+        {
+            DocumentoReporte plantilla = _plantillas.ObtenerPlantilla(TipoReporte.ComprobanteVenta);
+
+            var filasDetalle = comprobante.Detalles.Select(detalle =>
+                new Dictionary<string, string>
+                {
+                    ["Cantidad"] = detalle.Cantidad.ToString(),
+                    ["Producto"] = detalle.ProductoNombre,
+                    ["PrecioUnitario"] = $"{detalle.PrecioUnitario:0.00} Bs.",
+                    ["Subtotal"] = $"{detalle.Subtotal:0.00} Bs."
+                });
+
+            return _builder
+                .UsarPlantilla(plantilla)
+                .AgregarEncabezado(
+                    $"Comprobante de Venta Nro. {comprobante.NumeroComprobante}",
+                    comprobante.Estado.Equals("ANULADO", StringComparison.OrdinalIgnoreCase)
+                        ? "Venta anulada"
+                        : "Venta confirmada",
+                    comprobante.UsuarioNombre)
+                .AgregarDatosGenerales(new[]
+                {
+            CrearCampo("Fecha venta", comprobante.FechaVenta.ToString("dd/MM/yyyy HH:mm")),
+            CrearCampo("Cliente", comprobante.ClienteNombre),
+            CrearCampo("CI/NIT", comprobante.ClienteCiNit ?? "-"),
+            CrearCampo("Estado", comprobante.Estado),
+            CrearCampo("Vendedor", comprobante.UsuarioNombre),
+            CrearCampo("Fecha emisión", comprobante.FechaGeneracion.ToString("dd/MM/yyyy HH:mm")),
+            CrearCampo("Venta Nro.", comprobante.VentaId.ToString()),
+            CrearCampo("Comprobante Nro.", comprobante.NumeroComprobante),
+            CrearCampo("CorrelationId", comprobante.CorrelationId)
+                })
+                .AgregarTabla(
+                    "Detalle de productos",
+                    new[] { "Cantidad", "Producto", "PrecioUnitario", "Subtotal" },
+                    filasDetalle)
+                .AgregarResumen(new[]
+                {
+            CrearCampo("Importe literal", ConvertirMontoALiteral(comprobante.Total)),
+            CrearCampo("Total a pagar", $"{comprobante.Total:0.00} Bs.")
+                })
+                .AgregarPie(comprobante.UsuarioNombre)
+                .Construir();
+        }
+
+        private static CampoReporte CrearCampo(string etiqueta, string valor)
+        {
+            return new CampoReporte
+            {
+                Etiqueta = etiqueta,
+                Valor = valor
+            };
+        }
+
+        private byte[] RenderizarComprobanteVenta(
+            DocumentoReporte documentoReporte,
+            ComprobanteVenta comprobante)
+        {
             string rutaLogo = Path.Combine(
                 _env.ContentRootPath,
                 "Recursos",
@@ -42,7 +113,27 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                 "logo-lib.png"
             );
 
-            string importeLiteral = ConvertirMontoALiteral(comprobante.Total);
+            var tablaDetalle = documentoReporte.Tablas.FirstOrDefault();
+            var datos = documentoReporte.DatosGenerales
+                .ToDictionary(c => c.Etiqueta, c => c.Valor);
+
+            string fechaVenta = ObtenerValor(datos, "Fecha venta");
+            string cliente = ObtenerValor(datos, "Cliente");
+            string ciNit = ObtenerValor(datos, "CI/NIT");
+            string estado = ObtenerValor(datos, "Estado");
+            string vendedor = ObtenerValor(datos, "Vendedor");
+            string fechaEmision = ObtenerValor(datos, "Fecha emisión");
+            string ventaNro = ObtenerValor(datos, "Venta Nro.");
+            string comprobanteNro = ObtenerValor(datos, "Comprobante Nro.");
+            string correlationId = ObtenerValor(datos, "CorrelationId");
+
+            string importeLiteral = documentoReporte.Resumen
+                .FirstOrDefault(c => c.Etiqueta == "Importe literal")?.Valor
+                ?? ConvertirMontoALiteral(comprobante.Total);
+
+            string totalTexto = documentoReporte.Resumen
+                .FirstOrDefault(c => c.Etiqueta == "Total a pagar")?.Valor
+                ?? $"{comprobante.Total:0.00} Bs.";
 
             return Document.Create(documento =>
             {
@@ -62,9 +153,7 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                         .Padding(0)
                         .Column(col =>
                         {
-                            // =========================
-                            // ENCABEZADO PRINCIPAL
-                            // =========================
+                            // ENCABEZADO
                             col.Item()
                                 .Background(MoradoPrincipal)
                                 .PaddingVertical(14)
@@ -98,7 +187,7 @@ namespace MicroServicioReportes.Infraestructura.Generadores
 
                                     row.RelativeItem().PaddingLeft(18).Column(info =>
                                     {
-                                        info.Item().Text("COMPROBANTE DE VENTA")
+                                        info.Item().Text(documentoReporte.Titulo.ToUpper())
                                             .FontSize(23)
                                             .Bold()
                                             .FontColor(Blanco);
@@ -108,19 +197,17 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                             .SemiBold()
                                             .FontColor(MoradoClaro);
 
-                                        info.Item().PaddingTop(3).Text($"Venta Nro. {comprobante.VentaId}")
+                                        info.Item().PaddingTop(3).Text($"Venta Nro. {ventaNro}")
                                             .FontSize(10)
                                             .FontColor(Blanco);
 
-                                        info.Item().Text($"Comprobante Nro. {comprobante.NumeroComprobante}")
+                                        info.Item().Text($"Comprobante Nro. {comprobanteNro}")
                                             .FontSize(10)
                                             .FontColor(Blanco);
                                     });
                                 });
 
-                            // =========================
                             // CONTENIDO
-                            // =========================
                             col.Item().Padding(22).Column(contenido =>
                             {
                                 // DATOS GENERALES
@@ -131,16 +218,16 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                         .BorderLeft(5)
                                         .BorderColor(MoradoPrincipal)
                                         .Padding(12)
-                                        .Column(cliente =>
+                                        .Column(clienteCol =>
                                         {
-                                            cliente.Item().Text("Datos del cliente")
+                                            clienteCol.Item().Text("Datos del cliente")
                                                 .FontSize(13)
                                                 .Bold()
                                                 .FontColor(MoradoOscuro);
 
-                                            cliente.Item().PaddingTop(7).Text($"Fecha venta: {comprobante.FechaVenta:dd/MM/yyyy HH:mm}");
-                                            cliente.Item().Text($"Cliente: {comprobante.ClienteNombre}");
-                                            cliente.Item().Text($"CI/NIT: {comprobante.ClienteCiNit ?? "-"}");
+                                            clienteCol.Item().PaddingTop(7).Text($"Fecha venta: {fechaVenta}");
+                                            clienteCol.Item().Text($"Cliente: {cliente}");
+                                            clienteCol.Item().Text($"CI/NIT: {ciNit}");
                                         });
 
                                     row.ConstantItem(20);
@@ -161,18 +248,17 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                             {
                                                 r.AutoItem().Text("Estado: ");
                                                 r.AutoItem()
-                                                    .Background(ObtenerColorEstado(comprobante.Estado))
+                                                    .Background(ObtenerColorEstado(estado))
                                                     .PaddingHorizontal(8)
                                                     .PaddingVertical(3)
-                                                    .Text(comprobante.Estado)
+                                                    .Text(estado)
                                                     .FontSize(9)
                                                     .FontColor(Blanco)
                                                     .Bold();
                                             });
 
-                                            comp.Item().PaddingTop(5).Text($"Vendedor: {comprobante.UsuarioNombre}");
-                                            comp.Item().Text($"Hora emisión: {comprobante.FechaGeneracion:HH:mm}");
-                                            comp.Item().Text($"Fecha emisión: {comprobante.FechaGeneracion:dd/MM/yyyy}");
+                                            comp.Item().PaddingTop(5).Text($"Vendedor: {vendedor}");
+                                            comp.Item().Text($"Fecha emisión: {fechaEmision}");
                                         });
                                 });
 
@@ -181,7 +267,7 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                     .Background(MoradoPrincipal)
                                     .PaddingVertical(8)
                                     .PaddingHorizontal(10)
-                                    .Text("Detalle de productos")
+                                    .Text(tablaDetalle?.Titulo ?? "Detalle de productos")
                                     .FontSize(13)
                                     .Bold()
                                     .FontColor(Blanco);
@@ -207,18 +293,19 @@ namespace MicroServicioReportes.Infraestructura.Generadores
 
                                     bool alternar = false;
 
-                                    foreach (var detalle in comprobante.Detalles)
+                                    if (tablaDetalle != null)
                                     {
-                                        string fondo = alternar ? GrisSuave : Blanco;
+                                        foreach (var fila in tablaDetalle.Filas)
+                                        {
+                                            string fondo = alternar ? GrisSuave : Blanco;
 
-                                        CeldaDetalle(tabla, detalle.Cantidad.ToString(), true, fondo);
-                                        CeldaDetalle(tabla, detalle.ProductoNombre, false, fondo);
-                                        CeldaDetalle(tabla, $"{detalle.PrecioUnitario:0.00} Bs.", true, fondo);
+                                            CeldaDetalle(tabla, ObtenerValor(fila, "Cantidad"), true, fondo);
+                                            CeldaDetalle(tabla, ObtenerValor(fila, "Producto"), false, fondo);
+                                            CeldaDetalle(tabla, ObtenerValor(fila, "PrecioUnitario"), true, fondo);
+                                            CeldaDetalle(tabla, ObtenerValor(fila, "Subtotal"), true, fondo);
 
-                                        // Si tu entidad usa TotalLinea, cambia detalle.Subtotal por detalle.TotalLinea
-                                        CeldaDetalle(tabla, $"{detalle.Subtotal:0.00} Bs.", true, fondo);
-
-                                        alternar = !alternar;
+                                            alternar = !alternar;
+                                        }
                                     }
                                 });
 
@@ -254,7 +341,7 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                                 .Bold()
                                                 .FontColor(Blanco);
 
-                                            total.Item().PaddingTop(6).AlignCenter().Text($"{comprobante.Total:0.00} Bs.")
+                                            total.Item().PaddingTop(6).AlignCenter().Text(totalTexto)
                                                 .FontSize(20)
                                                 .Bold()
                                                 .FontColor(Blanco);
@@ -270,18 +357,10 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                                     .Text("Este comprobante se genera con los datos históricos guardados en Ventas. Los cambios posteriores en Clientes o Productos no modifican este documento.")
                                     .FontSize(9)
                                     .FontColor(GrisTexto);
-
-                                // TRAZABILIDAD
-                                contenido.Item().PaddingTop(8)
-                                    .Text($"CorrelationId: {comprobante.CorrelationId}")
-                                    .FontSize(7)
-                                    .FontColor(Colors.Grey.Darken1);
                             });
                         });
 
-                    // =========================
                     // PIE DE PÁGINA
-                    // =========================
                     pagina.Footer().PaddingHorizontal(35).PaddingBottom(18).Row(row =>
                     {
                         row.RelativeItem().Text("Librería Joelito")
@@ -296,12 +375,21 @@ namespace MicroServicioReportes.Infraestructura.Generadores
                             .Bold();
 
                         row.RelativeItem().AlignRight()
-                            .Text($"{comprobante.FechaGeneracion:dd/MM/yyyy HH:mm} - {comprobante.UsuarioNombre}")
+                            .Text(documentoReporte.PiePagina)
                             .FontSize(9)
                             .FontColor(GrisTexto);
                     });
                 });
             }).GeneratePdf();
+        }
+
+        private static string ObtenerValor(
+            IReadOnlyDictionary<string, string> datos,
+            string clave)
+        {
+            return datos.TryGetValue(clave, out string? valor)
+                ? valor
+                : "-";
         }
 
         private static void CeldaCabecera(TableCellDescriptor tabla, string texto)

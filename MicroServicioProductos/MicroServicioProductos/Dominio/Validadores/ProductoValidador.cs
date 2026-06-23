@@ -48,8 +48,8 @@ namespace MicroServicioProductos.Dominio.Validadores
         {
             if (stock < 0)
                 errores.Add(new ValidationResult("El stock no puede ser negativo.", new[] { "Stock" }));
-            if (stock > 100000000)
-                errores.Add(new ValidationResult("El stock no puede sobrepasar los 100000000", new[] { "Stock" }));
+            if (stock > 100000)
+                errores.Add(new ValidationResult("El stock no puede sobrepasar los 100000", new[] { "Stock" }));
         }
 
         public void ValidarIdMarca(int idMarca, List<ValidationResult> errores)

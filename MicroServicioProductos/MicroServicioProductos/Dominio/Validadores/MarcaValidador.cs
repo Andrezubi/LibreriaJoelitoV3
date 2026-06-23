@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MicroServicioProductos.Dominio.Validadores
 {
@@ -58,6 +59,10 @@ namespace MicroServicioProductos.Dominio.Validadores
             {
                 errores.Add(new ValidationResult("La Descripción no puede exceder los 500 caracteres.", new[] { "Descripcion" }));
             }
+            if (!Regex.IsMatch(descripcion, @"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s&\.\-]+$"))
+            {
+                errores.Add(new ValidationResult("La descripcion contiene caracteres no permitidos.", new[] { "Nombre" }));
+            }
         }
 
         private void ValidarPaginaWeb(string? url, List<ValidationResult> errores)
@@ -71,6 +76,14 @@ namespace MicroServicioProductos.Dominio.Validadores
                 if (url.Length > 250)
                 {
                     errores.Add(new ValidationResult("La URL es demasiado larga.", new[] { "PaginaWeb" }));
+                }
+                // No permitir ningún espacio en blanco
+                if (Regex.IsMatch(url, @"\s"))
+                {
+                    errores.Add(new ValidationResult(
+                        "La Página Web no puede contener espacios en blanco.",
+                        new[] { "PaginaWeb" }));
+                    return;
                 }
             }
         }

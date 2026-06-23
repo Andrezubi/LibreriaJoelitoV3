@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MicroServicioProductos.Aplicacion.Servicios;
+﻿using MicroServicioProductos.Aplicacion.Servicios;
 using MicroServicioProductos.Dominio.Modelos;
+using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace MicroServicioProductos.Controllers
 {
@@ -57,6 +59,12 @@ namespace MicroServicioProductos.Controllers
                 return BadRequest("No se eliminó ningún registro");
 
             return Ok();
+        }
+        public string NormalizarTexto(string? texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+            texto = Regex.Replace(texto.Trim(), @"\s+", " ");
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(texto.ToLower());
         }
     }
 }

@@ -2,6 +2,7 @@ using FrontendLibreria.Adaptadores.Reporte;
 using FrontendLibreria.DTOs.Reportes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 
 namespace FrontendLibreria.Pages.Reportes
 {
@@ -14,40 +15,109 @@ namespace FrontendLibreria.Pages.Reportes
             _reporteAdapter = reporteAdapter;
         }
 
-        public List<BitacoraReporteDto> Bitacora { get; set; } = new();
+        [BindProperty]
+        public DateTime? FechaDesde { get; set; }
 
-        public async Task OnGetAsync()
+        [BindProperty]
+        public DateTime? FechaHasta { get; set; }
+
+        [BindProperty]
+        public string OrdenPor { get; set; } = "producto";
+
+        [BindProperty]
+        public bool Descendente { get; set; }
+
+        public string? MensajeError { get; set; }
+
+        public void OnGet()
         {
-            Bitacora = await _reporteAdapter.ObtenerBitacoraAsync();
+            EstablecerFechasPorDefecto();
         }
 
         public async Task<IActionResult> OnPostGenerarVentasProductoAsync()
         {
-            var request = new ReporteRequestDto(); // Valores por defecto
+            if (!ValidarRangoFechas())
+            {
+                return Page();
+            }
+
+            var request = CrearRequestReporte();
             var bytes = await _reporteAdapter.GenerarVentasPorProductoAsync(request);
             
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
+            if (bytes == null || bytes.Length == 0)
+            {
+                MensajeError = "No se pudo generar el reporte de ventas por producto.";
+                return Page();
+            }
 
             return File(bytes, "application/pdf", "VentasPorProducto.pdf");
         }
 
         public async Task<IActionResult> OnPostGenerarResumenRecaudacionAsync()
         {
-            var request = new ReporteRequestDto(); // Valores por defecto
+            if (!ValidarRangoFechas())
+            {
+                return Page();
+            }
+
+            var request = CrearRequestReporte();
             var bytes = await _reporteAdapter.GenerarResumenRecaudacionAsync(request);
             
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
+            if (bytes == null || bytes.Length == 0)
+            {
+                MensajeError = "No se pudo generar el resumen de recaudación.";
+                return Page();
+            }
 
             return File(bytes, "application/pdf", "ResumenRecaudacion.pdf");
         }
 
-        public async Task<IActionResult> OnPostVerComprobanteAsync(int idVenta)
+        private ReporteRequestDto CrearRequestReporte()
         {
-            var bytes = await _reporteAdapter.VerComprobanteVentaAsync(idVenta);
-            
-            if (bytes == null || bytes.Length == 0) return RedirectToPage();
+            return new ReporteRequestDto
+            {
+                FechaDesde = FechaDesde,
+                FechaHasta = FechaHasta,
+                IdUsuario = ObtenerIdUsuario(),
+                Usuario = ObtenerNombreUsuario(),
+                OrdenPor = string.IsNullOrWhiteSpace(OrdenPor) ? "producto" : OrdenPor,
+                Descendente = Descendente
+            };
+        }
 
-            return File(bytes, "application/pdf");
+        private void EstablecerFechasPorDefecto()
+        {
+            FechaDesde ??= DateTime.Today.AddDays(-5);
+            FechaHasta ??= DateTime.Today;
+        }
+
+        private bool ValidarRangoFechas()
+        {
+            if (FechaDesde.HasValue &&
+                FechaHasta.HasValue &&
+                FechaDesde.Value.Date > FechaHasta.Value.Date)
+            {
+                MensajeError = "La fecha desde no puede ser mayor que la fecha hasta.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private int? ObtenerIdUsuario()
+        {
+            var idClaim = User.FindFirst("IdUsuario")?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            return int.TryParse(idClaim, out var idUsuario) ? idUsuario : null;
+        }
+
+        private string ObtenerNombreUsuario()
+        {
+            return User.FindFirst("NombreCompleto")?.Value
+                ?? User.FindFirst(ClaimTypes.Name)?.Value
+                ?? User.Identity?.Name
+                ?? "Sistema";
         }
     }
 }
